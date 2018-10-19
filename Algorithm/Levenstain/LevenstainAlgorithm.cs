@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Algorithm.Levenstain
 {
@@ -56,8 +57,11 @@ namespace Algorithm.Levenstain
             return matrix;
         }
 
-        public IEnumerable<TEdit> CalculateEdit<TEdit>(IList<TSource> source, IList<TTarget> target,
-            Func<TSource, TTarget, TEdit> editSelector)
+        public IEnumerable<TEdit> CalculateEdit<TEdit>(
+            IList<TSource> source, 
+            IList<TTarget> target,
+            Func<TSource, TTarget, TEdit> editSelector,
+            bool reverse = false)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
@@ -67,11 +71,14 @@ namespace Algorithm.Levenstain
                 throw new ArgumentNullException(nameof(editSelector));
             if (Options == null)
                 throw new ArgumentNullException(nameof(Options));
-            return CalculateEdit(CalculateMatrix(source, target), source, target, editSelector);
+            return CalculateEdit(CalculateMatrix(source, target), source, target, editSelector, reverse);
         }
 
-        public IEnumerable<TEdit> CalculateEdit<TEdit>(ILevenstainMatrix matrix, IList<TSource> source,
-            IList<TTarget> target, Func<TSource, TTarget, TEdit> editSelector)
+        private IEnumerable<TEdit> InternalCalculateEdit<TEdit>(
+            ILevenstainMatrix matrix,
+            IList<TSource> source,
+            IList<TTarget> target,
+            Func<TSource, TTarget, TEdit> editSelector)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
@@ -127,6 +134,17 @@ namespace Algorithm.Levenstain
                     throw new InvalidOperationException();
                 }
             }
+        }
+
+        public IEnumerable<TEdit> CalculateEdit<TEdit>(
+            ILevenstainMatrix matrix, 
+            IList<TSource> source,
+            IList<TTarget> target, 
+            Func<TSource, TTarget, TEdit> editSelector,
+            bool reverse = false)
+        {
+            var result = InternalCalculateEdit(matrix, source, target, editSelector);
+            return reverse ? result : result.Reverse(); //default is already reversed
         }
     }
 }

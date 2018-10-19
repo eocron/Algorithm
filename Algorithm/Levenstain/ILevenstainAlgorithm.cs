@@ -18,8 +18,14 @@ namespace Algorithm.Levenstain
         /// <param name="target"></param>
         /// <param name="editSelector"></param>
         /// <param name="matrix"></param>
+        /// <param name="reverse"></param>
         /// <returns></returns>
-        IEnumerable<TEdit> CalculateEdit<TEdit>(ILevenstainMatrix matrix, IList<TSource> source, IList<TTarget> target, Func<TSource, TTarget, TEdit> editSelector);
+        IEnumerable<TEdit> CalculateEdit<TEdit>(
+            ILevenstainMatrix matrix, 
+            IList<TSource> source, 
+            IList<TTarget> target, 
+            Func<TSource, TTarget, TEdit> editSelector,
+            bool reverse = false);
 
         /// <summary>
         /// Calculate action required to transform source sequence to target sequence.
@@ -28,8 +34,13 @@ namespace Algorithm.Levenstain
         /// <param name="source"></param>
         /// <param name="target"></param>
         /// <param name="editSelector"></param>
+        /// <param name="reverse"></param>
         /// <returns></returns>
-        IEnumerable<TEdit> CalculateEdit<TEdit>(IList<TSource> source, IList<TTarget> target, Func<TSource, TTarget, TEdit> editSelector);
+        IEnumerable<TEdit> CalculateEdit<TEdit>(
+            IList<TSource> source, 
+            IList<TTarget> target, 
+            Func<TSource, TTarget, TEdit> editSelector,
+            bool reverse = false);
 
         /// <summary>
         /// Calculates Levenstain weight matrix.
