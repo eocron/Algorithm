@@ -8,5 +8,5 @@ Main mottos in descending order:
      
 # Currently implemented
 ## Levenstain
-  - Wight matrix calculation
+  - Weight matrix calculation
   - Remarks calculation (sequence of actions to perform to transform source to target)
