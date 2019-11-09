@@ -22,6 +22,31 @@ namespace Tests
             return new TestStream(size, 42);
         }
 
+        private void AssertNoCachedFiles(FileCache<long> cache)
+        {
+            Assert.IsEmpty(Directory.GetFiles(Path.Combine(cache.CurrentFolder, "cch")));
+        }
+
+        private void AssertHasCachedFiles(FileCache<long> cache)
+        {
+            Assert.IsNotEmpty(Directory.GetFiles(Path.Combine(cache.CurrentFolder, "cch")));
+        }
+
+        private void AssertNoFiles(string path)
+        {
+            if (Directory.Exists(path))
+            {
+                Assert.IsEmpty(Directory.GetFiles(path, "*", SearchOption.AllDirectories));
+            }
+        }
+
+        private void AssertNoGarbageFiles(FileCache<long> cache)
+        {
+            AssertNoFiles(Path.Combine(cache.CurrentFolder, "bin"));
+            AssertNoFiles(Path.Combine(cache.CurrentFolder, "tmp"));
+            Assert.IsEmpty(Directory.GetDirectories(cache.BaseFolder).Where(x => x != cache.CurrentFolder));
+        }
+
         [Test]
         public async Task Performance()
         {
@@ -64,7 +89,7 @@ namespace Tests
 
             await cache.GarbageCollect(CancellationToken.None);
 
-            Assert.IsEmpty(Directory.GetDirectories(cache.BaseFolder).Where(x => x != cache.CurrentFolder));
+            AssertNoGarbageFiles(cache);
         }
 
         private async Task<byte[]> FullReadAsync(IFileCache<long> cache, long key)
@@ -118,7 +143,7 @@ namespace Tests
             Assert.IsNotNull(data);
             Assert.AreEqual(fileSize, data.Length);
 
-            Assert.IsEmpty(Directory.GetDirectories(cache.BaseFolder).Where(x => x != cache.CurrentFolder));
+            AssertNoGarbageFiles(cache);
         }
 
         [Test]
@@ -159,7 +184,7 @@ namespace Tests
             Assert.IsNotNull(data);
             Assert.AreEqual(fileSize, data.Length);
 
-            Assert.IsEmpty(Directory.GetDirectories(cache.BaseFolder).Where(x => x != cache.CurrentFolder));
+            AssertNoGarbageFiles(cache);
         }
 
         [Test]
@@ -182,7 +207,7 @@ namespace Tests
             data = await FullReadAsync(cache, 123);
             Assert.IsNull(data);
 
-            Assert.IsEmpty(Directory.GetDirectories(cache.BaseFolder).Where(x => x != cache.CurrentFolder));
+            AssertNoGarbageFiles(cache);
         }
 
         [Test]
@@ -206,11 +231,12 @@ namespace Tests
             data = await FullReadAsync(cache, 123);
             Assert.IsNull(data);
 
-            Assert.IsNotEmpty(Directory.GetFiles(cache.CurrentFolder, "*", SearchOption.AllDirectories));
+            AssertHasCachedFiles(cache);
 
             await cache.GarbageCollect(CancellationToken.None);//trash collected if not collected on read.
 
-            Assert.IsEmpty(Directory.GetFiles(cache.CurrentFolder, "*", SearchOption.AllDirectories));
+            AssertNoCachedFiles(cache);
+            AssertNoGarbageFiles(cache);
         }
 
         [Test]
@@ -244,7 +270,36 @@ namespace Tests
             data = await FullReadAsync(cache, 123);
             Assert.IsNull(data);
 
-            Assert.IsEmpty(Directory.GetDirectories(cache.BaseFolder).Where(x => x != cache.CurrentFolder));
+            AssertNoGarbageFiles(cache);
+        }
+        [Test]
+        public async Task CancellationSpam()
+        {
+
+            var cache = CreateCache();
+            var fileSize = 1L*1024*1024*1024*1024; //1 TB
+
+            var calls = 100;
+
+            
+            for (int i = 0; i < calls; i++)
+            {
+                using (var cts = new CancellationTokenSource())
+                {
+                    cts.CancelAfter(10);
+                    try
+                    {
+                        await cache.AddOrUpdateStreamAsync(123, GetRandomFile(fileSize), cts.Token, null);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        //good.
+                    }
+                }
+            }
+            await cache.GarbageCollect(CancellationToken.None);
+
+            AssertNoGarbageFiles(cache);
         }
     }
 }
