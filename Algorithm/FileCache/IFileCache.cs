@@ -24,7 +24,7 @@ namespace Algorithm.FileCache
     /// If you don't do this - cache will just grow over time.
     /// It will add 22 characters to base path. Be aware of your file paths.
     /// </summary>
-    /// <typeparam name="TKey"></typeparam>
+    /// <typeparam name="TKey">Key of cache entry.</typeparam>
     public interface IFileCache<TKey>
     {
         /// <summary>
@@ -43,7 +43,7 @@ namespace Algorithm.FileCache
         Task InvalidateAsync(TKey key, CancellationToken token);
 
         /// <summary>
-        /// Performs garbage collection. It can skip files which currently readed.
+        /// Performs garbage collection. It can skip files which currently readed, so run it periodically.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>

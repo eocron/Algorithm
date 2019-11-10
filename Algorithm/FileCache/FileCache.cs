@@ -10,7 +10,8 @@ namespace Algorithm.FileCache
 {
     public sealed class FileCache<TKey> : IFileCache<TKey>, IDisposable
     {
-        private long _uniqueIdCounter;
+        #region Private helper classes
+        private delegate Task CancellableAction(CancellationToken token);
         private sealed class PerKeySemaphoreSlim : IDisposable
         {
             private readonly int _initialCount;
@@ -46,14 +47,12 @@ namespace Algorithm.FileCache
                 }
             }
         }
-
         private sealed class CFileCacheEntry : AnyExpirationPolicy
         {
             public string FilePath { get; set; }
 
             public DateTime Created { get; set; }
         }
-
         private sealed class CFileSource
         {
             private readonly IFileSystem _fs;
@@ -73,7 +72,7 @@ namespace Algorithm.FileCache
                 Stream = stream;
             }
 
-            public async Task CopyToAsync(string path, CancellationToken token, bool hardLinkIfPossible)
+            public async Task CopyToAsync(string path, CancellationToken token, bool createHardLink)
             {
                 if (Stream != null)
                 {
@@ -84,29 +83,35 @@ namespace Algorithm.FileCache
                 }
                 else
                 {
-                    await _fs.CopyAsync(FilePath, path, token, hardLinkIfPossible);
+                    if (createHardLink)
+                    {
+                        await _fs.CreateHardLink(FilePath, path, token);
+                    }
+                    else
+                    {
+                        await _fs.CopyFileAsync(FilePath, path, token);
+                    }
                 }
             }
         }
+        #endregion
 
+        private static long _uniqueIdCounter = 0;
+        private const int BufferSize         = 81920;
+        private readonly PerKeySemaphoreSlim                _perKeyLock;
+        private readonly IFileSystem                        _fs;
+        private readonly string                             _baseFolder;
+        private readonly AsyncReaderWriterLock              _cacheLock;
 
-        private const int BufferSize = 81920;
-        private readonly PerKeySemaphoreSlim _perKeyLock;
-        private readonly IFileSystem _fs;
-        private readonly string _baseFolder;
-        private readonly AsyncReaderWriterLock _cacheLock;
-
-        private volatile bool _invalid;
-        private string _currentFolder;
-        private string _tempFolder;
-        private string _cacheFolder;
-        private string _trashFolder;
+        private volatile bool                               _invalid;
+        private string                                      _currentFolder;
+        private string                                      _tempFolder;
+        private string                                      _cacheFolder;
+        private string                                      _trashFolder;
         private ConcurrentDictionary<TKey, CFileCacheEntry> _entries;
-        private ConcurrentBag<CancellableAction> _actions;
-        private delegate Task CancellableAction(CancellationToken token);
+        private ConcurrentBag<CancellableAction>            _actions;
 
         public string BaseFolder => _baseFolder;
-
         public string CurrentFolder
         {
             get
@@ -127,8 +132,10 @@ namespace Algorithm.FileCache
             _invalid = true;
         }
 
-        private string GetUniqueFileName()
+        #region Private methods
+        private static string GetUniqueFileName()
         {
+            //it is very unlikelly to iterate over entire uniqueId and come back to collision.
             var id = unchecked((ulong)Interlocked.Increment(ref _uniqueIdCounter));
             return id.ToString("X8");
         }
@@ -272,7 +279,7 @@ namespace Algorithm.FileCache
                 if (await _fs.FileExistAsync(filePath, token))
                 {
                     var newPath = await GetTmpFileAsync(_trashFolder, t);
-                    await _fs.MoveAsync(filePath, newPath, t);
+                    await _fs.MoveFileAsync(filePath, newPath, t);
                 }
             }, token);
         }
@@ -281,7 +288,7 @@ namespace Algorithm.FileCache
         {
             await Ensure(_cacheFolder, token);
             var newPath = await GetTmpFileAsync(_cacheFolder, token);
-            await _fs.MoveAsync(filePath, newPath, token);
+            await _fs.MoveFileAsync(filePath, newPath, token);
             //new ZlpFileInfo(newPath).Attributes |= FileAttributes.Readonly;
             return newPath;
         }
@@ -363,29 +370,6 @@ namespace Algorithm.FileCache
             return Task.FromResult((CFileCacheEntry)null);
         }
 
-        public Task InvalidateAsync(CancellationToken token)
-        {
-            _invalid = true;
-            return Task.CompletedTask;
-        }
-
-        public async Task InvalidateAsync(TKey key, CancellationToken token)
-        {
-            if (_invalid)//no meaning to invalidate if cache is entirely invalidated.
-                return;
-
-            using (await GlobalReadLock(token))
-            {
-                if (_invalid)
-                    return;
-
-                CFileCacheEntry entry;
-                if (!_entries.TryRemove(key, out entry))
-                    return;
-
-                await MoveToTrashAsync(entry.FilePath, token);
-            }
-        }
 
         private async Task SafeDeleteFile(string path, CancellationToken token)
         {
@@ -428,6 +412,32 @@ namespace Algorithm.FileCache
                     await _fs.DeleteDirectoryNonRecursiveAsync(path, token);
                 }
                 catch { }
+            }
+        }
+
+        #endregion
+
+        public Task InvalidateAsync(CancellationToken token)
+        {
+            _invalid = true;
+            return Task.CompletedTask;
+        }
+
+        public async Task InvalidateAsync(TKey key, CancellationToken token)
+        {
+            if (_invalid)//no meaning to invalidate if cache is entirely invalidated.
+                return;
+
+            using (await GlobalReadLock(token))
+            {
+                if (_invalid)
+                    return;
+
+                CFileCacheEntry entry;
+                if (!_entries.TryRemove(key, out entry))
+                    return;
+
+                await MoveToTrashAsync(entry.FilePath, token);
             }
         }
 
@@ -541,7 +551,6 @@ namespace Algorithm.FileCache
                 await new CFileSource(entry.FilePath, _fs).CopyToAsync(targetFilePath, token, true);
             }
         }
-
 
         public async Task<bool> TryGetFile(TKey key, CancellationToken token, string targetFilePath)
         {

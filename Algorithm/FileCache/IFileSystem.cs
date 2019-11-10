@@ -16,9 +16,11 @@ namespace Algorithm.FileCache
         /// <param name="tgt"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        Task MoveAsync(string src, string tgt, CancellationToken token);
+        Task MoveFileAsync(string src, string tgt, CancellationToken token);
 
-        Task CopyAsync(string src, string tgt, CancellationToken token, bool hardLinkIfPossible);
+        Task CopyFileAsync(string src, string tgt, CancellationToken token);
+
+        Task CreateHardLink(string src, string tgt, CancellationToken token);
 
         Task<Stream> OpenReadAsync(string path, CancellationToken token);
 

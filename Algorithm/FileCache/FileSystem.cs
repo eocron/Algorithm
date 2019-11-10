@@ -23,7 +23,7 @@ namespace Algorithm.FileCache
             return Task.FromResult(new DirectoryInfo(path).Exists);
         }
 
-        public virtual Task MoveAsync(string src, string tgt, CancellationToken token)
+        public virtual Task MoveFileAsync(string src, string tgt, CancellationToken token)
         {
             var file = new FileInfo(src);
             var dir = new DirectoryInfo(src);
@@ -39,23 +39,10 @@ namespace Algorithm.FileCache
             return Task.CompletedTask;
         }
 
-        public Task CopyAsync(string src, string tgt, CancellationToken token, bool hardLinkIfPossible)
+        public Task CopyFileAsync(string src, string tgt, CancellationToken token)
         {
             var srcInfo = new FileInfo(src);
             var tgtInfo = new FileInfo(tgt);
-
-
-            if (hardLinkIfPossible)
-            {
-                //hard links possible only on same drive
-                var possible = Path.GetPathRoot(srcInfo.FullName) ==
-                               Path.GetPathRoot(tgtInfo.FullName);
-                if (possible)
-                {
-                    CreateHardLink(src, tgt);
-                    return Task.CompletedTask;
-                }
-            }
 
             srcInfo.CopyTo(tgtInfo.FullName, false);
             return Task.CompletedTask;
@@ -76,7 +63,7 @@ namespace Algorithm.FileCache
 
         public Task<Stream> OpenReadAsync(string path, CancellationToken token)
         {
-            return Task.FromResult((Stream)new FileInfo(path).OpenRead());
+            return Task.FromResult((Stream)File.OpenRead(path));
         }
 
         public Task<Stream> OpenCreateAsync(string path, CancellationToken token)
@@ -136,6 +123,19 @@ namespace Algorithm.FileCache
         public Task<bool> EqualsAsync(string firstPath, string secondPath, CancellationToken token)
         {
             return Task.FromResult(Path.GetFullPath(firstPath).Equals(Path.GetFullPath(secondPath)));
+        }
+
+        public async Task CreateHardLink(string src, string tgt, CancellationToken token)
+        {
+            //hard links possible only on same drive
+            var possible = Path.GetPathRoot(src) ==
+                           Path.GetPathRoot(tgt);
+            if (possible)
+            {
+                CreateHardLink(src, tgt);
+                return;
+            }
+            await CopyFileAsync(src, tgt, token);
         }
     }
 }
