@@ -55,6 +55,7 @@ namespace Algorithm.FileCache
         }
         private sealed class CFileSource
         {
+            private readonly int _uploadBufferSize = 81920;
             private readonly IFileSystem _fs;
             private string FilePath { get; set; }
 
@@ -78,7 +79,7 @@ namespace Algorithm.FileCache
                 {
                     using (var fstream = await _fs.OpenCreateAsync(path, token))
                     {
-                        await Stream.CopyToAsync(fstream, BufferSize, token);
+                        await Stream.CopyToAsync(fstream, _uploadBufferSize, token);
                     }
                 }
                 else
@@ -96,14 +97,17 @@ namespace Algorithm.FileCache
         }
         #endregion
 
-        private static long _uniqueIdCounter = 0;
-        private const int BufferSize         = 81920;
+        private static long _uniqueIdCounter        = 0;
+
+        private readonly int _gcIntervalMs          = 5 * 1000;
+        private readonly int _gcFailRetryIntervalMs = 10 * 1000;
         private readonly PerKeySemaphoreSlim                _perKeyLock;
         private readonly IFileSystem                        _fs;
         private readonly string                             _baseFolder;
         private readonly AsyncReaderWriterLock              _cacheLock;
         private readonly CancellationTokenSource            _cts;
         private readonly Task                               _gc;
+
         private volatile bool                               _invalid;
         private string                                      _currentFolder;
         private string                                      _tempFolder;
@@ -147,8 +151,6 @@ namespace Algorithm.FileCache
 
         private async Task GcTask(CancellationToken token)
         {
-            int betweenIterationIntervalMs = 5 * 1000;
-            int onFailRetryIntervalMs = 5 * 1000;
             while (!token.IsCancellationRequested)
             {
                 try
@@ -166,8 +168,8 @@ namespace Algorithm.FileCache
                     {
                         failed = true;
                     }
-
-                    await Task.Delay(failed ? onFailRetryIntervalMs : betweenIterationIntervalMs, token);
+                    token.ThrowIfCancellationRequested();
+                    await Task.Delay(failed ? _gcFailRetryIntervalMs : _gcIntervalMs, token);
                 }
                 catch(OperationCanceledException)
                 {
