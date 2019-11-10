@@ -72,7 +72,6 @@ namespace Tests
             var ms = new MemoryStream();
             using (var cachedStream = await cache.GetStreamOrAddStreamAsync(123, async _ => GetRandomFile(fileSize), CancellationToken.None, null))
             {
-                await cachedStream.CopyToAsync(ms);
             }
 
             sw.Stop();
@@ -86,7 +85,6 @@ namespace Tests
                 ms = new MemoryStream();
                 using (var cachedStream = await cache.GetStreamOrAddStreamAsync(123, async _ => GetRandomFile(fileSize), CancellationToken.None, null))
                 {
-                    await cachedStream.CopyToAsync(ms);
                 }
             }
 
@@ -106,7 +104,7 @@ namespace Tests
         private async Task<byte[]> FullReadAsync(IFileCache<long> cache, long key)
         {
             var ms = new MemoryStream();
-            using (var cached = await cache.TryGetStream(123, CancellationToken.None))
+            using (var cached = await cache.TryGetStream(key, CancellationToken.None))
             {
                 if (cached == null)
                     return null;
