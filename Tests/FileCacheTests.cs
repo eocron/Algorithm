@@ -14,7 +14,7 @@ namespace Tests
 
         private FileCache<long> CreateCache()
         {
-            return new FileCache<long>(Path.Combine(TestContext.CurrentContext.TestDirectory, "fileCache"));
+            return new FileCache<long>(Path.Combine(TestContext.CurrentContext.TestDirectory, "fileCache"), disableGc: true);
         }
 
         private string GetRandomPath()

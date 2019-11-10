@@ -102,7 +102,8 @@ namespace Algorithm.FileCache
         private readonly IFileSystem                        _fs;
         private readonly string                             _baseFolder;
         private readonly AsyncReaderWriterLock              _cacheLock;
-
+        private readonly CancellationTokenSource            _cts;
+        private readonly Task                               _gc;
         private volatile bool                               _invalid;
         private string                                      _currentFolder;
         private string                                      _tempFolder;
@@ -121,7 +122,13 @@ namespace Algorithm.FileCache
             }
         }
 
-        public FileCache(string baseFolder, IFileSystem fileSystem = null)
+        /// <summary>
+        /// File cache default ctr.
+        /// </summary>
+        /// <param name="baseFolder">Folder in which this instance of file cache will reside.</param>
+        /// <param name="fileSystem">File system interface to use in all file operation. Defaul is current file system.</param>
+        /// <param name="disableGc">Check if you will manage garbage collection yourself.</param>
+        public FileCache(string baseFolder, IFileSystem fileSystem = null, bool disableGc = false)
         {
             if (baseFolder == null)
                 throw new ArgumentNullException(nameof(baseFolder));
@@ -130,7 +137,45 @@ namespace Algorithm.FileCache
             _fs = fileSystem ?? FileSystem.Instance;
             _baseFolder = baseFolder;
             _invalid = true;
+
+            if (!disableGc)
+            {
+                _cts = new CancellationTokenSource();
+                _gc = GcTask(_cts.Token);
+            }
         }
+
+        private async Task GcTask(CancellationToken token)
+        {
+            int betweenIterationIntervalMs = 5 * 1000;
+            int onFailRetryIntervalMs = 5 * 1000;
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    bool failed = false;
+                    try
+                    {
+                        await GarbageCollect(token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch //we swallow exceptions of other types.
+                    {
+                        failed = true;
+                    }
+
+                    await Task.Delay(failed ? onFailRetryIntervalMs : betweenIterationIntervalMs, token);
+                }
+                catch(OperationCanceledException)
+                {
+                    break;
+                }
+            }
+        }
+
 
         #region Private methods
         private static string GetUniqueFileName()
@@ -581,6 +626,8 @@ namespace Algorithm.FileCache
 
         public void Dispose()
         {
+            _cts?.Dispose();
+            _gc?.Wait();
             _perKeyLock.Dispose();
             _cacheLock.Dispose();
         }

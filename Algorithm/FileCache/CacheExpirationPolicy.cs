@@ -120,19 +120,6 @@ namespace Algorithm.FileCache
             return policy;
         }
 
-        internal static async Task<IEnumerable<T>> WhereAsync<T>(this IEnumerable<T> tt, Func<T, Task<bool>> provider)
-        {
-            var ttt = tt.Select(ev => new { t = provider(ev), x = ev }).ToList();
-            var res = await Task.WhenAll(ttt.Select(x => x.t));
-            return ttt.Where((x, i) => res[i]).Select(x => x.x);
-        }
-
-        internal static async Task<IEnumerable<K>> SelectManyAsync<T, K>(this IEnumerable<T> tt, Func<T, Task<IEnumerable<K>>> provider)
-        {
-            var res = await Task.WhenAll(tt.Select(ev => provider(ev)));
-            return res.SelectMany(x => x);
-        }
-
         /// <summary>
         /// It will expire in specified datetime.
         /// </summary>
