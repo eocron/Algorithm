@@ -47,18 +47,41 @@ namespace Algorithm.FileCache
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        Task GarbageCollect(CancellationToken token);
+        Task GarbageCollectAsync(CancellationToken token);
 
         Task<Stream> GetStreamOrAddStreamAsync(TKey key, Func<TKey, Task<Stream>> provider, CancellationToken token, ICacheExpirationPolicy policy);
-        Task<Stream> GetStreamAddFileAsync(TKey key, Func<TKey, Task<string>> provider, CancellationToken token, ICacheExpirationPolicy policy);
+        Task<Stream> GetStreamOrAddFileAsync(TKey key, Func<TKey, Task<string>> provider, CancellationToken token, ICacheExpirationPolicy policy);
         Task AddOrUpdateStreamAsync(TKey key, Stream stream, CancellationToken token, ICacheExpirationPolicy policy);
 
         Task AddOrUpdateFileAsync(TKey key, string sourceFilePath, CancellationToken token, ICacheExpirationPolicy policy);
+
         Task GetFileOrAddStreamAsync(TKey key, Func<TKey, Task<Stream>> provider, CancellationToken token, string targetFilePath, ICacheExpirationPolicy policy);
         Task GetFileOrAddFileAsync(TKey key, Func<TKey, Task<string>> provider, CancellationToken token, string targetFilePath, ICacheExpirationPolicy policy);
 
-        Task<bool> TryGetFile(TKey key, CancellationToken token, string targetFilePath);
+        Task<bool> TryGetFileAsync(TKey key, CancellationToken token, string targetFilePath);
 
-        Task<Stream> TryGetStream(TKey key, CancellationToken token);
+        Task<Stream> TryGetStreamAsync(TKey key, CancellationToken token);
+    }
+
+    public interface IFileCacheSync<TKey>
+    {
+        void Invalidate(CancellationToken token);
+
+        void Invalidate(TKey key, CancellationToken token);
+
+        void GarbageCollect(CancellationToken token);
+
+        Stream GetStreamOrAddStream(TKey key, Func<TKey, Stream> provider, CancellationToken token, ICacheExpirationPolicy policy);
+        Stream GetStreamOrAddFile(TKey key, Func<TKey, string> provider, CancellationToken token, ICacheExpirationPolicy policy);
+        void AddOrUpdateStream(TKey key, Stream stream, CancellationToken token, ICacheExpirationPolicy policy);
+
+        void AddOrUpdateFile(TKey key, string sourceFilePath, CancellationToken token, ICacheExpirationPolicy policy);
+
+        void GetFileOrAddStream(TKey key, Func<TKey, Stream> provider, CancellationToken token, string targetFilePath, ICacheExpirationPolicy policy);
+        void GetFileOrAddFile(TKey key, Func<TKey, string> provider, CancellationToken token, string targetFilePath, ICacheExpirationPolicy policy);
+
+        bool TryGetFile(TKey key, CancellationToken token, string targetFilePath);
+
+        Stream TryGetStream(TKey key, CancellationToken token);
     }
 }

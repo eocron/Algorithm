@@ -8,45 +8,97 @@ using System.Threading.Tasks;
 
 namespace Algorithm.FileCache
 {
-    public sealed class FileCache<TKey> : IFileCache<TKey>, IDisposable
+    public sealed partial class FileCache<TKey> : IFileCache<TKey>, IDisposable
     {
         #region Private helper classes
         private delegate Task CancellableAction(CancellationToken token);
+
         private sealed class PerKeySemaphoreSlim : IDisposable
         {
-            private readonly int _initialCount;
-            private readonly ConcurrentDictionary<TKey, Lazy<SemaphoreSlim>> _perKeyLock = new ConcurrentDictionary<TKey, Lazy<SemaphoreSlim>>();
+            private sealed class RefCounted<T>
+            {
+                public RefCounted(T value)
+                {
+                    RefCount = 1;
+                    Value = value;
+                }
 
-            public PerKeySemaphoreSlim(int initialCount)
-            {
-                _initialCount = initialCount;
-            }
-            public async Task WaitAsync(TKey key, CancellationToken token)
-            {
-                var sema = _perKeyLock.GetOrAdd(key, x => new Lazy<SemaphoreSlim>(() => new SemaphoreSlim(_initialCount))).Value;
-                await sema.WaitAsync(token);
+                public int RefCount { get; set; }
+                public T Value { get; private set; }
             }
 
-            public void ReleaseLock(TKey key)
+            private readonly SemaphoreSlim _lock = new SemaphoreSlim(1);
+            private readonly Dictionary<object, RefCounted<SemaphoreSlim>> _dict = new Dictionary<object, RefCounted<SemaphoreSlim>>();
+
+            private async Task<RefCounted<SemaphoreSlim>> GetOrCreate(object key, CancellationToken token)
             {
-                Lazy<SemaphoreSlim> lazy;
-                _perKeyLock.TryRemove(key, out lazy);
-                if (lazy.IsValueCreated)
-                    lazy.Value.Release();
+                RefCounted<SemaphoreSlim> item;
+                await _lock.WaitAsync(token);
+                try
+                {
+                    if (_dict.TryGetValue(key, out item))
+                    {
+                        ++item.RefCount;
+                    }
+                    else
+                    {
+                        item = new RefCounted<SemaphoreSlim>(new SemaphoreSlim(1, 1));
+                        _dict[key] = item;
+                    }
+                }
+                finally
+                {
+                    _lock.Release();
+                }
+
+                return item;
+            }
+
+            public async Task<IDisposable> LockAsync(object key, CancellationToken token)
+            {
+                var item = await GetOrCreate(key, token);
+                await item.Value.WaitAsync(CancellationToken.None);
+                return new DisposableObject(() =>
+                {
+                    _lock.Wait(CancellationToken.None);
+                    try
+                    {
+                        --item.RefCount;
+                        if (item.RefCount == 0)
+                            _dict.Remove(key);
+                    }
+                    finally
+                    {
+                        _lock.Release();
+                    }
+
+                    item.Value.Release();
+                });
+            }
+
+            private struct DisposableObject : IDisposable
+            {
+                private readonly Action _action;
+                public DisposableObject(Action action)
+                {
+                    _action = action;
+                }
+                public void Dispose()
+                {
+                    _action();
+                }
             }
 
             public void Dispose()
             {
-                foreach (var kv in _perKeyLock)
+                _lock.Dispose();
+                foreach (var v in _dict.Values)
                 {
-                    var lazy = kv.Value;
-                    if (lazy.IsValueCreated)
-                    {
-                        lazy.Value.Dispose();
-                    }
+                    v.Value.Dispose();
                 }
             }
         }
+
         private sealed class CFileCacheEntry : AnyExpirationPolicy
         {
             public string FilePath { get; set; }
@@ -97,24 +149,24 @@ namespace Algorithm.FileCache
         }
         #endregion
 
-        private static long _uniqueIdCounter        = 0;
+        private static long _uniqueIdCounter = 0;
 
-        private readonly int _gcIntervalMs          = 5 * 1000;
+        private readonly int _gcIntervalMs = 5 * 1000;
         private readonly int _gcFailRetryIntervalMs = 10 * 1000;
-        private readonly PerKeySemaphoreSlim                _perKeyLock;
-        private readonly IFileSystem                        _fs;
-        private readonly string                             _baseFolder;
-        private readonly AsyncReaderWriterLock              _cacheLock;
-        private readonly CancellationTokenSource            _cts;
-        private readonly Task                               _gc;
+        private readonly PerKeySemaphoreSlim _perKeyLock;
+        private readonly IFileSystem _fs;
+        private readonly string _baseFolder;
+        private readonly AsyncReaderWriterLock _cacheLock;
+        private readonly CancellationTokenSource _cts;
+        private readonly Task _gc;
 
-        private volatile bool                               _invalid;
-        private string                                      _currentFolder;
-        private string                                      _tempFolder;
-        private string                                      _cacheFolder;
-        private string                                      _trashFolder;
+        private volatile bool _invalid;
+        private string _currentFolder;
+        private string _tempFolder;
+        private string _cacheFolder;
+        private string _trashFolder;
         private ConcurrentDictionary<TKey, CFileCacheEntry> _entries;
-        private ConcurrentBag<CancellableAction>            _actions;
+        private ConcurrentBag<CancellableAction> _actions;
 
         public string BaseFolder => _baseFolder;
         public string CurrentFolder
@@ -136,7 +188,7 @@ namespace Algorithm.FileCache
         {
             if (baseFolder == null)
                 throw new ArgumentNullException(nameof(baseFolder));
-            _perKeyLock = new PerKeySemaphoreSlim(1);
+            _perKeyLock = new PerKeySemaphoreSlim();
             _cacheLock = new AsyncReaderWriterLock();
             _fs = fileSystem ?? FileSystem.Instance;
             _baseFolder = baseFolder;
@@ -158,7 +210,7 @@ namespace Algorithm.FileCache
                     bool failed = false;
                     try
                     {
-                        await GarbageCollect(token);
+                        await GarbageCollectAsync(token);
                     }
                     catch (OperationCanceledException)
                     {
@@ -171,7 +223,7 @@ namespace Algorithm.FileCache
                     token.ThrowIfCancellationRequested();
                     await Task.Delay(failed ? _gcFailRetryIntervalMs : _gcIntervalMs, token);
                 }
-                catch(OperationCanceledException)
+                catch (OperationCanceledException)
                 {
                     break;
                 }
@@ -194,7 +246,7 @@ namespace Algorithm.FileCache
         /// <returns></returns>
         private async Task<IDisposable> GlobalWriteLock(CancellationToken token)
         {
-            return await _cacheLock.ReaderLockAsync(token);
+            return await _cacheLock.WriterLockAsync(token);
         }
 
         /// <summary>
@@ -204,18 +256,20 @@ namespace Algorithm.FileCache
         /// <returns></returns>
         private async Task<IDisposable> GlobalReadLock(CancellationToken token)
         {
-            return await _cacheLock.WriterLockAsync(token);
+            return await _cacheLock.ReaderLockAsync(token);
         }
 
         private async Task EnsureInitializedAsync(CancellationToken token)
         {
+            token.ThrowIfCancellationRequested();
             if (!_invalid)
                 return;
+            token.ThrowIfCancellationRequested();
             using (await GlobalWriteLock(token))
             {
                 if (!_invalid)
                     return;
-
+                token.ThrowIfCancellationRequested();
                 var currentFolder = await GenerateIncrementTmpPath(_baseFolder, token);
                 var tempFolder = Path.Combine(currentFolder, "tmp");
                 var cacheFolder = Path.Combine(currentFolder, "cch");
@@ -223,7 +277,6 @@ namespace Algorithm.FileCache
                 var transactionLogPath = Path.Combine(currentFolder, "journal.txt");
                 var entries = new ConcurrentDictionary<TKey, CFileCacheEntry>();
                 var actions = new ConcurrentBag<CancellableAction>();
-                token.ThrowIfCancellationRequested();
 
                 _currentFolder = currentFolder;
                 _tempFolder = tempFolder;
@@ -254,30 +307,31 @@ namespace Algorithm.FileCache
 
         private async Task ShouldExecuteIteration(CancellationToken token)
         {
-            if (_actions.Any())
+            var actions = _actions;
+            if (actions == null || actions.Count == 0)
+                return;
+
+            CancellableAction a;
+
+            var toRetry = new List<CancellableAction>();
+            while (actions.TryTake(out a))
             {
-                CancellableAction a;
-
-                var toRetry = new List<CancellableAction>();
-                while (_actions.TryTake(out a))
+                try
                 {
-                    try
-                    {
-                        await a(token);
-                    }
-                    catch
-                    {
-                        toRetry.Add(a);
-                    }
+                    await a(token);
                 }
-
-                foreach(var r in toRetry)
+                catch
                 {
-                    _actions.Add(r);
+                    toRetry.Add(a);
                 }
             }
+
+            foreach (var r in toRetry)
+            {
+                actions.Add(r);
+            }
         }
-        
+
 
         private async Task Ensure(string dir, CancellationToken token)
         {
@@ -323,10 +377,10 @@ namespace Algorithm.FileCache
             {
                 await Ensure(_trashFolder, t);
                 //new ZlpFileInfo(filePath).Attributes = FileAttributes.Normal;
-                if (await _fs.FileExistAsync(filePath, token))
+                if (await _fs.FileExistAsync(filePath, t))
                 {
                     var newPath = await GetTmpFileAsync(_trashFolder, t);
-                    await _fs.MoveFileAsync(filePath, newPath, t);
+                    await _fs.MoveAsync(filePath, newPath, t);
                 }
             }, token);
         }
@@ -335,7 +389,7 @@ namespace Algorithm.FileCache
         {
             await Ensure(_cacheFolder, token);
             var newPath = await GetTmpFileAsync(_cacheFolder, token);
-            await _fs.MoveFileAsync(filePath, newPath, token);
+            await _fs.MoveAsync(filePath, newPath, token);
             //new ZlpFileInfo(newPath).Attributes |= FileAttributes.Readonly;
             return newPath;
         }
@@ -382,8 +436,7 @@ namespace Algorithm.FileCache
 
             //per key mutex required to avoid multiple file upload to cache by same key.
             //files are very large objects, so unnecessary actions with them should be avoided if possible.
-            await _perKeyLock.WaitAsync(key, token);
-            try
+            using (await _perKeyLock.LockAsync(key, token))
             {
                 if (_entries.TryGetValue(key, out cacheEntry))
                     return cacheEntry.Pulse(policy);
@@ -402,10 +455,6 @@ namespace Algorithm.FileCache
                 _entries[key] = cacheEntry;
 
                 return cacheEntry.Pulse(policy);
-            }
-            finally
-            {
-                _perKeyLock.ReleaseLock(key);
             }
         }
 
@@ -488,21 +537,21 @@ namespace Algorithm.FileCache
             }
         }
 
-        public async Task GarbageCollect(CancellationToken token)
+        public async Task GarbageCollectAsync(CancellationToken token)
         {
             var now = DateTime.UtcNow;
-            using (await GlobalReadLock(token))
+            using (await GlobalWriteLock(token))
             {
                 var nonCacheFolders = new List<string>();
                 token.ThrowIfCancellationRequested();
-                foreach ( var dir in await _fs.GetDirectoriesAsync(_baseFolder, "fs*", SearchOption.TopDirectoryOnly, token))
+                foreach (var dir in await _fs.GetDirectoriesAsync(_baseFolder, "fs*", SearchOption.TopDirectoryOnly, token))
                 {
                     token.ThrowIfCancellationRequested();
                     if (!await _fs.EqualsAsync(dir, _currentFolder, token))
                         nonCacheFolders.Add(dir);
                 }
 
-                if (nonCacheFolders != null && nonCacheFolders.Any())
+                if (nonCacheFolders.Any())
                 {
                     foreach (var dir in nonCacheFolders)
                     {
@@ -551,7 +600,7 @@ namespace Algorithm.FileCache
             }
         }
 
-        public async Task<Stream> GetStreamAddFileAsync(TKey key, Func<TKey, Task<string>> provider, CancellationToken token, ICacheExpirationPolicy policy)
+        public async Task<Stream> GetStreamOrAddFileAsync(TKey key, Func<TKey, Task<string>> provider, CancellationToken token, ICacheExpirationPolicy policy)
         {
             await EnsureInitializedAsync(token);
             using (await GlobalReadLock(token))
@@ -599,7 +648,7 @@ namespace Algorithm.FileCache
             }
         }
 
-        public async Task<bool> TryGetFile(TKey key, CancellationToken token, string targetFilePath)
+        public async Task<bool> TryGetFileAsync(TKey key, CancellationToken token, string targetFilePath)
         {
             await EnsureInitializedAsync(token);
             using (await GlobalReadLock(token))
@@ -613,7 +662,7 @@ namespace Algorithm.FileCache
             }
         }
 
-        public async Task<Stream> TryGetStream(TKey key, CancellationToken token)
+        public async Task<Stream> TryGetStreamAsync(TKey key, CancellationToken token)
         {
             await EnsureInitializedAsync(token);
             using (await GlobalReadLock(token))
@@ -631,7 +680,67 @@ namespace Algorithm.FileCache
             _cts?.Dispose();
             _gc?.Wait();
             _perKeyLock.Dispose();
-            _cacheLock.Dispose();
+            //_cacheLock.Dispose();
+        }
+    }
+
+    public sealed partial class FileCache<TKey> : IFileCacheSync<TKey>
+    {
+        public void Invalidate(CancellationToken token)
+        {
+            InvalidateAsync(token).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public void Invalidate(TKey key, CancellationToken token)
+        {
+            InvalidateAsync(key, token).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public void GarbageCollect(CancellationToken token)
+        {
+            GarbageCollectAsync(token).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public Stream GetStreamOrAddStream(TKey key, Func<TKey, Stream> provider, CancellationToken token, ICacheExpirationPolicy policy)
+        {
+            return GetStreamOrAddStreamAsync(key, kk => Task.FromResult(provider(kk)), token, policy).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public Stream GetStreamOrAddFile(TKey key, Func<TKey, string> provider, CancellationToken token, ICacheExpirationPolicy policy)
+        {
+            return GetStreamOrAddFileAsync(key, kk => Task.FromResult(provider(kk)), token, policy).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public void AddOrUpdateStream(TKey key, Stream stream, CancellationToken token, ICacheExpirationPolicy policy)
+        {
+            AddOrUpdateStreamAsync(key, stream, token, policy).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public void AddOrUpdateFile(TKey key, string sourceFilePath, CancellationToken token, ICacheExpirationPolicy policy)
+        {
+            AddOrUpdateFileAsync(key, sourceFilePath, token, policy).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public void GetFileOrAddStream(TKey key, Func<TKey, Stream> provider, CancellationToken token, string targetFilePath,
+            ICacheExpirationPolicy policy)
+        {
+            GetFileOrAddStreamAsync(key, kk => Task.FromResult(provider(kk)), token, targetFilePath, policy).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public void GetFileOrAddFile(TKey key, Func<TKey, string> provider, CancellationToken token, string targetFilePath,
+            ICacheExpirationPolicy policy)
+        {
+            GetFileOrAddFileAsync(key, kk => Task.FromResult(provider(kk)), token, targetFilePath, policy).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public bool TryGetFile(TKey key, CancellationToken token, string targetFilePath)
+        {
+            return TryGetFileAsync(key, token, targetFilePath).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        public Stream TryGetStream(TKey key, CancellationToken token)
+        {
+            return TryGetStreamAsync(key, token).ConfigureAwait(false).GetAwaiter().GetResult();
         }
     }
 }

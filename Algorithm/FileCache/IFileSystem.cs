@@ -10,13 +10,13 @@ namespace Algorithm.FileCache
         Task<bool> FileExistAsync(string path, CancellationToken token);
         Task<bool> DirectoryExistAsync(string path, CancellationToken token);
         /// <summary>
-        /// Moves file from target to source
+        /// Moves file/directory from target to source
         /// </summary>
         /// <param name="src"></param>
         /// <param name="tgt"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        Task MoveFileAsync(string src, string tgt, CancellationToken token);
+        Task MoveAsync(string src, string tgt, CancellationToken token);
 
         Task CopyFileAsync(string src, string tgt, CancellationToken token);
 

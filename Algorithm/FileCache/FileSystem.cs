@@ -23,7 +23,7 @@ namespace Algorithm.FileCache
             return Task.FromResult(new DirectoryInfo(path).Exists);
         }
 
-        public virtual Task MoveFileAsync(string src, string tgt, CancellationToken token)
+        public virtual Task MoveAsync(string src, string tgt, CancellationToken token)
         {
             var file = new FileInfo(src);
             var dir = new DirectoryInfo(src);
