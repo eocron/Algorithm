@@ -323,7 +323,7 @@ namespace Algorithm.FileCache
             {
                 await Ensure(_trashFolder, t);
                 //new ZlpFileInfo(filePath).Attributes = FileAttributes.Normal;
-                if (await _fs.FileExistAsync(filePath, token))
+                if (await _fs.FileExistAsync(filePath, t))
                 {
                     var newPath = await GetTmpFileAsync(_trashFolder, t);
                     await _fs.MoveFileAsync(filePath, newPath, t);
