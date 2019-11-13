@@ -141,6 +141,7 @@ namespace Algorithm.FileCache
                         await _fs.CopyFileAsync(FilePath, path, token);
                     }
                 }
+                await _fs.SetAttributesAsync(path, FileAttributes.Normal, token);
             }
 
             public void Dispose()
