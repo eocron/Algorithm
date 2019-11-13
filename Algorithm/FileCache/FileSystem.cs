@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 
 
 namespace Algorithm.FileCache
@@ -14,16 +13,16 @@ namespace Algorithm.FileCache
         private static readonly Lazy<IFileSystem> _intance = new Lazy<IFileSystem>(() => new FileSystem(), true);
         public static IFileSystem Instance => _intance.Value;
 
-        public virtual Task<bool> FileExistAsync(string path, CancellationToken token)
+        public virtual bool FileExist(string path, CancellationToken token)
         {
-            return Task.FromResult(new FileInfo(path).Exists);
+            return new FileInfo(path).Exists;
         }
-        public virtual Task<bool> DirectoryExistAsync(string path, CancellationToken token)
+        public virtual bool DirectoryExist(string path, CancellationToken token)
         {
-            return Task.FromResult(new DirectoryInfo(path).Exists);
+            return new DirectoryInfo(path).Exists;
         }
 
-        public virtual Task MoveAsync(string src, string tgt, CancellationToken token)
+        public virtual void Move(string src, string tgt, CancellationToken token)
         {
             var file = new FileInfo(src);
             var dir = new DirectoryInfo(src);
@@ -36,22 +35,21 @@ namespace Algorithm.FileCache
             {
                 dir.MoveTo(tgt);
             }
-            return Task.CompletedTask;
         }
 
-        public Task CopyFileAsync(string src, string tgt, CancellationToken token)
+        public void CopyFile(string src, string tgt, CancellationToken token)
         {
             var srcInfo = new FileInfo(src);
             var tgtInfo = new FileInfo(tgt);
 
             srcInfo.CopyTo(tgtInfo.FullName, false);
-            return Task.CompletedTask;
+            SetAttributes(tgtInfo.FullName, FileAttributes.Normal, token);
         }
 
         [DllImport("Kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern bool CreateHardLink(string lpFileName, string lpExistingFileName, IntPtr lpSecurityAttributes);
 
-        public static void CreateHardLink(string src, string tgt)
+        private static void InternalCreateHardLink(string src, string tgt)
         {
             var res = CreateHardLink(tgt, src, IntPtr.Zero);
             if (!res)
@@ -61,81 +59,94 @@ namespace Algorithm.FileCache
             }
         }
 
-        public Task<Stream> OpenReadAsync(string path, CancellationToken token)
+        public Stream OpenRead(string path, CancellationToken token)
         {
-            return Task.FromResult((Stream)File.OpenRead(path));
+            return (Stream)File.OpenRead(path);
         }
 
-        public Task<Stream> OpenCreateAsync(string path, CancellationToken token)
+        public Stream OpenCreate(string path, CancellationToken token)
         {
-            return Task.FromResult((Stream)new FileInfo(path).OpenWrite());
+            return (Stream)new FileInfo(path).OpenWrite();
         }
 
-        public Task<Stream> OpenWriteAsync(string path, CancellationToken token)
+        public Stream OpenWrite(string path, CancellationToken token)
         {
-            return Task.FromResult((Stream)new FileInfo(path).OpenWrite());
+            return (Stream)new FileInfo(path).OpenWrite();
         }
 
-        public virtual async Task DeleteFileAsync(string path, CancellationToken token)
+        public virtual  void DeleteFile(string path, CancellationToken token)
         {
-            await DeleteFileAsync(new FileInfo(path), token);
+            DeleteFile(new FileInfo(path), token);
         }
-        public virtual async Task DeleteDirectoryNonRecursiveAsync(string path, CancellationToken token)
+        public virtual  void DeleteDirectoryNonRecursive(string path, CancellationToken token)
         {
-            await DeleteDirectoryNonRecursiveAsync(new DirectoryInfo(path), token);
-        }
-
-        public virtual Task<string[]> GetFilesAsync(string path, string pattern, SearchOption option, CancellationToken token)
-        {
-            return Task.FromResult(new DirectoryInfo(path).GetFiles(pattern, option).Select(x => x.FullName).ToArray());
+            DeleteDirectoryNonRecursive(new DirectoryInfo(path), token);
         }
 
-        public virtual Task<string[]> GetDirectoriesAsync(string path, string pattern, SearchOption option, CancellationToken token)
+        public virtual string[] GetFiles(string path, string pattern, SearchOption option, CancellationToken token)
         {
-            return Task.FromResult(new DirectoryInfo(path).GetDirectories(pattern, option).Select(x => x.FullName).ToArray());
+            return new DirectoryInfo(path).GetFiles(pattern, option).Select(x => x.FullName).ToArray();
         }
 
-        public Task CreateDirectoryAsync(string path, CancellationToken token)
+        public virtual string[] GetDirectories(string path, string pattern, SearchOption option, CancellationToken token)
+        {
+            return new DirectoryInfo(path).GetDirectories(pattern, option).Select(x => x.FullName).ToArray();
+        }
+
+        public void CreateDirectory(string path, CancellationToken token)
         {
             new DirectoryInfo(path).Create();
-            return Task.CompletedTask;
+            return ;
         }
 
-        private Task DeleteFileAsync(FileInfo file, CancellationToken token)
+        private void DeleteFile(FileInfo file, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
             if (!file.Exists)
-                return Task.CompletedTask;
+                return ;
             file.Attributes = FileAttributes.Normal;
             file.Delete();
-            return Task.CompletedTask;
+            return ;
         }
-        private Task DeleteDirectoryNonRecursiveAsync(DirectoryInfo targetDir, CancellationToken token)
+        private void DeleteDirectoryNonRecursive(DirectoryInfo targetDir, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
             if (!targetDir.Exists)
-                return Task.CompletedTask;
+                return ;
             targetDir.Attributes = FileAttributes.Normal;
             targetDir.Delete(false);
-            return Task.CompletedTask;
+            return ;
         }
 
-        public Task<bool> EqualsAsync(string firstPath, string secondPath, CancellationToken token)
+        public bool Equals(string firstPath, string secondPath, CancellationToken token)
         {
-            return Task.FromResult(Path.GetFullPath(firstPath).Equals(Path.GetFullPath(secondPath)));
+            return Path.GetFullPath(firstPath).Equals(Path.GetFullPath(secondPath));
         }
 
-        public async Task CreateHardLink(string src, string tgt, CancellationToken token)
+        public  void CreateHardLink(string src, string tgt, CancellationToken token)
         {
             //hard links possible only on same drive
-            var possible = Path.GetPathRoot(src) ==
-                           Path.GetPathRoot(tgt);
-            if (possible)
+            //also hard links is very hardcore because of their problems with Access denied behavior, so it is disabled.
+            //var possible = Path.GetPathRoot(src) ==
+            //               Path.GetPathRoot(tgt);
+            //if (possible)
+            //{
+            //    InternalCreateHardLink(src, tgt);
+            //    return;
+            //}
+            CopyFile(src, tgt, token);
+        }
+
+        public void SetAttributes(string filePath, FileAttributes attr, CancellationToken token)
+        {
+            if (File.Exists(filePath))
             {
-                CreateHardLink(src, tgt);
-                return;
+                new FileInfo(filePath).Attributes = attr;
             }
-            await CopyFileAsync(src, tgt, token);
+            else if (Directory.Exists(filePath))
+            {
+                new DirectoryInfo(filePath).Attributes = attr;
+            }
         }
     }
 }

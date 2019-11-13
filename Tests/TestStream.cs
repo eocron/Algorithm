@@ -7,6 +7,9 @@ namespace Tests
         private readonly long _size;
         private readonly long _seed;
 
+        public bool Disposed;
+        public bool Closed;
+
         private static byte GetByte(long position, long seed)
         {
             var h = seed;
@@ -28,6 +31,7 @@ namespace Tests
 
         public override void Close()
         {
+            Closed = true;
             base.Close();
         }
 
@@ -67,5 +71,11 @@ namespace Tests
         public override bool CanWrite => false;
         public override long Length => _size;
         public override long Position { get; set; }
+
+        protected override void Dispose(bool disposing)
+        {
+            Disposed = true;
+            base.Dispose(disposing);
+        }
     }
 }

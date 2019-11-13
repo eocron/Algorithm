@@ -26,7 +26,8 @@ namespace Tests
 
         private void DeleteRandomPaths()
         {
-            Directory.Delete(Path.Combine(TestContext.CurrentContext.TestDirectory, "fileCacheTmp"), true);
+            var path = Path.Combine(TestContext.CurrentContext.TestDirectory, "fileCacheTmp");
+            Directory.Delete(path, true);
         }
 
         private Stream GetRandomFile(long size)
@@ -60,7 +61,50 @@ namespace Tests
         }
 
         [Test]
-        public async Task Performance()
+        public void StreamDisposed()
+        {
+            var cache = CreateCache();
+            var fileSize = 10 * 1024 * 1024;
+
+            var stream = new TestStream(fileSize, 42);
+            using (var cachedStream = cache.GetStreamOrAddStream(123, _ => stream,
+                CancellationToken.None, null))
+            {
+                cachedStream.ReadByte();
+            }
+
+            Assert.IsTrue(stream.Closed);
+            Assert.IsTrue(stream.Disposed);
+        }
+
+        [Test]
+        public void StreamDisposed2()
+        {
+            var cache = CreateCache();
+            var fileSize = 10 * 1024 * 1024;
+
+            var stream = new TestStream(fileSize, 42);
+            cache.AddOrUpdateStream(123, stream, CancellationToken.None, null, leaveOpen: false);
+
+            Assert.IsTrue(stream.Closed);
+            Assert.IsTrue(stream.Disposed);
+        }
+
+        [Test]
+        public void StreamNotDisposed()
+        {
+            var cache = CreateCache();
+            var fileSize = 10 * 1024 * 1024;
+
+            var stream = new TestStream(fileSize, 42);
+            cache.AddOrUpdateStream(123, stream, CancellationToken.None, null, leaveOpen: true);
+
+            Assert.IsFalse(stream.Closed);
+            Assert.IsFalse(stream.Disposed);
+        }
+
+        [Test]
+        public void Performance()
         {
             var cache = CreateCache();
             var fileSize = 10 * 1024 * 1024;
@@ -71,7 +115,7 @@ namespace Tests
             Stopwatch sw = Stopwatch.StartNew();
             //heat up
             var ms = new MemoryStream();
-            using (var cachedStream = await cache.GetStreamOrAddStreamAsync(123, async _ => GetRandomFile(fileSize),
+            using (var cachedStream = cache.GetStreamOrAddStream(123, _ => GetRandomFile(fileSize),
                 CancellationToken.None, null))
             {
             }
@@ -85,7 +129,7 @@ namespace Tests
             for (int i = 0; i < iterCount; i++)
             {
                 ms = new MemoryStream();
-                using (var cachedStream = await cache.GetStreamOrAddStreamAsync(123, async _ => GetRandomFile(fileSize),
+                using (var cachedStream = cache.GetStreamOrAddStream(123, _ => GetRandomFile(fileSize),
                     CancellationToken.None, null))
                 {
                 }
@@ -99,59 +143,59 @@ namespace Tests
             Assert.Greater(heatup, accessTime);
 
 
-            await cache.GarbageCollectAsync(CancellationToken.None);
+            cache.GarbageCollect(CancellationToken.None);
 
             AssertNoGarbageFiles(cache);
         }
 
-        private async Task<byte[]> FullReadAsync(IFileCache<long> cache, long key)
+        private byte[] FullRead(IFileCache<long> cache, long key)
         {
             var ms = new MemoryStream();
-            using (var cached = await cache.TryGetStreamAsync(key, CancellationToken.None))
+            using (var cached = cache.TryGetStream(key, CancellationToken.None))
             {
                 if (cached == null)
                     return null;
-                await cached.CopyToAsync(ms);
+                cached.CopyTo(ms);
             }
 
             return ms.ToArray();
         }
 
         [Test]
-        public async Task Invalidate()
+        public void Invalidate()
         {
             var cache = CreateCache();
             var fileSize = 1 * 1024;
 
-            var data = await FullReadAsync(cache, 123);
+            var data = FullRead(cache, 123);
             Assert.IsNull(data);
 
-            await cache.AddOrUpdateStreamAsync(123, GetRandomFile(fileSize), CancellationToken.None, null);
+            cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None, null);
 
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNotNull(data);
             Assert.AreEqual(fileSize, data.Length);
 
-            await cache.GarbageCollectAsync(CancellationToken.None);
+            cache.GarbageCollect(CancellationToken.None);
 
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNotNull(data);
             Assert.AreEqual(fileSize, data.Length);
             //
-            await cache.InvalidateAsync(CancellationToken.None);
+            cache.Invalidate(CancellationToken.None);
             //
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNull(data);
 
-            await cache.AddOrUpdateStreamAsync(123, GetRandomFile(fileSize), CancellationToken.None, null);
+            cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None, null);
 
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNotNull(data);
             Assert.AreEqual(fileSize, data.Length);
 
-            await cache.GarbageCollectAsync(CancellationToken.None);
+            cache.GarbageCollect(CancellationToken.None);
 
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNotNull(data);
             Assert.AreEqual(fileSize, data.Length);
 
@@ -159,40 +203,40 @@ namespace Tests
         }
 
         [Test]
-        public async Task InvalidateKey()
+        public void InvalidateKey()
         {
             var cache = CreateCache();
             var fileSize = 1 * 1024;
 
-            var data = await FullReadAsync(cache, 123);
+            var data = FullRead(cache, 123);
             Assert.IsNull(data);
 
-            await cache.AddOrUpdateStreamAsync(123, GetRandomFile(fileSize), CancellationToken.None, null);
+            cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None, null);
 
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNotNull(data);
             Assert.AreEqual(fileSize, data.Length);
 
-            await cache.GarbageCollectAsync(CancellationToken.None);
+            cache.GarbageCollect(CancellationToken.None);
 
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNotNull(data);
             Assert.AreEqual(fileSize, data.Length);
             //
-            await cache.InvalidateAsync(123, CancellationToken.None);
+            cache.Invalidate(123, CancellationToken.None);
             //
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNull(data);
 
-            await cache.AddOrUpdateStreamAsync(123, GetRandomFile(fileSize), CancellationToken.None, null);
+            cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None, null);
 
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNotNull(data);
             Assert.AreEqual(fileSize, data.Length);
 
-            await cache.GarbageCollectAsync(CancellationToken.None);
+            cache.GarbageCollect(CancellationToken.None);
 
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNotNull(data);
             Assert.AreEqual(fileSize, data.Length);
 
@@ -200,80 +244,99 @@ namespace Tests
         }
 
         [Test]
-        public async Task AbsoluteExpiration()
+        public void AbsoluteExpiration()
         {
             var cache = CreateCache();
             var fileSize = 1 * 1024;
 
-            var data = await FullReadAsync(cache, 123);
+            var data = FullRead(cache, 123);
             Assert.IsNull(data);
             //expired long time ago
-            await cache.AddOrUpdateStreamAsync(123, GetRandomFile(fileSize), CancellationToken.None,
+            cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None,
                 CacheExpirationPolicy.AbsoluteUtc(DateTime.MinValue));
 
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNotNull(data);
             Assert.AreEqual(fileSize, data.Length);
 
-            await cache.GarbageCollectAsync(CancellationToken.None); //here is expired one collected
+            cache.GarbageCollect(CancellationToken.None); //here is expired one collected
 
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNull(data);
 
             AssertNoGarbageFiles(cache);
         }
 
         [Test]
-        public async Task LockedForReadFileGc()
+        public void LockedForReadFileGc()
         {
             var cache = CreateCache();
             var fileSize = 10;
-            var data = await FullReadAsync(cache, 123);
+            var data = FullRead(cache, 123);
             Assert.IsNull(data);
-            await cache.AddOrUpdateStreamAsync(123, GetRandomFile(fileSize), CancellationToken.None,
+            cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None,
                 CacheExpirationPolicy.AbsoluteUtc(DateTime.MinValue));
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNotNull(data);
 
             var ms = new MemoryStream();
-            using (var s = await cache.TryGetStreamAsync(123, CancellationToken.None))
+            using (var s = cache.TryGetStream(123, CancellationToken.None))
             {
-                await cache.GarbageCollectAsync(CancellationToken.None); //item is expired but will not be collected.
-                await s.CopyToAsync(ms);
+                cache.GarbageCollect(CancellationToken.None); //item is expired but will not be collected.
+                s.CopyTo(ms);
             }
 
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNull(data);
 
             AssertHasCachedFiles(cache);
 
-            await cache.GarbageCollectAsync(CancellationToken.None); //trash collected if not collected on read.
+            cache.GarbageCollect(CancellationToken.None); //trash collected if not collected on read.
 
             AssertNoCachedFiles(cache);
             AssertNoGarbageFiles(cache);
         }
 
         [Test]
-        public async Task Stress()
+        public void AsyncLockedForReadFileGc()
         {
             try
             {
                 var cache = CreateCache();
                 var fileSize = 1 * 1024;
-                var data = await FullReadAsync(cache, 123);
+                var data = FullRead(cache, 123);
                 Assert.IsNull(data);
-                var tasks = Enumerable.Range(0, 100).Select(async i =>
+                var tasks = Enumerable.Range(0, 20).Select(async i =>
                 {
-                    var filePath = GetRandomPath();
-                    await cache.GetFileOrAddStreamAsync(123, async x => GetRandomFile(fileSize), CancellationToken.None, filePath,
-                        CacheExpirationPolicy.AbsoluteUtc(DateTime.MinValue));
-                    await cache.GarbageCollectAsync(CancellationToken.None);
-                    await AssertFile(filePath, fileSize);
+                    try
+                    {
+                        var filePath = GetRandomPath();
+                        cache.GetFileOrAddStream(123, x => GetRandomFile(fileSize), CancellationToken.None, filePath,
+                            CacheExpirationPolicy.AbsoluteUtc(DateTime.MinValue));
+                        cache.GarbageCollect(CancellationToken.None);
+                        while (true)
+                        {
+                            try
+                            {
+                                AssertFile(filePath, fileSize);
+                                break;
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e);
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                        throw;
+                    }
                 }).ToArray();
 
-                await Task.WhenAll(tasks);
+                Task.WhenAll(tasks);
 
-                await cache.GarbageCollectAsync(CancellationToken.None); //trash collected if not collected on read.
+                cache.GarbageCollect(CancellationToken.None); //trash collected if not collected on read.
 
                 AssertNoCachedFiles(cache);
                 AssertNoGarbageFiles(cache);
@@ -285,7 +348,7 @@ namespace Tests
         }
 
         [Test]
-        public async Task SlidingExpiration()
+        public void SlidingExpiration()
         {
             var cache = CreateCache();
             var fileSize = 10;
@@ -295,32 +358,32 @@ namespace Tests
 
             var part = new TimeSpan(2 * slide.Ticks / calls);
 
-            var data = await FullReadAsync(cache, 123);
+            var data = FullRead(cache, 123);
             Assert.IsNull(data);
             //expired long time ago
-            await cache.AddOrUpdateStreamAsync(123, GetRandomFile(fileSize), CancellationToken.None,
+            cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None,
                 CacheExpirationPolicy.SlidingUtc(slide));
 
             for (int i = 0; i < calls; i++)
             {
-                data = await FullReadAsync(cache, 123);
+                data = FullRead(cache, 123);
                 Assert.IsNotNull(data);
                 Assert.AreEqual(fileSize, data.Length);
-                await cache.GarbageCollectAsync(CancellationToken.None); //here is expired one collected
-                await Task.Delay(part);
+                cache.GarbageCollect(CancellationToken.None); //here is expired one collected
+                Thread.Sleep(part);
             }
 
-            await Task.Delay(new TimeSpan(2 * slide.Ticks));
-            await cache.GarbageCollectAsync(CancellationToken.None); //here is expired one collected
+            Thread.Sleep(new TimeSpan(2 * slide.Ticks));
+            cache.GarbageCollect(CancellationToken.None); //here is expired one collected
 
-            data = await FullReadAsync(cache, 123);
+            data = FullRead(cache, 123);
             Assert.IsNull(data);
 
             AssertNoGarbageFiles(cache);
         }
 
         [Test]
-        public async Task CancellationSpam()
+        public void CancellationSpam()
         {
             var cache = CreateCache();
             var fileSize = 1L * 1024 * 1024 * 1024 * 1024; //1 TB
@@ -335,7 +398,7 @@ namespace Tests
                     cts.CancelAfter(10);
                     try
                     {
-                        await cache.AddOrUpdateStreamAsync(123, GetRandomFile(fileSize), cts.Token, null);
+                        cache.AddOrUpdateStream(123, GetRandomFile(fileSize), cts.Token, null);
                     }
                     catch (OperationCanceledException)
                     {
@@ -344,13 +407,13 @@ namespace Tests
                 }
             }
 
-            await cache.GarbageCollectAsync(CancellationToken.None);
+            cache.GarbageCollect(CancellationToken.None);
 
             AssertNoGarbageFiles(cache);
         }
 
         [Test]
-        public async Task PerformanceCopyOfFile()
+        public void PerformanceCopyOfFile()
         {
             try
             {
@@ -364,10 +427,10 @@ namespace Tests
                 Stopwatch sw = Stopwatch.StartNew();
                 //heat up
                 var targetFilePath = GetRandomPath();
-                await cache.GetFileOrAddStreamAsync(123, async _ => GetRandomFile(fileSize), CancellationToken.None,
+                cache.GetFileOrAddStream(123, _ => GetRandomFile(fileSize), CancellationToken.None,
                     targetFilePath, null);
                 sw.Stop();
-                await AssertFile(targetFilePath, fileSize);
+                AssertFile(targetFilePath, fileSize);
 
 
                 var heatup = sw.Elapsed;
@@ -379,7 +442,7 @@ namespace Tests
                 for (int i = 0; i < iterCount; i++)
                 {
                     targetFilePath = GetRandomPath();
-                    await cache.GetFileOrAddStreamAsync(123, async _ => GetRandomFile(fileSize), CancellationToken.None,
+                    cache.GetFileOrAddStream(123, _ => GetRandomFile(fileSize), CancellationToken.None,
                         targetFilePath, null);
                 }
 
@@ -391,7 +454,7 @@ namespace Tests
                 Assert.Greater(heatup, accessTime);
 
 
-                await cache.GarbageCollectAsync(CancellationToken.None);
+                cache.GarbageCollect(CancellationToken.None);
 
                 AssertNoGarbageFiles(cache);
             }
@@ -401,7 +464,7 @@ namespace Tests
             }
         }
 
-        private async Task AssertFile(string filePath, long fileSize)
+        private void AssertFile(string filePath, long fileSize)
         {
             Assert.IsTrue(File.Exists(filePath));
             Assert.AreEqual(fileSize, new FileInfo(filePath).Length);
@@ -412,44 +475,44 @@ namespace Tests
         }
 
         [Test]
-        public async Task LockedForReadHardlinkGc()
+        public void LockedForReadHardlinkGc()
         {
             try
             {
                 var cache = CreateCache();
                 var fileSize = 1 * 1024 * 1024; // 1 mb
 
-                await cache.AddOrUpdateStreamAsync(123, GetRandomFile(fileSize), CancellationToken.None,
+                cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None,
                     CacheExpirationPolicy.AbsoluteUtc(DateTime.MinValue));
-                var data = await FullReadAsync(cache, 123);
+                var data = FullRead(cache, 123);
                 Assert.IsNotNull(data);
 
 
                 var targetFilePath = GetRandomPath();
-                Assert.IsTrue(await cache.TryGetFileAsync(123, CancellationToken.None, targetFilePath));
+                Assert.IsTrue(cache.TryGetFile(123, CancellationToken.None, targetFilePath));
                 try
                 {
-                    await AssertFile(targetFilePath, fileSize);
+                    AssertFile(targetFilePath, fileSize);
                     AssertHasCachedFiles(cache);
 
                     using (var s = File.OpenRead(targetFilePath))
                     {
                         var bytes = new byte[8 * 1024];
-                        Assert.IsTrue(await s.ReadAsync(bytes, 0, bytes.Length) > 0);
-                        await cache.GarbageCollectAsync(CancellationToken.None);
+                        Assert.IsTrue(s.Read(bytes, 0, bytes.Length) > 0);
+                        cache.GarbageCollect(CancellationToken.None);
                     }
 
-                    await AssertFile(targetFilePath, fileSize);//item is expired, collected, but available to user
+                    AssertFile(targetFilePath, fileSize);//item is expired, collected, but available to user
 
-                    data = await FullReadAsync(cache, 123);
+                    data = FullRead(cache, 123);
                     Assert.IsNull(data);
 
-                    await cache.GarbageCollectAsync(CancellationToken.None); //trash collected if not collected on read.
+                    cache.GarbageCollect(CancellationToken.None); //trash collected if not collected on read.
 
                     AssertNoCachedFiles(cache);
                     AssertNoGarbageFiles(cache);
 
-                    await AssertFile(targetFilePath, fileSize);
+                    AssertFile(targetFilePath, fileSize);
                 }
                 finally
                 {
@@ -461,6 +524,5 @@ namespace Tests
                 DeleteRandomPaths();
             }
         }
-
     }
 }

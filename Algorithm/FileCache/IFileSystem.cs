@@ -1,14 +1,12 @@
 ﻿using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
-
 
 namespace Algorithm.FileCache
 {
     public interface IFileSystem
     {
-        Task<bool> FileExistAsync(string path, CancellationToken token);
-        Task<bool> DirectoryExistAsync(string path, CancellationToken token);
+        bool FileExist(string path, CancellationToken token);
+        bool DirectoryExist(string path, CancellationToken token);
         /// <summary>
         /// Moves file/directory from target to source
         /// </summary>
@@ -16,19 +14,19 @@ namespace Algorithm.FileCache
         /// <param name="tgt"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        Task MoveAsync(string src, string tgt, CancellationToken token);
+        void Move(string src, string tgt, CancellationToken token);
 
-        Task CopyFileAsync(string src, string tgt, CancellationToken token);
+        void CopyFile(string src, string tgt, CancellationToken token);
 
-        Task CreateHardLink(string src, string tgt, CancellationToken token);
+        void CreateHardLink(string src, string tgt, CancellationToken token);
 
-        Task<Stream> OpenReadAsync(string path, CancellationToken token);
+        Stream OpenRead(string path, CancellationToken token);
 
-        Task<Stream> OpenCreateAsync(string path, CancellationToken token);
+        Stream OpenCreate(string path, CancellationToken token);
 
-        Task<Stream> OpenWriteAsync(string path, CancellationToken token);
+        Stream OpenWrite(string path, CancellationToken token);
 
-        Task<bool> EqualsAsync(string firstPath, string secondPath, CancellationToken token);
+        bool Equals(string firstPath, string secondPath, CancellationToken token);
 
         /// <summary>
         /// Deletes file
@@ -36,7 +34,7 @@ namespace Algorithm.FileCache
         /// <param name="path"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        Task DeleteFileAsync(string path, CancellationToken token);
+        void DeleteFile(string path, CancellationToken token);
 
         /// <summary>
         /// Deletes directory. Non recursive. If file or dir inside - it will throw exception.
@@ -44,11 +42,12 @@ namespace Algorithm.FileCache
         /// <param name="path"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        Task DeleteDirectoryNonRecursiveAsync(string path, CancellationToken token);
+        void DeleteDirectoryNonRecursive(string path, CancellationToken token);
 
-        Task<string[]> GetFilesAsync(string path, string pattern, SearchOption option, CancellationToken token);
-        Task<string[]> GetDirectoriesAsync(string path, string pattern, SearchOption option, CancellationToken token);
+        string[] GetFiles(string path, string pattern, SearchOption option, CancellationToken token);
+        string[] GetDirectories(string path, string pattern, SearchOption option, CancellationToken token);
 
-        Task CreateDirectoryAsync(string path, CancellationToken token);
+        void CreateDirectory(string path, CancellationToken token);
+        void SetAttributes(string filePath, FileAttributes normal, CancellationToken t);
     }
 }
