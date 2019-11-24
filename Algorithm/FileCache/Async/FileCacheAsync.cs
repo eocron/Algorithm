@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Algorithm.Disposing;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -58,7 +59,7 @@ namespace Algorithm.FileCache
             {
                 var item = await GetOrCreate(key, token);
                 await item.Value.WaitAsync(CancellationToken.None);
-                return new DisposableObject(() =>
+                return new Disposable(() =>
                 {
                     _lock.Wait(CancellationToken.None);
                     try

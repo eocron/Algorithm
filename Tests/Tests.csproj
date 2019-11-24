@@ -47,6 +47,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DisposableTests.cs" />
     <Compile Include="FileCacheTests.cs" />
     <Compile Include="LevenstainTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

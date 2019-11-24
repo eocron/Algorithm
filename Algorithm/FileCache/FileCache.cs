@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Algorithm.Disposing;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -58,7 +59,7 @@ namespace Algorithm.FileCache
             {
                 var item =  GetOrCreate(key, token);
                  item.Value.Wait(CancellationToken.None);
-                return new DisposableObject(() =>
+                return new Disposable(() =>
                 {
                     _lock.Wait(CancellationToken.None);
                     try
@@ -272,7 +273,7 @@ namespace Algorithm.FileCache
         private  IDisposable GlobalWriteLock(CancellationToken token)
         {
             _cacheLock.EnterWriteLock();
-            return new DisposableObject(() => _cacheLock.ExitWriteLock());
+            return new Disposable(() => _cacheLock.ExitWriteLock());
         }
 
         /// <summary>
@@ -283,7 +284,7 @@ namespace Algorithm.FileCache
         private  IDisposable GlobalReadLock(CancellationToken token)
         {
             _cacheLock.EnterReadLock();
-            return new DisposableObject(() => _cacheLock.ExitReadLock());
+            return new Disposable(() => _cacheLock.ExitReadLock());
         }
 
         private  void EnsureInitialized(CancellationToken token)

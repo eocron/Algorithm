@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Algorithm.Disposing;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,21 +10,6 @@ namespace Algorithm.FileCache
     /// </summary>
     public sealed class AsyncReaderWriterLock : IDisposable
     {
-        private struct Disposable : IDisposable
-        {
-            private readonly Action dispose;
-
-            public Disposable(Action dispose)
-            {
-                this.dispose = dispose;
-            }
-
-            public void Dispose()
-            {
-                this.dispose();
-            }
-        }
-
         private readonly SemaphoreSlim _r = new SemaphoreSlim(1);
         private readonly SemaphoreSlim _g = new SemaphoreSlim(1);
         private int _b = 0;
