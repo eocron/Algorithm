@@ -9,6 +9,26 @@ namespace Algorithm.Tree
     /// </summary>
     public static class TreeTraversalExtensions
     {
+        private static IEnumerable<T> InternalTraverseReverseInOrder<T>(this T root, Func<T, IEnumerable<T>> childrenProvider)
+        {
+            if (childrenProvider == null)
+                throw new ArgumentNullException(nameof(childrenProvider));
+
+            var stack = new Stack<T>();
+            stack.Push(root);
+            while (stack.Count > 0)
+            {
+                var item = stack.Pop();
+                yield return item;
+                var children = childrenProvider(item);
+                if (children != null)
+                {
+                    foreach (var c in children)
+                        stack.Push(c);
+                }
+            }
+        }
+
         /// <summary>
         /// RNL
         /// </summary>
@@ -18,19 +38,10 @@ namespace Algorithm.Tree
         /// <returns></returns>
         public static IEnumerable<T> TraverseReverseInOrder<T>(this T root, Func<T, IEnumerable<T>> childrenProvider)
         {
-            var stack = new Stack<T>();
-            stack.Push(root);
-            while(stack.Count > 0)
-            {
-                var item = stack.Pop();
-                yield return item;
-                var children = childrenProvider(item);
-                if(children != null)
-                {
-                    foreach (var c in children)
-                        stack.Push(c);
-                }
-            }
+            if (childrenProvider == null)
+                throw new ArgumentNullException(nameof(childrenProvider));
+
+            return InternalTraverseReverseInOrder(root, childrenProvider);
         }
 
         /// <summary>
@@ -42,7 +53,10 @@ namespace Algorithm.Tree
         /// <returns></returns>
         public static IEnumerable<T> TraversePreOrder<T>(this T root, Func<T, IEnumerable<T>> childrenProvider)
         {
-            return TraverseReverseInOrder(root, (x) => childrenProvider(x)?.Reverse());
+            if (childrenProvider == null)
+                throw new ArgumentNullException(nameof(childrenProvider));
+
+            return InternalTraverseReverseInOrder(root, (x) => childrenProvider(x)?.Reverse());
         }
 
         /// <summary>
@@ -54,7 +68,10 @@ namespace Algorithm.Tree
         /// <returns></returns>
         public static IEnumerable<T> TraversePostOrder<T>(this T root, Func<T, IEnumerable<T>> childrenProvider)
         {
-            return TraverseReverseInOrder(root, childrenProvider).Reverse();
+            if (childrenProvider == null)
+                throw new ArgumentNullException(nameof(childrenProvider));
+
+            return InternalTraverseReverseInOrder(root, childrenProvider).Reverse();
         }
 
         /// <summary>
@@ -66,6 +83,9 @@ namespace Algorithm.Tree
         /// <returns></returns>
         public static IEnumerable<T> TraverseLevelOrder<T>(this T root, Func<T, IEnumerable<T>> childrenProvider)
         {
+            if (childrenProvider == null)
+                throw new ArgumentNullException(nameof(childrenProvider));
+
             var queue = new Queue<T>();
             queue.Enqueue(root);
             while(queue.Count > 0)

@@ -8,24 +8,32 @@ namespace NTests
     [TestFixture]
     public class TreeTraversalTests
     {
-        //private Dictionary<char, List<char>> Tree = new Dictionary<char, List<char>> { 
-        //    { 'D', new List<char> { 'C', 'F' } },
-        //    { 'C', new List<char> { 'A', 'B' } },
-        //    { 'F', new List<char> { 'E', 'G' } }
-        //};
-
-        private Dictionary<char, List<char>> Tree = new Dictionary<char, List<char>> {
-            { 'F', new List<char> { 'B', 'G' } },
-            { 'B', new List<char> { 'A', 'D' } },
-            { 'D', new List<char> { 'C', 'E' } },
-                        { 'G', new List<char> { 'I' } },
-                                    { 'I', new List<char> { 'H' } }
-        };
+        /// <summary>
+        ///      F
+        ///     / \
+        ///    B   G
+        ///   / \   \
+        ///  A   D   I
+        ///     / \   \
+        ///    C   E   H
+        /// </summary>
+        /// <returns></returns>
+        private Dictionary<char, char[]> GetTestTree()
+        {
+            return new Dictionary<char, char[]>()
+            {
+                {'F', new[]{'B','G'}},
+                {'B', new[]{'A','D'}},
+                {'D', new[]{'C','E'}},
+                {'G', new[]{'I'}},
+                {'I', new[]{'H'}},
+            };
+        }
 
         private IEnumerable<char> GetChildren(char c)
         {
-            List<char> res;
-            if (Tree.TryGetValue(c, out res))
+            char[] res;
+            if (GetTestTree().TryGetValue(c, out res))
                 return res;
             return null;
         }
