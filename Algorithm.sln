@@ -13,7 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{1DA5EA29-2
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{1FA23704-3ABB-4FCE-9FA1-F932A6AF6AF5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NTests", "NTests\NTests.csproj", "{D7B5517E-1C02-41E0-A9A9-57D8E7347264}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,10 +25,10 @@ Global
 		{24865395-8D2A-4CFB-AD75-D4BB0DDFF310}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24865395-8D2A-4CFB-AD75-D4BB0DDFF310}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24865395-8D2A-4CFB-AD75-D4BB0DDFF310}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1FA23704-3ABB-4FCE-9FA1-F932A6AF6AF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1FA23704-3ABB-4FCE-9FA1-F932A6AF6AF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1FA23704-3ABB-4FCE-9FA1-F932A6AF6AF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1FA23704-3ABB-4FCE-9FA1-F932A6AF6AF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7B5517E-1C02-41E0-A9A9-57D8E7347264}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7B5517E-1C02-41E0-A9A9-57D8E7347264}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7B5517E-1C02-41E0-A9A9-57D8E7347264}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7B5517E-1C02-41E0-A9A9-57D8E7347264}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
