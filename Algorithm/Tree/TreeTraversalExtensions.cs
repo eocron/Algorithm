@@ -22,10 +22,8 @@ namespace Algorithm.Tree
                 yield return item;
                 var children = childrenProvider(item);
                 if (children != null)
-                {
                     foreach (var c in children)
                         stack.Push(c);
-                }
             }
         }
 
@@ -94,12 +92,8 @@ namespace Algorithm.Tree
                     yield return item;
                 var children = childrenProvider(item);
                 if (children != null)
-                {
                     foreach (var c in children)
-                    {
                         queue.Enqueue(c);
-                    }
-                }
             }
         }
     }
