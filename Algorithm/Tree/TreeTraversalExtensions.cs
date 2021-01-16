@@ -31,6 +31,8 @@ namespace Algorithm.Tree
     {
         /// <summary>
         /// Perform traversal of basic Tree-like structures or Graphs without cycles.
+        /// Asymptotic worst case: O(n)
+        /// Memory asymptotic worst case: O(n)
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="root">Starting subtree root.</param>

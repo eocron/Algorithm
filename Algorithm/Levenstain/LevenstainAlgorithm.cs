@@ -18,6 +18,14 @@ namespace Algorithm.Levenstain
             return new LevenstainAlgorithm<TSource, TTarget>();
         }
 
+        /// <summary>
+        /// Calculates dynamic Levenstain matrix of weights.
+        /// Asymptotic worst case: O(n*m) 
+        /// Memory asymptotic worst case: O(n*m) 
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="target"></param>
+        /// <returns></returns>
         public ILevenstainMatrix CalculateMatrix(IList<TSource> source, IList<TTarget> target)
         {
             if (source == null)
@@ -57,6 +65,17 @@ namespace Algorithm.Levenstain
             return matrix;
         }
 
+        /// <summary>
+        /// Calculates set of remarks which need to do to transform source to target.
+        /// Asymptotic worst case: O(max(n,m)) 
+        /// Memory asymptotic worst case: O(1) 
+        /// </summary>
+        /// <typeparam name="TEdit"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="target"></param>
+        /// <param name="editSelector">Remark provider.</param>
+        /// <param name="reverse">Reverse result.</param>
+        /// <returns></returns>
         public IEnumerable<TEdit> CalculateEdit<TEdit>(
             IList<TSource> source, 
             IList<TTarget> target,

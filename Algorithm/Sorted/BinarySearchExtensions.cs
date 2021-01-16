@@ -8,6 +8,7 @@ namespace Algorithm.Sorted
         /// <summary>
         /// Use binary search approach to find index in sorted list.
         /// Asymptotic worst case: O(log(n))
+        /// Memory asymptotic worst case: O(1) 
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="collection">Sorted collection.</param>
@@ -44,6 +45,7 @@ namespace Algorithm.Sorted
         /// <summary>
         /// Use binary search approach to find lower bound index in sorted list.
         /// Asymptotic worst case: O(log(n))
+        /// Memory asymptotic worst case: O(1) 
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="collection">Sorted collection.</param>
@@ -80,6 +82,7 @@ namespace Algorithm.Sorted
         /// <summary>
         /// Use binary search approach to find upper bound index in sorted list.
         /// Asymptotic worst case: O(log(n))
+        /// Memory asymptotic worst case: O(1) 
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="collection">Sorted collection.</param>
