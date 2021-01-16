@@ -39,35 +39,14 @@ namespace NTests
         }
 
         [Test]
-        public void ReverseInOrder_RNL()
+        [TestCase('F', TraversalKind.ReverseInOrder, "FGIHBDECA")]
+        [TestCase('F', TraversalKind.PreOrder, "FBADCEGIH")]
+        [TestCase('F', TraversalKind.PostOrder, "ACEDBHIGF")]
+        [TestCase('F', TraversalKind.LevelOrder, "FBGADICEH")]
+        public void Traversal(char root, TraversalKind kind, string expected)
         {
-            var root = 'F';
-            var result = new string(root.TraverseReverseInOrder(GetChildren).ToArray());
-            Assert.AreEqual("FGIHBDECA", result);
-        }
-
-        [Test]
-        public void PreOrder_NLR()
-        {
-            var root = 'F';
-            var result = new string(root.TraversePreOrder(GetChildren).ToArray());
-            Assert.AreEqual("FBADCEGIH", result);
-        }
-
-        [Test]
-        public void PostOrder_LRN()
-        {
-            var root = 'F';
-            var result = new string(root.TraversePostOrder(GetChildren).ToArray());
-            Assert.AreEqual("ACEDBHIGF", result);
-        }
-
-        [Test]
-        public void LevelOrder_BFS()
-        {
-            var root = 'F';
-            var result = new string(root.TraverseLevelOrder(GetChildren).ToArray());
-            Assert.AreEqual("FBGADICEH", result);
+            var actual = new string(root.Traverse(GetChildren, kind).ToArray());
+            Assert.AreEqual(expected, actual);
         }
     }
 }
