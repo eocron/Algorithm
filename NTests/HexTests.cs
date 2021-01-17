@@ -1,6 +1,7 @@
 ﻿using Algorithm.Hex;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 
 namespace NTests
 {
@@ -33,6 +34,7 @@ namespace NTests
         [TestCase("", HexFormatting.Unix, "Invalid hex format. (Parameter 'str')")]
         [TestCase("0x0", HexFormatting.Unix, "Invalid hex length. (Parameter 'str')")]
         [TestCase(null, HexFormatting.Unix, "Value cannot be null. (Parameter 'str')")]
+        [TestCase("0xfoobar", HexFormatting.Unix, "Invalid hex character.")]
         public void ConvertError(string input, HexFormatting formatting, string expectedError)
         {
             Assert.That(() => HexEncoding.Convert(input, formatting),

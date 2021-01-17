@@ -75,29 +75,49 @@ namespace Algorithm.Hex
             var offset = prefix?.Length ?? 0;
 
             var c = new char[offset + bytes.Length * 2];
-            for (int i = 0; i < offset; i++)
+            for (var i = 0; i < offset; i++)
                 c[i] = prefix[i];
 
             byte b;
-            var letterOffset = upperCase ? 0x17 + 0x20 : 0x37 + 0x20;
+            var letterOffset = upperCase ? 0x37 : 0x57;
+            const int digitOffset = 0x30;
             for (int bx = 0, cx = 0; bx < bytes.Length; ++bx, ++cx)
             {
-                b = ((byte)(bytes[bx] >> 4));
-                c[offset + cx] = (char)(b > 9 ? b + letterOffset : b + 0x30);
+                b = (byte)(bytes[bx] >> 4);
+                c[offset + cx] = (char)(b > 9 ? b + letterOffset : b + digitOffset);
 
-                b = ((byte)(bytes[bx] & 0x0F));
-                c[offset + (++cx)] = (char)(b > 9 ? b + letterOffset : b + 0x30);
+                b = (byte)(bytes[bx] & 0x0F);
+                c[offset + (++cx)] = (char)(b > 9 ? b + letterOffset : b + digitOffset);
             }
 
             return new string(c);
         }
 
         /// <summary>
-        /// Convert HEX representation to bytes.
+        /// Convert HEX representation to byte array.
         /// </summary>
-        /// <param name="str"></param>
+        /// <param name="str">Input string.</param>
+        /// <param name="formatting"></param>
         /// <returns></returns>
-        public static byte[] Convert(string str, HexFormatting formatting = HexFormatting.Default, int offset = -1, int count = -1)
+        public static byte[] Convert(string str, HexFormatting formatting = HexFormatting.Default)
+        {
+            return InternalConvert(str, formatting, -1, -1);
+        }
+
+        /// <summary>
+        /// Convert HEX representation to byte array.
+        /// </summary>
+        /// <param name="str">Input string.</param>
+        /// <param name="offset">Starting position in string.</param>
+        /// <param name="count">Count of characters in string.</param>
+        /// <param name="formatting"></param>
+        /// <returns></returns>
+        public static byte[] Convert(string str, int offset, int count, HexFormatting formatting = HexFormatting.Default)
+        {
+            return InternalConvert(str, formatting, offset, count);
+        }
+
+        private static byte[] InternalConvert(string str, HexFormatting formatting, int offset, int count)
         {
             if (str == null)
                 throw new ArgumentNullException(nameof(str));
@@ -118,20 +138,27 @@ namespace Algorithm.Hex
                 throw new ArgumentOutOfRangeException(nameof(str), "Invalid hex length.");
 
             if (count == 0)
-                return new byte[0];
+                return Array.Empty<byte>();
             
             var buffer = new byte[count / 2];
-            char c;
             for (int bx = 0, sx = 0; bx < buffer.Length; ++bx, ++sx)
             {
-                c = str[sx+offset];
-                buffer[bx] = (byte)((c > '9' ? (c > 'Z' ? (c - 'a' + 10) : (c - 'A' + 10)) : (c - '0')) << 4);
-
-                c = str[++sx + offset];
-                buffer[bx] |= (byte)(c > '9' ? (c > 'Z' ? (c - 'a' + 10) : (c - 'A' + 10)) : (c - '0'));
+                buffer[bx] = (byte)(GetNibble(str[sx + offset]) << 4);
+                buffer[bx] |= (byte)GetNibble(str[++sx + offset]);
             }
 
             return buffer;
+        }
+
+        private static int GetNibble(char c)
+        {
+            if (c >= '0' && c <= '9')
+                return (c - '0');
+            if (c >= 'a' && c <= 'f')
+                return (c - 'a') + 10;
+            if (c >= 'A' && c <= 'F')
+                return (c - 'A') + 10;
+            throw new ArgumentException("Invalid hex character.");
         }
     }
 }
