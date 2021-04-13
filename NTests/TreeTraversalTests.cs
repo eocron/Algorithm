@@ -9,20 +9,20 @@ namespace NTests
     public class TreeTraversalTests
     {
         /// <summary>
-        ///      F
-        ///     / \
-        ///    B   G
-        ///   / \   \
-        ///  A   D   I
-        ///     / \   \
-        ///    C   E   H
+        ///       F
+        ///     / | \
+        ///    B  J  G
+        ///   / \     \
+        ///  A   D     I
+        ///     / \     \
+        ///    C   E     H
         /// </summary>
         /// <returns></returns>
         private Dictionary<char, char[]> GetTestTree()
         {
             return new Dictionary<char, char[]>()
             {
-                {'F', new[]{'B','G'}},
+                {'F', new[]{'B','J','G'}},
                 {'B', new[]{'A','D'}},
                 {'D', new[]{'C','E'}},
                 {'G', new[]{'I'}},
@@ -39,10 +39,10 @@ namespace NTests
         }
 
         [Test]
-        [TestCase('F', TraversalKind.ReverseInOrder, "FGIHBDECA")]
-        [TestCase('F', TraversalKind.PreOrder, "FBADCEGIH")]
-        [TestCase('F', TraversalKind.PostOrder, "ACEDBHIGF")]
-        [TestCase('F', TraversalKind.LevelOrder, "FBGADICEH")]
+        [TestCase('F', TraversalKind.ReverseInOrder, "FGIHJBDECA")]
+        [TestCase('F', TraversalKind.PreOrder, "FBADCEJGIH")]
+        [TestCase('F', TraversalKind.PostOrder, "ACEDBJHIGF")]
+        [TestCase('F', TraversalKind.LevelOrder, "FBJGADICEH")]
         public void Traversal(char root, TraversalKind kind, string expected)
         {
             var actual = new string(root.Traverse(GetChildren, kind).ToArray());
