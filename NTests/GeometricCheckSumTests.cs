@@ -15,7 +15,7 @@ namespace NTests
             ba[0] = 1;
             ba[29] = 2;
             var ms = new MemoryStream(ba);
-            var lazy = new GeometricLazyCheckSum(() => { ms.Seek(0, SeekOrigin.Begin); return ms; }, 1, 2);
+            var lazy = new LazyCheckSum<int>(() => { ms.Seek(0, SeekOrigin.Begin); return ms; }, new GeometricCheckSum(1, 2));
 
             var all = lazy.ToList();
 
@@ -31,7 +31,7 @@ namespace NTests
             ba[1+2] = 2;
             ba[1+2+4+8] = 3;
             var ms = new MemoryStream(ba);
-            var lazy = new GeometricLazyCheckSum(() => { ms.Seek(0, SeekOrigin.Begin); return ms; }, 1, 2);
+            var lazy = new LazyCheckSum<int>(() => { ms.Seek(0, SeekOrigin.Begin); return ms; }, new GeometricCheckSum(1, 2));
 
             var all = lazy.ToList();
 
@@ -44,7 +44,7 @@ namespace NTests
         {
             var ba = new byte[0];
             var ms = new MemoryStream(ba);
-            var lazy = new GeometricLazyCheckSum(() => { ms.Seek(0, SeekOrigin.Begin); return ms; }, 1, 2);
+            var lazy = new LazyCheckSum<int>(() => { ms.Seek(0, SeekOrigin.Begin); return ms; }, new GeometricCheckSum(1, 2));
 
             var all = lazy.ToList();
 
@@ -58,7 +58,7 @@ namespace NTests
             var ba = new byte[1];
             ba[0] = 1;
             var ms = new MemoryStream(ba);
-            var lazy = new GeometricLazyCheckSum(() => { ms.Seek(0, SeekOrigin.Begin); return ms; }, 1, 2);
+            var lazy = new LazyCheckSum<int>(() => { ms.Seek(0, SeekOrigin.Begin); return ms; }, new GeometricCheckSum(1, 2));
 
             var all = lazy.ToList();
 
