@@ -17,13 +17,18 @@ namespace Algorithm.FileCheckSum
         private readonly Func<Stream> _streamProvider;
         private readonly ArrayPool<byte> _arrayPool;
         private readonly int _bufferSize;
-
+        private readonly bool _disposeStream;
         private readonly int _partSize;
         private List<int> _hashes;
         private long _offset;
 
 
-        public PartitionedLazyCheckSum(Func<Stream> streamProvider, int partSize, ArrayPool<byte> arrayPool = null, int bufferSize = 8 * 1024)
+        public PartitionedLazyCheckSum(
+            Func<Stream> streamProvider, 
+            int partSize, 
+            ArrayPool<byte> arrayPool = null, 
+            int bufferSize = 8 * 1024,
+            bool disposeStream = true)
         {
             if (partSize <= 0)
                 throw new ArgumentOutOfRangeException(nameof(partSize));
@@ -35,6 +40,7 @@ namespace Algorithm.FileCheckSum
             _streamProvider = streamProvider;
             _arrayPool = arrayPool;
             _bufferSize = bufferSize;
+            _disposeStream = disposeStream;
         }
 
 
@@ -56,7 +62,8 @@ namespace Algorithm.FileCheckSum
                 var buffer = pool.Rent(_bufferSize);
                 try
                 {
-                    using (var fi = _streamProvider())
+                    var fi = _streamProvider();
+                    try
                     {
                         if (_hashes == null)
                         {
@@ -76,6 +83,11 @@ namespace Algorithm.FileCheckSum
                             _hashes.Add(hash);
                             yield return hash;
                         }
+                    }
+                    finally
+                    {
+                        if (_disposeStream)
+                            fi.Dispose();
                     }
                 }
                 finally

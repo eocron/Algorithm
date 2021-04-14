@@ -14,6 +14,7 @@ namespace Algorithm.FileCheckSum
     public class GeometricLazyCheckSum : ILazyCheckSum<int>
     {
         private readonly int _bufferSize;
+        private readonly bool _disposeStream;
         private readonly Func<Stream> _streamProvider;
         private readonly ArrayPool<byte> _arrayPool;
 
@@ -23,7 +24,13 @@ namespace Algorithm.FileCheckSum
         private long _offset;
 
 
-        public GeometricLazyCheckSum(Func<Stream> streamProvider, int a, int q, ArrayPool<byte> arrayPool = null, int bufferSize = 8 * 1024)
+        public GeometricLazyCheckSum(
+            Func<Stream> streamProvider, 
+            int a, 
+            int q, 
+            ArrayPool<byte> arrayPool = null, 
+            int bufferSize = 8 * 1024, 
+            bool disposeStream = true)
         {
             if (a <= 0)
                 throw new ArgumentOutOfRangeException(nameof(a));
@@ -38,6 +45,7 @@ namespace Algorithm.FileCheckSum
             _a = a;
             _q = q;
             _bufferSize = bufferSize;
+            _disposeStream = disposeStream;
         }
 
         private int GetPartsOffset()
@@ -63,7 +71,8 @@ namespace Algorithm.FileCheckSum
                 var buffer = pool.Rent(_bufferSize);
                 try
                 {
-                    using (var fi = _streamProvider())
+                    var fi = _streamProvider();
+                    try
                     {
                         if (_hashes == null)
                         {
@@ -84,6 +93,11 @@ namespace Algorithm.FileCheckSum
                             _hashes.Add(hash);
                             yield return hash;
                         }
+                    }
+                    finally
+                    {
+                        if (_disposeStream)
+                            fi.Dispose();
                     }
                 }
                 finally
