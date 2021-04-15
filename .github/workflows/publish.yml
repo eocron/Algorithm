@@ -24,5 +24,6 @@ jobs:
         with:
           # Filepath of the project to be packaged, relative to root of repository
           PROJECT_FILE_PATH: Algorithm/Algorithm.csproj
-          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
+          PACKAGE_NAME: EocronAlgorithm
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
       
