@@ -268,6 +268,7 @@ namespace Tests
         }
 
         [Test]
+        [Category("FailOnNix")]
         public void LockedForReadFileGc()
         {
             var cache = CreateCache();
