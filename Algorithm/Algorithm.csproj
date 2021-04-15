@@ -2,6 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
+    <Authors>eocron</Authors>
+    <Company />
+    <PackageId>EocronAlgorithm</PackageId>
+    <Product />
+    <Copyright />
+    <PackageProjectUrl>https://github.com/eocron/Algorithm</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/eocron/Algorithm.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>algorithm</PackageTags>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
