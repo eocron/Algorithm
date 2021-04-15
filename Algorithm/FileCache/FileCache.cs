@@ -328,7 +328,7 @@ namespace Algorithm.FileCache
                 action(token);
                 return;
             }
-            catch (Exception e) { Console.WriteLine(e); }
+            catch { }
             _actions.Add(action);
         }
 
