@@ -10,7 +10,7 @@ namespace Algorithm.FileCheckSum
     {
         private readonly int _partSize;
 
-        public PartitionedCheckSum(int partSize)
+        public PartitionedCheckSum(int partSize = 16*1024*1024)
         {
             if (partSize <= 0)
                 throw new ArgumentOutOfRangeException(nameof(partSize));
@@ -18,6 +18,8 @@ namespace Algorithm.FileCheckSum
         }
         public override int CalculateCapacity(long streamLength)
         {
+            if (streamLength <= _partSize)
+                return 1;
             return (int)(streamLength / _partSize) + ((streamLength % _partSize) > 0 ? 1 : 0);
         }
 

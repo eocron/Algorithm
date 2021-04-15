@@ -11,7 +11,7 @@ namespace Algorithm.FileCheckSum
         private readonly int _a;
         private readonly int _q;
 
-        public GeometricCheckSum(int a, int q)
+        public GeometricCheckSum(int a = 4 * 1024, int q = 16)
         {
             if (a <= 0)
                 throw new ArgumentOutOfRangeException(nameof(a));
