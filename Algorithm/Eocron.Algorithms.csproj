@@ -4,8 +4,8 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <Authors>eocron</Authors>
     <Company />
-    <PackageId>EocronAlgorithm</PackageId>
-    <Product />
+    <PackageId>Eocron.Algorithms</PackageId>
+    <Product>Eocron.Algorithms</Product>
     <Copyright />
     <PackageProjectUrl>https://github.com/eocron/Algorithm</PackageProjectUrl>
     <RepositoryUrl>https://github.com/eocron/Algorithm.git</RepositoryUrl>
@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
   </ItemGroup>
 

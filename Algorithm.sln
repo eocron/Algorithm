@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29324.140
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Algorithm", "Algorithm\Algorithm.csproj", "{24865395-8D2A-4CFB-AD75-D4BB0DDFF310}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eocron.Algorithms", "Algorithm\Eocron.Algorithms.csproj", "{24865395-8D2A-4CFB-AD75-D4BB0DDFF310}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{1DA5EA29-2A76-4663-916A-511884213110}"
 	ProjectSection(SolutionItems) = preProject
