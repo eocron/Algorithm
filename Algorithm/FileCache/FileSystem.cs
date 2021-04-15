@@ -61,7 +61,7 @@ namespace Algorithm.FileCache
 
         public Stream OpenRead(string path, CancellationToken token)
         {
-            return (Stream)File.OpenRead(path);
+            return (Stream)new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
         }
 
         public Stream OpenCreate(string path, CancellationToken token)

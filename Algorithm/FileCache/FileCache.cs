@@ -31,10 +31,10 @@ namespace Algorithm.FileCache
             private readonly SemaphoreSlim _lock = new SemaphoreSlim(1);
             private readonly Dictionary<object, RefCounted<SemaphoreSlim>> _dict = new Dictionary<object, RefCounted<SemaphoreSlim>>();
 
-            private  RefCounted<SemaphoreSlim> GetOrCreate(object key, CancellationToken token)
+            private RefCounted<SemaphoreSlim> GetOrCreate(object key, CancellationToken token)
             {
                 RefCounted<SemaphoreSlim> item;
-                 _lock.Wait(token);
+                _lock.Wait(token);
                 try
                 {
                     if (_dict.TryGetValue(key, out item))
@@ -55,10 +55,10 @@ namespace Algorithm.FileCache
                 return item;
             }
 
-            public  IDisposable Lock(object key, CancellationToken token)
+            public IDisposable Lock(object key, CancellationToken token)
             {
-                var item =  GetOrCreate(key, token);
-                 item.Value.Wait(CancellationToken.None);
+                var item = GetOrCreate(key, token);
+                item.Value.Wait(CancellationToken.None);
                 return new Disposable(() =>
                 {
                     _lock.Wait(CancellationToken.None);
@@ -119,14 +119,14 @@ namespace Algorithm.FileCache
                 Stream = stream;
             }
 
-            public  void CopyTo(string path, CancellationToken token, bool createHardLink)
+            public void CopyTo(string path, CancellationToken token, bool createHardLink)
             {
                 if (string.IsNullOrWhiteSpace(path))
                     throw new ArgumentNullException("Target path is null or empty.");
 
                 if (Stream != null)
                 {
-                    using (var fstream =  _fs.OpenCreate(path, token))
+                    using (var fstream = _fs.OpenCreate(path, token))
                     {
                         Task.Run(async () => await Stream.CopyToAsync(fstream, _uploadBufferSize, token), token).GetAwaiter().GetResult();
                     }
@@ -135,11 +135,11 @@ namespace Algorithm.FileCache
                 {
                     if (createHardLink)
                     {
-                         _fs.CreateHardLink(FilePath, path, token);
+                        _fs.CreateHardLink(FilePath, path, token);
                     }
                     else
                     {
-                         _fs.CopyFile(FilePath, path, token);
+                        _fs.CopyFile(FilePath, path, token);
                     }
                 }
                 _fs.SetAttributes(path, FileAttributes.Normal, token);
@@ -212,7 +212,7 @@ namespace Algorithm.FileCache
             if (!disableGc)
             {
                 _cts = new CancellationTokenSource();
-                _gc = new Thread(()=> GcTask(_cts.Token));
+                _gc = new Thread(() => GcTask(_cts.Token));
                 _gc.Start();
             }
         }
@@ -227,7 +227,7 @@ namespace Algorithm.FileCache
             if (obj == null)
                 throw new ArgumentNullException(name, "Input parameter is null.");
         }
-        private  void GcTask(CancellationToken token)
+        private void GcTask(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
@@ -236,7 +236,7 @@ namespace Algorithm.FileCache
                     bool failed = false;
                     try
                     {
-                         GarbageCollect(token);
+                        GarbageCollect(token);
                     }
                     catch (OperationCanceledException)
                     {
@@ -262,7 +262,7 @@ namespace Algorithm.FileCache
         {
             //it is very unlikelly to iterate over entire uniqueId and come back to collision.
             var id = unchecked((ulong)Interlocked.Increment(ref _uniqueIdCounter));
-            return id.ToString("X8");
+            return id.ToString("x8");
         }
 
         /// <summary>
@@ -270,7 +270,7 @@ namespace Algorithm.FileCache
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private  IDisposable GlobalWriteLock(CancellationToken token)
+        private IDisposable GlobalWriteLock(CancellationToken token)
         {
             _cacheLock.EnterWriteLock();
             return new Disposable(() => _cacheLock.ExitWriteLock());
@@ -281,28 +281,27 @@ namespace Algorithm.FileCache
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        private  IDisposable GlobalReadLock(CancellationToken token)
+        private IDisposable GlobalReadLock(CancellationToken token)
         {
             _cacheLock.EnterReadLock();
             return new Disposable(() => _cacheLock.ExitReadLock());
         }
 
-        private  void EnsureInitialized(CancellationToken token)
+        private void EnsureInitialized(CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
             if (!_invalid)
                 return;
             token.ThrowIfCancellationRequested();
-            using ( GlobalWriteLock(token))
+            using (GlobalWriteLock(token))
             {
                 if (!_invalid)
                     return;
                 token.ThrowIfCancellationRequested();
-                var currentFolder =  GenerateIncrementTmpPath(_baseFolder, token);
+                var currentFolder = GenerateIncrementTmpPath(_baseFolder, token);
                 var tempFolder = Path.Combine(currentFolder, "tmp");
                 var cacheFolder = Path.Combine(currentFolder, "cch");
                 var trashFolder = Path.Combine(currentFolder, "bin");
-                var transactionLogPath = Path.Combine(currentFolder, "journal.txt");
                 var entries = new ConcurrentDictionary<TKey, CFileCacheEntry>();
                 var actions = new ConcurrentBag<CancellableAction>();
 
@@ -322,18 +321,18 @@ namespace Algorithm.FileCache
         /// <param name="action"></param>
         /// <param name="token"></param>
         /// <returns></returns>
-        private  void ShouldExecute(CancellableAction action, CancellationToken token)
+        private void ShouldExecute(CancellableAction action, CancellationToken token)
         {
             try
             {
-                 action(token);
+                action(token);
                 return;
             }
-            catch { }
+            catch (Exception e) { Console.WriteLine(e); }
             _actions.Add(action);
         }
 
-        private  void ShouldExecuteIteration(CancellationToken token)
+        private void ShouldExecuteIteration(CancellationToken token)
         {
             var actions = _actions;
             if (actions == null || !actions.Any())
@@ -346,7 +345,7 @@ namespace Algorithm.FileCache
             {
                 try
                 {
-                     a(token);
+                    a(token);
                 }
                 catch
                 {
@@ -361,96 +360,96 @@ namespace Algorithm.FileCache
         }
 
 
-        private  void Ensure(string dir, CancellationToken token)
+        private void Ensure(string dir, CancellationToken token)
         {
-             _fs.CreateDirectory(dir, token);
+            _fs.CreateDirectory(dir, token);
         }
 
-        private  string GenerateIncrementTmpPath(string folder, CancellationToken token)
+        private string GenerateIncrementTmpPath(string folder, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
-             Ensure(folder, token);
+            Ensure(folder, token);
             int i = 0;
             do
             {
                 token.ThrowIfCancellationRequested();
 
                 var path = Path.Combine(folder, "fs" + GetUniqueFileName());
-                if (! _fs.FileExist(path, token) && ! _fs.DirectoryExist(path, token))
+                if (!_fs.FileExist(path, token) && !_fs.DirectoryExist(path, token))
                     return path;
 
                 i++;
             } while (true);
         }
 
-        private  string GetTmpFile(string folder, CancellationToken token)
+        private string GetTmpFile(string folder, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
-             Ensure(folder, token);
+            Ensure(folder, token);
             while (true)
             {
                 token.ThrowIfCancellationRequested();
 
                 var path = Path.Combine(folder, GetUniqueFileName());
-                if ( _fs.FileExist(path, token))
+                if (_fs.FileExist(path, token))
                     continue;
 
                 return path;
             }
         }
 
-        private  void MoveToTrash(string filePath, CancellationToken token)
+        private void MoveToTrash(string filePath, CancellationToken token)
         {
-             ShouldExecute( (t) =>
-            {
-                 Ensure(_trashFolder, t);
-                //new ZlpFileInfo(filePath).Attributes = FileAttributes.Normal;
-                if ( _fs.FileExist(filePath, t))
-                {
-                    var newPath =  GetTmpFile(_trashFolder, t);
-                     _fs.SetAttributes(filePath, FileAttributes.Normal, t);
-                     _fs.Move(filePath, newPath, t);
-                }
-            }, token);
+            ShouldExecute((t) =>
+              {
+                  Ensure(_trashFolder, t);
+                  //new ZlpFileInfo(filePath).Attributes = FileAttributes.Normal;
+                  if (_fs.FileExist(filePath, t))
+                  {
+                      var newPath = GetTmpFile(_trashFolder, t);
+                      _fs.SetAttributes(filePath, FileAttributes.Normal, t);
+                      _fs.Move(filePath, newPath, t);
+                  }
+              }, token);
         }
 
-        private  string MoveToCache(string filePath, CancellationToken token)
+        private string MoveToCache(string filePath, CancellationToken token)
         {
-             Ensure(_cacheFolder, token);
-            var newPath =  GetTmpFile(_cacheFolder, token);
-             _fs.Move(filePath, newPath, token);
-             _fs.SetAttributes(newPath, FileAttributes.ReadOnly | FileAttributes.NotContentIndexed, token);
+            Ensure(_cacheFolder, token);
+            var newPath = GetTmpFile(_cacheFolder, token);
+            _fs.Move(filePath, newPath, token);
+            _fs.SetAttributes(newPath, FileAttributes.ReadOnly | FileAttributes.NotContentIndexed, token);
             //new ZlpFileInfo(newPath).Attributes |= FileAttributes.Readonly;
             return newPath;
         }
 
-        private  string GetTmpUploadFilePath(CancellationToken token)
+        private string GetTmpUploadFilePath(CancellationToken token)
         {
-            return  GetTmpFile(_tempFolder, token);
+            return GetTmpFile(_tempFolder, token);
         }
 
-        private  string UploadToCache(CFileSource src, CancellationToken token)
+        private string UploadToCache(CFileSource src, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
-            var path =  GetTmpUploadFilePath(token);
+            var path = GetTmpUploadFilePath(token);
             try
             {
-                 src.CopyTo(path, token, false);
+                src.CopyTo(path, token, false);
                 token.ThrowIfCancellationRequested();
-                return  MoveToCache(path, token);
+                return MoveToCache(path, token);
             }
             catch
             {
-                if ( _fs.FileExist(path, token))
-                     MoveToTrash(path, token);
+                if (_fs.FileExist(path, token))
+                    MoveToTrash(path, token);
                 throw;
             }
         }
 
-        private  void InternalAddOrUpdate(TKey key, CFileSource src, CancellationToken token, ICacheExpirationPolicy policy)
+        private void InternalAddOrUpdate(TKey key, CFileSource src, CancellationToken token, ICacheExpirationPolicy policy)
         {
             //at this point we are not responsible of disposing 'src' cause it's lifetime is wider than this method
-            var path =  UploadToCache(src, token);
+            var path = UploadToCache(src, token);
             _entries[key] = new CFileCacheEntry()
             {
                 Created = DateTime.UtcNow,
@@ -458,7 +457,7 @@ namespace Algorithm.FileCache
             }.Pulse(policy);
         }
 
-        private  CFileCacheEntry InternalGetOrAdd(TKey key, Func<TKey, CFileSource> provider, CancellationToken token, ICacheExpirationPolicy policy)
+        private CFileCacheEntry InternalGetOrAdd(TKey key, Func<TKey, CFileSource> provider, CancellationToken token, ICacheExpirationPolicy policy)
         {
             CFileCacheEntry cacheEntry;
 
@@ -467,7 +466,7 @@ namespace Algorithm.FileCache
 
             //per key mutex required to avoid multiple file upload to cache by same key.
             //files are very large objects, so unnecessary actions with them should be avoided if possible.
-            using ( _perKeyLock.Lock(key, token))
+            using (_perKeyLock.Lock(key, token))
             {
                 if (_entries.TryGetValue(key, out cacheEntry))
                     return cacheEntry.Pulse(policy);
@@ -475,10 +474,10 @@ namespace Algorithm.FileCache
                 token.ThrowIfCancellationRequested();
 
                 //we are responsible for creation and disposing of stream we created, so we wrap src in using directive.
-                using (var src =  provider(key))
+                using (var src = provider(key))
                 {
                     token.ThrowIfCancellationRequested();
-                    var path =  UploadToCache(src, token);
+                    var path = UploadToCache(src, token);
                     cacheEntry = new CFileCacheEntry()
                     {
                         Created = DateTime.UtcNow,
@@ -501,11 +500,11 @@ namespace Algorithm.FileCache
         }
 
 
-        private  void SafeDeleteFile(string path, CancellationToken token)
+        private void SafeDeleteFile(string path, CancellationToken token)
         {
             try
             {
-                 _fs.DeleteFile(path, token);
+                _fs.DeleteFile(path, token);
             }
             catch
             {
@@ -513,33 +512,33 @@ namespace Algorithm.FileCache
             }
         }
 
-        private  void Delete(string path, CancellationToken token)
+        private void Delete(string path, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
-            if ( _fs.FileExist(path, token))
+            if (_fs.FileExist(path, token))
             {
                 token.ThrowIfCancellationRequested();
-                 SafeDeleteFile(path, token);
+                SafeDeleteFile(path, token);
             }
             token.ThrowIfCancellationRequested();
-            if ( _fs.DirectoryExist(path, token))
+            if (_fs.DirectoryExist(path, token))
             {
                 token.ThrowIfCancellationRequested();
-                foreach (var file in  _fs.GetFiles(path, "*", SearchOption.TopDirectoryOnly, token))
+                foreach (var file in _fs.GetFiles(path, "*", SearchOption.TopDirectoryOnly, token))
                 {
                     token.ThrowIfCancellationRequested();
-                     SafeDeleteFile(file, token);
+                    SafeDeleteFile(file, token);
                 }
                 token.ThrowIfCancellationRequested();
-                foreach (var dir in  _fs.GetDirectories(path, "*", SearchOption.TopDirectoryOnly, token))
+                foreach (var dir in _fs.GetDirectories(path, "*", SearchOption.TopDirectoryOnly, token))
                 {
                     token.ThrowIfCancellationRequested();
-                     Delete(dir, token);
+                    Delete(dir, token);
                 }
                 token.ThrowIfCancellationRequested();
                 try
                 {
-                     _fs.DeleteDirectoryNonRecursive(path, token);
+                    _fs.DeleteDirectoryNonRecursive(path, token);
                 }
                 catch { }
             }
@@ -552,12 +551,12 @@ namespace Algorithm.FileCache
             _invalid = true;
         }
 
-        public  void Invalidate(TKey key, CancellationToken token)
+        public void Invalidate(TKey key, CancellationToken token)
         {
             if (_invalid)//no meaning to invalidate if cache is entirely invalidated.
                 return;
 
-            using ( GlobalReadLock(token))
+            using (GlobalReadLock(token))
             {
                 if (_invalid)
                     return;
@@ -566,21 +565,21 @@ namespace Algorithm.FileCache
                 if (!_entries.TryRemove(key, out entry))
                     return;
 
-                 MoveToTrash(entry.FilePath, token);
+                MoveToTrash(entry.FilePath, token);
             }
         }
 
-        public  void GarbageCollect(CancellationToken token)
+        public void GarbageCollect(CancellationToken token)
         {
             var now = DateTime.UtcNow;
-            using ( GlobalWriteLock(token))
+            using (GlobalWriteLock(token))
             {
                 var nonCacheFolders = new List<string>();
                 token.ThrowIfCancellationRequested();
-                foreach (var dir in  _fs.GetDirectories(_baseFolder, "fs*", SearchOption.TopDirectoryOnly, token))
+                foreach (var dir in _fs.GetDirectories(_baseFolder, "fs*", SearchOption.TopDirectoryOnly, token))
                 {
                     token.ThrowIfCancellationRequested();
-                    if (! _fs.Equals(dir, _currentFolder, token))
+                    if (!_fs.Equals(dir, _currentFolder, token))
                         nonCacheFolders.Add(dir);
                 }
 
@@ -589,11 +588,11 @@ namespace Algorithm.FileCache
                     foreach (var dir in nonCacheFolders)
                     {
                         token.ThrowIfCancellationRequested();
-                         Delete(dir, token);
+                        Delete(dir, token);
                     }
                 }
 
-                 ShouldExecuteIteration(token);
+                ShouldExecuteIteration(token);
 
                 token.ThrowIfCancellationRequested();
                 if (_entries != null && _entries.Any())
@@ -605,145 +604,145 @@ namespace Algorithm.FileCache
                         CFileCacheEntry entry;
                         if (_entries.TryRemove(key, out entry))
                         {
-                             MoveToTrash(entry.FilePath, token);
+                            MoveToTrash(entry.FilePath, token);
                         }
                     }
                 }
                 token.ThrowIfCancellationRequested();
-                if (_trashFolder != null &&  _fs.DirectoryExist(_trashFolder, token))
+                if (_trashFolder != null && _fs.DirectoryExist(_trashFolder, token))
                 {
                     token.ThrowIfCancellationRequested();
-                    foreach (var file in  _fs.GetFiles(_trashFolder, "*", SearchOption.TopDirectoryOnly, token))
+                    foreach (var file in _fs.GetFiles(_trashFolder, "*", SearchOption.TopDirectoryOnly, token))
                     {
                         token.ThrowIfCancellationRequested();
-                         Delete(file, token);
+                        Delete(file, token);
                     }
                 }
             }
         }
 
-        public  Stream GetStreamOrAddStream(TKey key, Func<TKey, Stream> provider, CancellationToken token, ICacheExpirationPolicy policy)
+        public Stream GetStreamOrAddStream(TKey key, Func<TKey, Stream> provider, CancellationToken token, ICacheExpirationPolicy policy)
         {
             NotNull(provider, nameof(provider));
             NotNull(key, nameof(key));
 
-             EnsureInitialized(token);
-            using ( GlobalReadLock(token))
+            EnsureInitialized(token);
+            using (GlobalReadLock(token))
             {
-                Func<TKey, CFileSource> op =  kk => new CFileSource( provider(kk), false, _fs);
-                var entry =  InternalGetOrAdd(key, op, token, policy);
-                return  _fs.OpenRead(entry.FilePath, token);
+                Func<TKey, CFileSource> op = kk => new CFileSource(provider(kk), false, _fs);
+                var entry = InternalGetOrAdd(key, op, token, policy);
+                return _fs.OpenRead(entry.FilePath, token);
             }
         }
 
-        public  Stream GetStreamOrAddFile(TKey key, Func<TKey, string> provider, CancellationToken token, ICacheExpirationPolicy policy)
+        public Stream GetStreamOrAddFile(TKey key, Func<TKey, string> provider, CancellationToken token, ICacheExpirationPolicy policy)
         {
             NotNull(provider, nameof(provider));
             NotNull(key, nameof(key));
 
-             EnsureInitialized(token);
-            using ( GlobalReadLock(token))
+            EnsureInitialized(token);
+            using (GlobalReadLock(token))
             {
-                var entry =  InternalGetOrAdd(key,  kk => new CFileSource( provider(kk), _fs), token, policy);
-                return  _fs.OpenRead(entry.FilePath, token);
+                var entry = InternalGetOrAdd(key, kk => new CFileSource(provider(kk), _fs), token, policy);
+                return _fs.OpenRead(entry.FilePath, token);
             }
         }
 
-        public  void AddOrUpdateStream(TKey key, Stream stream, CancellationToken token, ICacheExpirationPolicy policy, bool leaveOpen = false)
+        public void AddOrUpdateStream(TKey key, Stream stream, CancellationToken token, ICacheExpirationPolicy policy, bool leaveOpen = false)
         {
             NotNull(stream, nameof(stream));
             NotNull(key, nameof(key));
 
             using (var cfs = new CFileSource(stream, leaveOpen, _fs))
             {
-                 EnsureInitialized(token);
-                using ( GlobalReadLock(token))
+                EnsureInitialized(token);
+                using (GlobalReadLock(token))
                 {
-                     InternalAddOrUpdate(key, cfs, token, policy);
+                    InternalAddOrUpdate(key, cfs, token, policy);
                 }
             }
         }
 
-        public  void AddOrUpdateFile(TKey key, string sourceFilePath, CancellationToken token, ICacheExpirationPolicy policy)
+        public void AddOrUpdateFile(TKey key, string sourceFilePath, CancellationToken token, ICacheExpirationPolicy policy)
         {
             NotNull(sourceFilePath, nameof(sourceFilePath));
             NotNull(key, nameof(key));
             using (var cfs = new CFileSource(sourceFilePath, _fs))
             {
-                 EnsureInitialized(token);
-                using ( GlobalReadLock(token))
+                EnsureInitialized(token);
+                using (GlobalReadLock(token))
                 {
-                     InternalAddOrUpdate(key, cfs, token, policy);
+                    InternalAddOrUpdate(key, cfs, token, policy);
                 }
             }
         }
 
-        public  void GetFileOrAddStream(TKey key, Func<TKey, Stream> provider, CancellationToken token, string targetFilePath, ICacheExpirationPolicy policy)
+        public void GetFileOrAddStream(TKey key, Func<TKey, Stream> provider, CancellationToken token, string targetFilePath, ICacheExpirationPolicy policy)
         {
             NotNull(provider, nameof(provider));
             NotNull(key, nameof(key));
             NotNull(targetFilePath, nameof(targetFilePath));
 
-             EnsureInitialized(token);
-            using ( GlobalReadLock(token))
+            EnsureInitialized(token);
+            using (GlobalReadLock(token))
             {
-                var entry =  InternalGetOrAdd(key,  kk => new CFileSource( provider(kk), false, _fs), token, policy);
+                var entry = InternalGetOrAdd(key, kk => new CFileSource(provider(kk), false, _fs), token, policy);
                 using (var cfs = new CFileSource(entry.FilePath, _fs))
                 {
-                     cfs.CopyTo(targetFilePath, token, true);
+                    cfs.CopyTo(targetFilePath, token, true);
                 }
             }
         }
 
-        public  void GetFileOrAddFile(TKey key, Func<TKey, string> provider, CancellationToken token, string targetFilePath, ICacheExpirationPolicy policy)
+        public void GetFileOrAddFile(TKey key, Func<TKey, string> provider, CancellationToken token, string targetFilePath, ICacheExpirationPolicy policy)
         {
             NotNull(provider, nameof(provider));
             NotNull(key, nameof(key));
             NotNull(targetFilePath, nameof(targetFilePath));
 
-             EnsureInitialized(token);
-            using ( GlobalReadLock(token))
+            EnsureInitialized(token);
+            using (GlobalReadLock(token))
             {
-                var entry =  InternalGetOrAdd(key,  kk => new CFileSource( provider(kk), _fs), token, policy);
+                var entry = InternalGetOrAdd(key, kk => new CFileSource(provider(kk), _fs), token, policy);
                 using (var cfs = new CFileSource(entry.FilePath, _fs))
                 {
-                     cfs.CopyTo(targetFilePath, token, true);
+                    cfs.CopyTo(targetFilePath, token, true);
                 }
             }
         }
 
-        public  bool TryGetFile(TKey key, CancellationToken token, string targetFilePath)
+        public bool TryGetFile(TKey key, CancellationToken token, string targetFilePath)
         {
             NotNull(key, nameof(key));
             NotNull(targetFilePath, nameof(targetFilePath));
 
-             EnsureInitialized(token);
-            using ( GlobalReadLock(token))
+            EnsureInitialized(token);
+            using (GlobalReadLock(token))
             {
-                var entry =  InternalGetEntry(key, token);
+                var entry = InternalGetEntry(key, token);
                 if (entry == null)
                     return false;
 
                 using (var cfs = new CFileSource(entry.FilePath, _fs))
                 {
-                     cfs.CopyTo(targetFilePath, token, true);
+                    cfs.CopyTo(targetFilePath, token, true);
                 }
                 return true;
             }
         }
 
-        public  Stream TryGetStream(TKey key, CancellationToken token)
+        public Stream TryGetStream(TKey key, CancellationToken token)
         {
             NotNull(key, nameof(key));
 
-             EnsureInitialized(token);
-            using ( GlobalReadLock(token))
+            EnsureInitialized(token);
+            using (GlobalReadLock(token))
             {
-                var entry =  InternalGetEntry(key, token);
+                var entry = InternalGetEntry(key, token);
                 if (entry == null)
                     return null;
 
-                return  _fs.OpenRead(entry.FilePath, token);
+                return _fs.OpenRead(entry.FilePath, token);
             }
         }
 
