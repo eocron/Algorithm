@@ -1,9 +1,9 @@
-﻿using Algorithm.Disposing;
+﻿using Eocron.Algorithms.Disposing;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Algorithm.FileCache
+namespace Eocron.Algorithms.FileCache
 {
     /// <summary>
     /// Read-preffered ReaderWriterLockSlim implementation.

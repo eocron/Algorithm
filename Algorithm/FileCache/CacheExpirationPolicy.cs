@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Algorithm.FileCache
+namespace Eocron.Algorithms.FileCache
 {
     internal sealed class AbsoluteExpirationPolicy : ICacheExpirationPolicy
     {

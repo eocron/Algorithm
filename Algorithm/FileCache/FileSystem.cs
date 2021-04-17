@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 
 
-namespace Algorithm.FileCache
+namespace Eocron.Algorithms.FileCache
 {
     public class FileSystem : IFileSystem
     {

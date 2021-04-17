@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Algorithm.FileCheckSum
+namespace Eocron.Algorithms.FileCheckSum
 {
     public abstract class CheckSumBase : ICheckSum<int>
     {

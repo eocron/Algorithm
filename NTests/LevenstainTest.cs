@@ -1,4 +1,4 @@
-﻿using Algorithm.Levenstain;
+﻿using Eocron.Algorithms.Levenstain;
 using NUnit.Framework;
 
 namespace Tests

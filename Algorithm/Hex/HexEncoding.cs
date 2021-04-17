@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Algorithm.Hex
+namespace Eocron.Algorithms.Hex
 {
     [Flags]
     public enum HexFormatting : uint

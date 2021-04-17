@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Algorithm.Disposing
+namespace Eocron.Algorithms.Disposing
 {
     /// <summary>
     /// Safe way to wrap nesting streams into one for return.

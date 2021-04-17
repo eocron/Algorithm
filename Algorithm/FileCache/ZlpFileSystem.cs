@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 //using ZetaLongPaths;
 
-namespace Algorithm.FileCache
+namespace Eocron.Algorithms.FileCache
 {
     //public class ZlpFileSystem : IFileSystem
     //{

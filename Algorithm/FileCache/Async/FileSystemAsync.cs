@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 
-namespace Algorithm.FileCache
+namespace Eocron.Algorithms.FileCache
 {
     public class FileSystemAsync : IFileSystemAsync
     {

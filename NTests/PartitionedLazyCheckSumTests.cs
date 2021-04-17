@@ -1,4 +1,4 @@
-﻿using Algorithm.FileCheckSum;
+﻿using Eocron.Algorithms.FileCheckSum;
 using NUnit.Framework;
 using System.IO;
 using System.Linq;

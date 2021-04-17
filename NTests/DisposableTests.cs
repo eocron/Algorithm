@@ -1,4 +1,4 @@
-﻿using Algorithm.Disposing;
+﻿using Eocron.Algorithms.Disposing;
 using NUnit.Framework;
 
 namespace Tests

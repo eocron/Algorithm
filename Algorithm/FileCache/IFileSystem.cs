@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Threading;
 
-namespace Algorithm.FileCache
+namespace Eocron.Algorithms.FileCache
 {
     public interface IFileSystem
     {

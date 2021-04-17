@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Algorithm.FileCache;
+using Eocron.Algorithms.FileCache;
 using NUnit.Framework;
 namespace Tests
 {

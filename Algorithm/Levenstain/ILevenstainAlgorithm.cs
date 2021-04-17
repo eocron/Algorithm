@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Algorithm.Levenstain
+namespace Eocron.Algorithms.Levenstain
 {
     public interface ILevenstainAlgorithm<TSource, TTarget>
     {

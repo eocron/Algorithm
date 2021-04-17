@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace Algorithm.Levenstain
+namespace Eocron.Algorithms.Levenstain
 {
     public class DefaultLevenstainOptions<TSource, TTarget> : ILevenstainOptions<TSource, TTarget>
     {

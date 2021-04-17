@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Algorithm.FileCache
+namespace Eocron.Algorithms.FileCache
 {
     /// <summary>
     /// Expiration policy of file. Allows one to invalidate object by custom behavior and constant updates.

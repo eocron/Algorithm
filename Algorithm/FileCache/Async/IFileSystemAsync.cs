@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 
-namespace Algorithm.FileCache
+namespace Eocron.Algorithms.FileCache
 {
     public interface IFileSystemAsync
     {

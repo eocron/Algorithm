@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Algorithm.Disposing
+namespace Eocron.Algorithms.Disposing
 {
     /// <summary>
     /// Disposable struct. You can specify dispose action and return this object for later dispose.

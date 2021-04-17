@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Algorithm.FileCheckSum
+namespace Eocron.Algorithms.FileCheckSum
 {
     /// <summary>
     /// Performs lazy calculation of stream total checksum by splitting stream on parts and calculating hash for each part.

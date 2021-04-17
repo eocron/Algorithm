@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Algorithm.FileCheckSum
+namespace Eocron.Algorithms.FileCheckSum
 {
     /// <summary>
     /// Split stream into chunks of equal size and calculate hash for each one of them.

@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Algorithm.FileCache
+namespace Eocron.Algorithms.FileCache
 {
     /// <summary>
     /// Represents file system cache of files.

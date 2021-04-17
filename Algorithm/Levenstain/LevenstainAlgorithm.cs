@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Algorithm.Levenstain
+namespace Eocron.Algorithms.Levenstain
 {
     public sealed class LevenstainAlgorithm<TSource, TTarget> : ILevenstainAlgorithm<TSource, TTarget>
     {

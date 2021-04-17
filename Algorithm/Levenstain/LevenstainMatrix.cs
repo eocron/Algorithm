@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Algorithm.Levenstain
+namespace Eocron.Algorithms.Levenstain
 {
     internal sealed class LevenstainMatrix : ILevenstainMatrix
     {

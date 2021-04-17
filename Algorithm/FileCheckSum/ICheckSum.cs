@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Algorithm.FileCheckSum
+namespace Eocron.Algorithms.FileCheckSum
 {
     public interface ICheckSum<T>
     {

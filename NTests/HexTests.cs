@@ -1,7 +1,7 @@
-﻿using Algorithm.Hex;
+﻿
+using Eocron.Algorithms.Hex;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 
 namespace NTests
 {

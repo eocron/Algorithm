@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
 using System.Collections.Generic;
-using Algorithm.Tree;
 using System.Linq;
+using Eocron.Algorithms.Tree;
 
 namespace NTests
 {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Algorithm.FileCheckSum
+namespace Eocron.Algorithms.FileCheckSum
 {
     public class LazyCheckSumEqualityComparer<T> : IEqualityComparer<ILazyCheckSum<T>>
     {

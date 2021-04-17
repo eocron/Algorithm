@@ -1,4 +1,4 @@
-﻿namespace Algorithm.Levenstain
+﻿namespace Eocron.Algorithms.Levenstain
 {
     public interface ILevenstainMatrix
     {

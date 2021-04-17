@@ -1,4 +1,4 @@
-﻿using Algorithm.Disposing;
+﻿using Eocron.Algorithms.Disposing;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Algorithm.FileCache
+namespace Eocron.Algorithms.FileCache
 {
     public sealed class FileCacheAsync<TKey> : IFileCacheAsync<TKey>, IDisposable
     {
