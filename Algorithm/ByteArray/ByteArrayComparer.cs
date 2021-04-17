@@ -7,13 +7,13 @@ namespace Eocron.Algorithms.ByteArray
     /// Extreme version of byte array equality comparer for x64 environments. 
     /// For equality it uses x64 machine word alignment.
     /// For hash it will scan every 1024 word instead of scanning everything.
-    /// It is probably fastest algo there is for various dictionaries.
+    /// Perfromance is just like memcpm.
     /// </summary>
     public sealed class ByteArrayEqualityComparer : IEqualityComparer<ArraySegment<byte>>
     {
         private readonly bool _hashWithLoss;
         private const int _hashLossPow = 10;
-        private const int _hashLoss = 1 << _hashLossPow;
+        private const int _hashLoss = (1 << _hashLossPow) * sizeof(long);
         public ByteArrayEqualityComparer(bool hashWithLoss = true)
         {
             _hashWithLoss = hashWithLoss;

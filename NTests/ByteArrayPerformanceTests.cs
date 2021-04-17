@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace NTests
 {
-    [TestFixture]
+    [TestFixture, Category("Performance"), Explicit]
     public class ByteArrayPerformanceTests
     {
 
@@ -31,7 +31,7 @@ namespace NTests
             Comparer = new ByteArrayEqualityComparer();
         }
 
-        [Test, Category("Performance")]
+        [Test]
         public void PerformanceGetHashCode()
         {
             int count = 1000;
@@ -52,7 +52,7 @@ namespace NTests
             Console.WriteLine(sw.Elapsed / count);
         }
 
-        [Test, Category("Performance")]
+        [Test]
         public void PerformanceEquals()
         {
             int count = 1000;
