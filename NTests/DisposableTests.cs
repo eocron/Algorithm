@@ -1,7 +1,7 @@
 ﻿using Eocron.Algorithms.Disposing;
 using NUnit.Framework;
 
-namespace Tests
+namespace NTests
 {
     [TestFixture]
     public class DisposableTests

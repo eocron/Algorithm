@@ -1,4 +1,4 @@
-﻿using Eocron.Algorithms.HashCode;
+﻿using Eocron.Algorithms;
 using NUnit.Framework;
 using System;
 using System.Buffers;
@@ -50,7 +50,7 @@ namespace NTests
             {
                 using (var fs = File.OpenRead(_filePath))
                 {
-                    var hash = await StreamHashHelper.GetHashCodeAsync(fs);
+                    var hash = await fs.GetHashCodeAsync();
                 }
             }
             sw.Stop();

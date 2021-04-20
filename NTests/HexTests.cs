@@ -1,5 +1,5 @@
 ﻿
-using Eocron.Algorithms.Hex;
+using Eocron.Algorithms;
 using NUnit.Framework;
 using System;
 
@@ -25,8 +25,8 @@ namespace NTests
         [TestCase("#", HexFormatting.HtmlColor, "#")]
         public void Convert(string input, HexFormatting formatting, string expected)
         {
-            var bytes = HexEncoding.Convert(input, formatting);
-            var actual = HexEncoding.Convert(bytes, formatting, upperCase: true);
+            var bytes = HexEncodingExtensions.FromHexString(input, formatting);
+            var actual = HexEncodingExtensions.ToHexString(bytes, formatting);
             Assert.AreEqual(expected, actual);
         }
 
@@ -37,7 +37,7 @@ namespace NTests
         [TestCase("0xfoobar", HexFormatting.Unix, "Invalid hex character.")]
         public void ConvertError(string input, HexFormatting formatting, string expectedError)
         {
-            Assert.That(() => HexEncoding.Convert(input, formatting),
+            Assert.That(() => HexEncodingExtensions.FromHexString(input, formatting),
                Throws.Exception
                  .InstanceOf<ArgumentException>()
                  .With.Message.EqualTo(expectedError));

@@ -1,4 +1,4 @@
-﻿using Eocron.Algorithms.HashCode;
+﻿using Eocron.Algorithms;
 using NUnit.Framework;
 using System;
 using System.IO;
@@ -20,7 +20,7 @@ namespace NTests
             {
                 var ms = new MemoryStream(bytes, 0, i, false, false);
 
-                var next = await StreamHashHelper.GetHashCodeAsync(ms);
+                var next = await ms.GetHashCodeAsync();
                 if (prev != null)
                     Assert.AreNotEqual(prev.Value, next);
 

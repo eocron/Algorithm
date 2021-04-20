@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Eocron.Algorithms.Hex
+namespace Eocron.Algorithms
 {
     [Flags]
     public enum HexFormatting : uint
@@ -41,7 +41,7 @@ namespace Eocron.Algorithms.Hex
         HtmlColor = 1 << 6
     }
 
-    public static class HexEncoding
+    public static class HexEncodingExtensions
     {
         private static readonly string[] PossiblePrefixes = new string[]
         {
@@ -66,7 +66,19 @@ namespace Eocron.Algorithms.Hex
         /// <param name="formatting">HEX string formatting.</param>
         /// <param name="upperCase">Should hex litteral be in upper case.</param>
         /// <returns>Formatted HEX representation of bytes.</returns>
-        public static string Convert(Span<byte> bytes, HexFormatting formatting = HexFormatting.Default, bool upperCase = false)
+        public static string ToHexString(this byte[] bytes, HexFormatting formatting = HexFormatting.Default, bool upperCase = true)
+        {
+            return ToHexString((ArraySegment<byte>)bytes, formatting, upperCase);
+        }
+
+        /// <summary>
+        /// Convert byte sequence to HEX representation.
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <param name="formatting">HEX string formatting.</param>
+        /// <param name="upperCase">Should hex litteral be in upper case.</param>
+        /// <returns>Formatted HEX representation of bytes.</returns>
+        public static string ToHexString(this ArraySegment<byte> bytes, HexFormatting formatting = HexFormatting.Default, bool upperCase = true)
         {
             if (bytes == null)
                 throw new ArgumentNullException(nameof(bytes));
@@ -74,14 +86,14 @@ namespace Eocron.Algorithms.Hex
             var prefix = GetFilteredPrefixes(formatting).FirstOrDefault();
             var offset = prefix?.Length ?? 0;
 
-            var c = new char[offset + bytes.Length * 2];
+            var c = new char[offset + bytes.Count * 2];
             for (var i = 0; i < offset; i++)
                 c[i] = prefix[i];
 
             byte b;
             var letterOffset = upperCase ? 0x37 : 0x57;
             const int digitOffset = 0x30;
-            for (int bx = 0, cx = 0; bx < bytes.Length; ++bx, ++cx)
+            for (int bx = 0, cx = 0; bx < bytes.Count; ++bx, ++cx)
             {
                 b = (byte)(bytes[bx] >> 4);
                 c[offset + cx] = (char)(b > 9 ? b + letterOffset : b + digitOffset);
@@ -99,7 +111,7 @@ namespace Eocron.Algorithms.Hex
         /// <param name="str">Input string.</param>
         /// <param name="formatting"></param>
         /// <returns></returns>
-        public static byte[] Convert(string str, HexFormatting formatting = HexFormatting.Default)
+        public static byte[] FromHexString(this string str, HexFormatting formatting = HexFormatting.Default)
         {
             return InternalConvert(str, formatting, -1, -1);
         }
@@ -112,7 +124,7 @@ namespace Eocron.Algorithms.Hex
         /// <param name="count">Count of characters in string.</param>
         /// <param name="formatting"></param>
         /// <returns></returns>
-        public static byte[] Convert(string str, int offset, int count, HexFormatting formatting = HexFormatting.Default)
+        public static byte[] FromHexString(this string str, int offset, int count, HexFormatting formatting = HexFormatting.Default)
         {
             return InternalConvert(str, formatting, offset, count);
         }

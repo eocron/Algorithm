@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Eocron.Algorithms.FileCache;
 using NUnit.Framework;
-namespace Tests
+namespace NTests
 {
     [TestFixture]
     public class FileCacheTests

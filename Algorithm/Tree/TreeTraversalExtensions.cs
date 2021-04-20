@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Eocron.Algorithms.Tree
+namespace Eocron.Algorithms
 {
     public enum TraversalKind
     {

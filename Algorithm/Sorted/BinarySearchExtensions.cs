@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Eocron.Algorithms.Sorted
+namespace Eocron.Algorithms
 {
     public static class BinarySearchExtensions
     {

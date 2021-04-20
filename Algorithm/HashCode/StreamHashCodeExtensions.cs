@@ -5,11 +5,18 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Eocron.Algorithms.HashCode
+namespace Eocron.Algorithms
 {
-    public static class StreamHashHelper
+    public static class StreamHashCodeExtensions
     {
-        public static long GetHashCode(Stream stream, CancellationToken cancellationToken= default, ArrayPool<byte> pool = null)
+        /// <summary>
+        /// Retrieves partial hash code from seekable stream.
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <param name="cancellationToken"></param>
+        /// <param name="pool"></param>
+        /// <returns></returns>
+        public static int GetHashCode(this Stream stream, CancellationToken cancellationToken= default, ArrayPool<byte> pool = null)
         {
             pool = pool ?? ArrayPool<byte>.Shared;
             var cmp = ByteArrayEqualityComparer.Default;
@@ -57,14 +64,22 @@ namespace Eocron.Algorithms.HashCode
                     }
 
                 }
-                return hash;
+                return (int)hash;
             }
             finally
             {
                 pool.Return(buffer);
             }
         }
-        public static async Task<long> GetHashCodeAsync(Stream stream, CancellationToken cancellationToken = default, ArrayPool<byte> pool = null)
+
+        /// <summary>
+        /// Retrieves partial hash code from seekable stream.
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <param name="cancellationToken"></param>
+        /// <param name="pool"></param>
+        /// <returns></returns>
+        public static async Task<long> GetHashCodeAsync(this Stream stream, CancellationToken cancellationToken = default, ArrayPool<byte> pool = null)
         {
             pool = pool ?? ArrayPool<byte>.Shared;
             var cmp = ByteArrayEqualityComparer.Default;

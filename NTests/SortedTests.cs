@@ -1,5 +1,5 @@
 ﻿using NUnit.Framework;
-using Eocron.Algorithms.Sorted;
+using Eocron.Algorithms;
 namespace NTests
 {
     [TestFixture]
