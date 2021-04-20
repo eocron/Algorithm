@@ -1,13 +1,9 @@
-﻿using Eocron.Algorithms.ByteArray;
-using Eocron.Algorithms.FileCheckSum;
+﻿using Eocron.Algorithms.HashCode;
 using NUnit.Framework;
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace NTests

@@ -299,7 +299,7 @@ namespace Tests
         }
 
         [Test]
-        public void AsyncLockedForReadFileGc()
+        public async Task AsyncLockedForReadFileGc()
         {
             try
             {
@@ -307,7 +307,7 @@ namespace Tests
                 var fileSize = 1 * 1024;
                 var data = FullRead(cache, 123);
                 Assert.IsNull(data);
-                var tasks = Enumerable.Range(0, 20).Select(async i =>
+                var tasks = Enumerable.Range(0, 20).Select(i =>
                 {
                     try
                     {
@@ -333,9 +333,10 @@ namespace Tests
                         Console.WriteLine(e.Message);
                         throw;
                     }
+                    return Task.CompletedTask;
                 }).ToArray();
 
-                Task.WhenAll(tasks);
+                await Task.WhenAll(tasks);
 
                 cache.GarbageCollect(CancellationToken.None); //trash collected if not collected on read.
 

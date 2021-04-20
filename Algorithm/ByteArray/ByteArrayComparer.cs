@@ -11,6 +11,8 @@ namespace Eocron.Algorithms.ByteArray
     /// </summary>
     public sealed class ByteArrayEqualityComparer : IEqualityComparer<ArraySegment<byte>>
     {
+        public static readonly IEqualityComparer<ArraySegment<byte>> Default = new ByteArrayEqualityComparer();
+
         private readonly bool _hashWithLoss;
         private const int _hashLossPow = 10;
         private const int _hashLoss = (1 << _hashLossPow) * sizeof(long);

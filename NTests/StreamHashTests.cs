@@ -1,4 +1,4 @@
-﻿using Eocron.Algorithms.FileCheckSum;
+﻿using Eocron.Algorithms.HashCode;
 using NUnit.Framework;
 using System;
 using System.IO;
