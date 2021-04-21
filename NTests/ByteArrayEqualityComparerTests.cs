@@ -29,7 +29,7 @@ namespace NTests
         }
 
         [Test]
-        public void DiffSizeAreEqual()
+        public void SubArraysAreEqual()
         {
             var a = new byte[40000];
             var b = new byte[40000];
@@ -60,6 +60,7 @@ namespace NTests
             yield return new TestCaseData(GetBytes(20 * 1024 * 1024), GetBytes(20 * 1024 * 1024)).SetName("-20mb");
             yield return new TestCaseData(Array.Empty<byte>(), null).SetName("-rnull");
             yield return new TestCaseData(null, Array.Empty<byte>()).SetName("-lnull");
+            yield return new TestCaseData(new byte[] { 1, 2 }, new byte[] { 2 }).SetName("diff_size");
         }
         private static TestCaseData Eq(int size)
         {
