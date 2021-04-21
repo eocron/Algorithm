@@ -1,4 +1,4 @@
-﻿using Eocron.Algorithms.ByteArray;
+﻿using Eocron.Algorithms;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace NTests
 {
     [TestFixture]
-    public class ByteArrayTests
+    public class ByteArrayEqualityComparerTests
     {
         private static Random _rnd = new Random(42);
 
@@ -14,7 +14,7 @@ namespace NTests
         [TestCaseSource(nameof(GetAreEqualTests))]
         public void AreEqual(byte[] a, byte[] b)
         {
-            var cmp = new ByteArrayEqualityComparer();
+            var cmp = ByteArrayEqualityComparer.Default;
             Assert.IsTrue(cmp.Equals(a, b));
             Assert.AreEqual(cmp.GetHashCode(a), cmp.GetHashCode(b));
         }
@@ -23,7 +23,7 @@ namespace NTests
         [TestCaseSource(nameof(GetAreNotEqualTests))]
         public void AreNotEqual(byte[] a, byte[] b)
         {
-            var cmp = new ByteArrayEqualityComparer();
+            var cmp = ByteArrayEqualityComparer.Default;
             Assert.IsFalse(cmp.Equals(a, b));
             Assert.AreNotEqual(cmp.GetHashCode(a), cmp.GetHashCode(b));
         }
@@ -35,8 +35,8 @@ namespace NTests
             var b = new byte[40000];
             _rnd.NextBytes(a);
             Array.Copy(a, b, a.Length);
-            var cmp = new ByteArrayEqualityComparer();
-            for(int i = 1; i < 40000; i+=149)
+            var cmp = ByteArrayEqualityComparer.Default;
+            for (int i = 1; i < 40000; i+=149)
             {
                 var aa = new ArraySegment<byte>(a, 0, i);
                 var bb = new ArraySegment<byte>(b, 0, i);

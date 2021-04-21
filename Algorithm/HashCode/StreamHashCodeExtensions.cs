@@ -1,5 +1,4 @@
-﻿using Eocron.Algorithms.ByteArray;
-using System;
+﻿using System;
 using System.Buffers;
 using System.IO;
 using System.Threading;

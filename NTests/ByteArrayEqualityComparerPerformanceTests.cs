@@ -1,4 +1,4 @@
-﻿using Eocron.Algorithms.ByteArray;
+﻿using Eocron.Algorithms;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Diagnostics;
 namespace NTests
 {
     [TestFixture, Category("Performance"), Explicit]
-    public class ByteArrayPerformanceTests
+    public class ByteArrayEqualityComparerPerformanceTests
     {
 
         public List<byte[]> ArrayPool;

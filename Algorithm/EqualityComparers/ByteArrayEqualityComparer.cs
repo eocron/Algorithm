@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Eocron.Algorithms.ByteArray
+namespace Eocron.Algorithms
 {
     /// <summary>
     /// Extreme version of byte array equality comparer for x64 environments. 
