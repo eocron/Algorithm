@@ -9,7 +9,7 @@ namespace Eocron.Algorithms
     /// For hash it will scan every 1024 word instead of scanning everything.
     /// Perfromance is just like memcpm.
     /// </summary>
-    public sealed class ByteArrayEqualityComparer : IEqualityComparer<ArraySegment<byte>>
+    public class ByteArrayEqualityComparer : IEqualityComparer<ArraySegment<byte>>
     {
         public static readonly IEqualityComparer<ArraySegment<byte>> Default = new ByteArrayEqualityComparer();
 
@@ -107,7 +107,7 @@ namespace Eocron.Algorithms
                 }
         }
 
-        public bool Equals(ArraySegment<byte> x, ArraySegment<byte> y)
+        public virtual bool Equals(ArraySegment<byte> x, ArraySegment<byte> y)
         {
             if (ReferenceEquals(x.Array, y.Array) && x.Offset == y.Offset && x.Count == y.Count)
                 return true;
@@ -118,7 +118,7 @@ namespace Eocron.Algorithms
             return EqualBytesLongUnrolled(x, y);
         }
 
-        public int GetHashCode(ArraySegment<byte> obj)
+        public virtual int GetHashCode(ArraySegment<byte> obj)
         {
             if (obj == null)
                 return 0;

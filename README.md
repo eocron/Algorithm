@@ -35,6 +35,7 @@ and it is not present in common libraries.
 
   - Around 180 faster than SequenceEquals almost like memcmp.
   - Has fast but not precise hash code. By default, invoked when byte array is greater than certain bound.
+    This makes hashing of same size arrays more efficient than just by length comparison.
   - Has slow but through hash code. Choose yourself.
 
 ## Hex format parsing
@@ -59,3 +60,10 @@ https://en.wikipedia.org/wiki/Binary_search_algorithm
   - Search lower bound.
   - Search upper bound.
   - Custom comparer support.
+
+## Random class extensions
+
+  - NextStream.
+  - NextString.
+  - NextBool.
+  - NextLong.
