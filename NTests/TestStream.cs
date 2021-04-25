@@ -1,64 +1,44 @@
 ﻿using System;
 using System.IO;
+using Eocron.Algorithms;
 namespace NTests
 {
     internal sealed class TestStream : Stream
     {
-        private readonly long _size;
-        private readonly long _seed;
-
+        public readonly Stream Inner;
         public bool Disposed;
         public bool Closed;
 
-        private static byte GetByte(long position, long seed)
+        public TestStream(long size, int seed)
         {
-            var h = seed;
-            h ^= 12345;
-            h += position;
-            h ^= 3345;
-            return (byte)h;
-        }
-
-        public TestStream(long size, long seed)
-        {
-            _size = size;
-            _seed = seed;
+            Inner = new Random(seed).NextStream(size);
         }
 
         public override void Flush()
         {
+            Inner.Flush();
         }
 
         public override void Close()
         {
             Closed = true;
+            Inner.Close();
             base.Close();
         }
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-
-            throw new NotImplementedException();
+            return Inner.Seek(offset, origin);
         }
 
         public override void SetLength(long value)
         {
-            throw new NotSupportedException();
+            Inner.SetLength(value);
         }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            var len = Length;
-            var pos = Position;
-
-            var left = Math.Min(count, len - pos);
-            for (int i = 0; i < left; i++)
-            {
-                buffer[i] = GetByte(pos + i, _seed);
-            }
-
-            Position += left;
-            return (int)left;
+            return Inner.Read(buffer, offset, count);
         }
 
         public override void Write(byte[] buffer, int offset, int count)
@@ -66,15 +46,17 @@ namespace NTests
             throw new NotSupportedException();
         }
 
-        public override bool CanRead => true;
-        public override bool CanSeek => false;
+        public override bool CanRead => Inner.CanRead;
+        public override bool CanSeek => Inner.CanSeek;
         public override bool CanWrite => false;
-        public override long Length => _size;
-        public override long Position { get; set; }
+        public override long Length => Inner.Length;
+
+        public override long Position { get => Inner.Position; set => Inner.Position = value; }
 
         protected override void Dispose(bool disposing)
         {
             Disposed = true;
+            Inner.Dispose();
             base.Dispose(disposing);
         }
     }
