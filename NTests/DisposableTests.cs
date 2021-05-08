@@ -10,7 +10,7 @@ namespace NTests
         [Test]
         public void StreamClosedAndDisposed()
         {
-            var ts = new TestStream(10, 42);
+            var ts = new AssertStream(10, 42);
             using (new DisposableStream(ts, ts)) { }
 
             Assert.IsTrue(ts.Closed);

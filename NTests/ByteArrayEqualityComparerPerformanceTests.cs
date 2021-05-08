@@ -1,8 +1,10 @@
 ﻿using Eocron.Algorithms;
+using NTests.Core;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 
 namespace NTests
 {
@@ -34,44 +36,33 @@ namespace NTests
         [Test]
         public void PerformanceGetHashCode()
         {
-            int count = 1000;
-            for (int i = 0; i < count; i++)
+            using var cts = new CancellationTokenSource();
+            cts.CancelAfter(TimeSpan.FromSeconds(30));
+            Benchmark.InfiniteMeasure((ctx) =>
             {
-                Comparer.GetHashCode(ArrayPool[i % ArrayPool.Count]);
-            }
-
-            var sw = Stopwatch.StartNew();
-
-            for(int i = 0; i < count; i++)
-            {
-                Comparer.GetHashCode(ArrayPool[i%ArrayPool.Count]);
-            }
-
-            sw.Stop();
-
-            Console.WriteLine(sw.Elapsed / count);
+                int count = 200000;
+                for (int i = 0; i < count; i++)
+                {
+                    Comparer.GetHashCode(ArrayPool[i % ArrayPool.Count]);
+                }
+                ctx.Increment(count);
+            }, cts.Token);
         }
 
         [Test]
         public void PerformanceEquals()
         {
-            int count = 1000;
-            for (int i = 0; i < count; i++)
+            using var cts = new CancellationTokenSource();
+            cts.CancelAfter(TimeSpan.FromSeconds(30));
+            Benchmark.InfiniteMeasure((ctx) =>
             {
-                var r = Comparer.Equals(ArrayPool[i % ArrayPool.Count], ArrayPool[(i + 1) % ArrayPool.Count]);
-                Assert.IsTrue(r);
-            }
-
-            var sw = Stopwatch.StartNew();
-
-            for (int i = 0; i < count; i++)
-            {
-                Comparer.Equals(ArrayPool[i % ArrayPool.Count], ArrayPool[(i + 1) % ArrayPool.Count]);
-            }
-
-            sw.Stop();
-
-            Console.WriteLine(sw.Elapsed / count);
+                int count = 1000;
+                for (int i = 0; i < count; i++)
+                {
+                    Comparer.Equals(ArrayPool[i % ArrayPool.Count], ArrayPool[(i + 1) % ArrayPool.Count]);
+                }
+                ctx.Increment(count);
+            }, cts.Token);
         }
     }
 }

@@ -3,13 +3,13 @@ using System.IO;
 using Eocron.Algorithms;
 namespace NTests
 {
-    internal sealed class TestStream : Stream
+    internal sealed class AssertStream : Stream
     {
         public readonly Stream Inner;
         public bool Disposed;
         public bool Closed;
 
-        public TestStream(long size, int seed)
+        public AssertStream(long size, int seed)
         {
             Inner = new Random(seed).NextStream(size);
         }

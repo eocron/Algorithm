@@ -1,9 +1,11 @@
 ﻿using Eocron.Algorithms;
+using NTests.Core;
 using NUnit.Framework;
 using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace NTests
@@ -44,17 +46,20 @@ namespace NTests
         [Test]
         public async Task CalculateSpeed()
         {
-            var count = 100;
-            var sw = Stopwatch.StartNew();
-            for (var i = 0; i < count; i++)
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+            await Benchmark.InfiniteMeasureAsync(async (ctx) =>
             {
-                using (var fs = File.OpenRead(_filePath))
+                const int count = 100;
+                for (var i = 0; i < count; i++)
                 {
-                    var hash = await fs.GetHashCodeAsync();
+                    using (var fs = File.OpenRead(_filePath))
+                    {
+                        var hash = await fs.GetHashCodeAsync(cts.Token);
+                    }
                 }
-            }
-            sw.Stop();
-            Console.WriteLine(sw.Elapsed / count);
+                ctx.Increment(count);
+            }, cts.Token);
         }
     }
 }

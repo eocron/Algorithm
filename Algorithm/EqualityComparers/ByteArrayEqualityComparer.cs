@@ -9,9 +9,9 @@ namespace Eocron.Algorithms
     /// For hash it will scan every 1024 word instead of scanning everything.
     /// Perfromance is just like memcpm.
     /// </summary>
-    public class ByteArrayEqualityComparer : IEqualityComparer<ArraySegment<byte>>
+    public class ByteArrayEqualityComparer : IEqualityComparer<ArraySegment<byte>>, IEqualityComparer<byte[]>
     {
-        public static readonly IEqualityComparer<ArraySegment<byte>> Default = new ByteArrayEqualityComparer();
+        public static readonly ByteArrayEqualityComparer Default = new ByteArrayEqualityComparer();
 
         private readonly bool _hashWithLoss;
         private const int _hashLossPow = 10;
@@ -125,6 +125,16 @@ namespace Eocron.Algorithms
             if (_hashWithLoss && obj.Count > _hashLoss)
                 return (int)GetHashCodeLongUnrolledLoss(obj);
             return (int)GetHashCodeLongUnrolled(obj);
+        }
+
+        public bool Equals(byte[] x, byte[] y)
+        {
+            return Equals(new ArraySegment<byte>(x), new ArraySegment<byte>(y));
+        }
+
+        public int GetHashCode(byte[] obj)
+        {
+            return GetHashCode(new ArraySegment<byte>(obj));
         }
     }
 }

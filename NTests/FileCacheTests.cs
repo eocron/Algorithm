@@ -32,7 +32,7 @@ namespace NTests
 
         private Stream GetRandomFile(long size)
         {
-            return new TestStream(size, 42);
+            return new AssertStream(size, 42);
         }
 
         private void AssertNoCachedFiles(FileCache<long> cache)
@@ -66,7 +66,7 @@ namespace NTests
             var cache = CreateCache();
             var fileSize = 10 * 1024 * 1024;
 
-            var stream = new TestStream(fileSize, 42);
+            var stream = new AssertStream(fileSize, 42);
             using (var cachedStream = cache.GetStreamOrAddStream(123, _ => stream,
                 CancellationToken.None, null))
             {
@@ -83,7 +83,7 @@ namespace NTests
             var cache = CreateCache();
             var fileSize = 10 * 1024 * 1024;
 
-            var stream = new TestStream(fileSize, 42);
+            var stream = new AssertStream(fileSize, 42);
             cache.AddOrUpdateStream(123, stream, CancellationToken.None, null, leaveOpen: false);
 
             Assert.IsTrue(stream.Closed);
@@ -96,7 +96,7 @@ namespace NTests
             var cache = CreateCache();
             var fileSize = 10 * 1024 * 1024;
 
-            var stream = new TestStream(fileSize, 42);
+            var stream = new AssertStream(fileSize, 42);
             cache.AddOrUpdateStream(123, stream, CancellationToken.None, null, leaveOpen: true);
 
             Assert.IsFalse(stream.Closed);
