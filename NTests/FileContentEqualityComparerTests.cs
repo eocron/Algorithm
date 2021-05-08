@@ -6,7 +6,7 @@ using System.IO;
 namespace NTests
 {
     [TestFixture]
-    public class FileContentComparerTests
+    public class FileContentEqualityComparerTests
     {
         private string _smallFile;
         private string _bigFile;
@@ -33,7 +33,7 @@ namespace NTests
         [Test]
         public void Equal()
         {
-            var cmp = FileContentComparer.Default;
+            var cmp = FileContentEqualityComparer.Default;
 
             Assert.IsTrue(cmp.Equals(_smallFile, _smallFile));
             Assert.IsTrue(cmp.Equals(_bigFile, _bigFile));
@@ -44,7 +44,7 @@ namespace NTests
         [Test]
         public void NotEqual()
         {
-            var cmp = FileContentComparer.Default;
+            var cmp = FileContentEqualityComparer.Default;
 
             Assert.IsFalse(cmp.Equals(_smallFile, _bigFile));
             Assert.AreNotEqual(cmp.GetHashCode(_smallFile), cmp.GetHashCode(_bigFile));

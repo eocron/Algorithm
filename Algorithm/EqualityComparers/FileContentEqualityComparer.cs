@@ -9,9 +9,9 @@ namespace Eocron.Algorithms
     /// <summary>
     /// Checks file equality. Possible cancellation and pool usage for internal implementation.
     /// </summary>
-    public sealed class FileContentComparer : IEqualityComparer<string>, IEqualityComparer<FileInfo>
+    public sealed class FileContentEqualityComparer : IEqualityComparer<string>, IEqualityComparer<FileInfo>
     {
-        public static readonly FileContentComparer Default = new FileContentComparer();
+        public static readonly FileContentEqualityComparer Default = new FileContentEqualityComparer();
 
         private readonly ArrayPool<byte> _pool;
         private readonly IEqualityComparer<ArraySegment<byte>> _byteArrayEqualityComparer;
@@ -25,7 +25,7 @@ namespace Eocron.Algorithms
         /// <param name="bufferSize">Array pool buffer size.</param>
         /// <param name="byteArrayEqualityComparer">Comparer for array pool buffers.</param>
         /// <param name="shutdownToken">Token to cancel all comparison, which can take long time.</param>
-        public FileContentComparer(
+        public FileContentEqualityComparer(
             ArrayPool<byte> pool = null, 
             int bufferSize = 8 * 1024, 
             IEqualityComparer<ArraySegment<byte>> byteArrayEqualityComparer = null,
