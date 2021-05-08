@@ -63,12 +63,12 @@ namespace Eocron.Algorithms
                     for (int i = 0; i < iterCount; i++)
                     {
                         _shutdownToken.ThrowIfCancellationRequested();
-                        fs1.Read(one, 0, _bufferSize);
-                        fs2.Read(two, 0, _bufferSize);
+                        var read1 = fs1.Read(one, 0, _bufferSize);
+                        var read2 = fs2.Read(two, 0, _bufferSize);
 
                         if (!_byteArrayEqualityComparer.Equals(
-                            new ArraySegment<byte>(one, 0, _bufferSize),
-                            new ArraySegment<byte>(two, 0, _bufferSize)))
+                            new ArraySegment<byte>(one, 0, read1),
+                            new ArraySegment<byte>(two, 0, read2)))
                             return false;
                     }
                 }

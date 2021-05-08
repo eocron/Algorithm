@@ -45,6 +45,23 @@ namespace NTests
             }
         }
 
+        [Test]
+        public void BufferEqual()
+        {
+            var a = new byte[8 * 1024];
+            var b = new byte[8 * 1024];
+            _rnd.NextBytes(a);
+            Array.Copy(a, b, a.Length);
+            var cmp = ByteArrayEqualityComparer.Default;
+            for (int i = 1; i < 8 * 1024; i += 149)
+            {
+                var aa = new ArraySegment<byte>(a, 0, i);
+                var bb = new ArraySegment<byte>(b, 0, i);
+                Assert.IsTrue(cmp.Equals(aa, bb));
+                Assert.AreEqual(cmp.GetHashCode(aa), cmp.GetHashCode(bb));
+            }
+        }
+
         private static IEnumerable<TestCaseData> GetAreEqualTests()
         {
             yield return Eq(1).SetName("+1b");

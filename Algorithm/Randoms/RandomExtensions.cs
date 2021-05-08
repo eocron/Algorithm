@@ -8,7 +8,7 @@ namespace Eocron.Algorithms
     public static class RandomExtensions
     {
         public static readonly char[] DefaultStringDomain = "0123456789abcdef".ToCharArray();
-        public static ArrayPool<byte> DefaultArrayPool = ArrayPool<byte>.Shared;
+
         /// <summary>
         /// Returns random string from specified domain of characters.
         /// </summary>
@@ -47,11 +47,11 @@ namespace Eocron.Algorithms
         /// <param name="random">The given random instance</param>
         /// <param name="min">The inclusive minimum bound</param>
         /// <param name="max">The exclusive maximum bound.  Must be greater than min</param>
-        public static long NextLong(this Random random, long min, long max)
+        public static long NextLong(this Random random, long min, long max, ArrayPool<byte> pool = null)
         {
             if (max <= min)
                 throw new ArgumentOutOfRangeException("max", "max must be > min!");
-
+            pool = pool ?? ArrayPool<byte>.Shared;
             //Working with ulong so that modulo works correctly with values > long.MaxValue
             ulong uRange = (ulong)(max - min);
 
@@ -60,7 +60,7 @@ namespace Eocron.Algorithms
             //In the worst case, the expected number of calls is 2 (though usually it's
             //much closer to 1) so this loop doesn't really hurt performance at all.
             ulong ulongRand;
-            var buf = DefaultArrayPool.Rent(8);
+            var buf = pool.Rent(sizeof(ulong));
             try
             {
                 do
@@ -71,7 +71,7 @@ namespace Eocron.Algorithms
             }
             finally
             {
-                DefaultArrayPool.Return(buf);
+                pool.Return(buf);
             }
             return (long)(ulongRand % uRange) + min;
         }
@@ -103,9 +103,27 @@ namespace Eocron.Algorithms
         /// <param name="size"></param>
         /// <param name="blockLength"></param>
         /// <returns></returns>
-        public static Stream NextStream(this Random rnd, long size = long.MaxValue, int blockLength = 8*1024)
+        public static Stream NextStream(this Random rnd, long size = long.MaxValue, int blockLength = 8*1024, ArrayPool<byte> pool = null)
         {
-            return new RandomStream(rnd.NextLong(), size, blockLength, DefaultArrayPool);
+            return new RandomStream(rnd.NextLong(), size, blockLength, pool ?? ArrayPool<byte>.Shared);
+        }
+
+        /// <summary>
+        /// Creates file with random content or appends to existing.
+        /// </summary>
+        /// <param name="random">The given random instance</param>
+        /// <param name="size"></param>
+        public static void NextFile(this Random rnd, string filePath, long size, ArrayPool<byte> pool = null)
+        {
+            if (filePath == null)
+                throw new ArgumentNullException(nameof(filePath));
+            if (size < 0)
+                throw new ArgumentOutOfRangeException(nameof(size), size, "Invalid random file size.");
+            using var rs = rnd.NextStream(size: size, pool: pool);
+            using(var fs = File.OpenWrite(filePath))
+            {
+                rs.CopyTo(fs);
+            }
         }
     }
 }
