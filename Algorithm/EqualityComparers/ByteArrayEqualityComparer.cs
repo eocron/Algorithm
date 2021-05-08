@@ -129,11 +129,19 @@ namespace Eocron.Algorithms
 
         public bool Equals(byte[] x, byte[] y)
         {
+            if (ReferenceEquals(x, y))
+                return true;
+            if (ReferenceEquals(x, null))
+                return false;
+            if (ReferenceEquals(y, null))
+                return false;
             return Equals(new ArraySegment<byte>(x), new ArraySegment<byte>(y));
         }
 
         public int GetHashCode(byte[] obj)
         {
+            if (obj == null)
+                return 0;
             return GetHashCode(new ArraySegment<byte>(obj));
         }
     }
