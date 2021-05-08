@@ -10,9 +10,12 @@
     <PackageProjectUrl>https://github.com/eocron/Algorithm</PackageProjectUrl>
     <RepositoryUrl>https://github.com/eocron/Algorithm.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>algorithm</PackageTags>
+    <PackageTags>algorithm;eocron</PackageTags>
+    <Description>
+      This client library contains some basic and usefull alghorithms for my work.
+    </Description>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <Version>1.0.3</Version>
+    <Version>1.1.0</Version>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
   </PropertyGroup>
 
