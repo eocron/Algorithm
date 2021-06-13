@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Eocron.Algorithms
@@ -100,8 +101,8 @@ namespace Eocron.Algorithms
         /// Returns stream of random bytes. Can be used to generate random files or for testing purposes.
         /// </summary>
         /// <param name="rnd"></param>
-        /// <param name="size"></param>
-        /// <param name="blockLength"></param>
+        /// <param name="size">Stream size</param>
+        /// <param name="blockLength">Stream block size</param>
         /// <returns></returns>
         public static Stream NextStream(this Random rnd, long size = long.MaxValue, int blockLength = 8*1024, ArrayPool<byte> pool = null)
         {
@@ -112,7 +113,7 @@ namespace Eocron.Algorithms
         /// Creates file with random content or appends to existing.
         /// </summary>
         /// <param name="random">The given random instance</param>
-        /// <param name="size"></param>
+        /// <param name="size">File size</param>
         public static void NextFile(this Random rnd, string filePath, long size, ArrayPool<byte> pool = null)
         {
             if (filePath == null)
@@ -124,6 +125,46 @@ namespace Eocron.Algorithms
             {
                 rs.CopyTo(fs);
             }
+        }
+
+        /// <summary>
+        /// Creates random guid. Usefull when you want stable guid generation binded to Random seed.
+        /// </summary>
+        /// <param name="random">The given random instance</param>
+        /// <returns></returns>
+        public static Guid NextGuid(this Random random)
+        {
+            var guid = new byte[16];
+            random.NextBytes(guid);
+            return new Guid(guid);
+        }
+
+        /// <summary>
+        /// Retrieves any random element from collection.
+        /// </summary>
+        /// <typeparam name="T">Element type</typeparam>
+        /// <param name="random">The given random instance</param>
+        /// <param name="collection">Possible domain of values</param>
+        /// <returns></returns>
+        public static T NextAny<T>(this Random random, params T[] collection)
+        {
+            if (collection == null || collection.Length == 0)
+                throw new ArgumentNullException(nameof(collection));
+            return collection[random.Next(0, collection.Length)];
+        }
+
+        /// <summary>
+        /// Retrieves any random element from collection.
+        /// </summary>
+        /// <typeparam name="T">Element type</typeparam>
+        /// <param name="random">The given random instance</param>
+        /// <param name="collection">Possible domain of values</param>
+        /// <returns></returns>
+        public static T NextAny<T>(this Random random, IList<T> collection)
+        {
+            if (collection == null || collection.Count == 0)
+                throw new ArgumentNullException(nameof(collection));
+            return collection[random.Next(0, collection.Count)];
         }
     }
 }
