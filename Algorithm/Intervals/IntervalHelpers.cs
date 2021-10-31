@@ -87,7 +87,7 @@ namespace Eocron.Algorithms.Intervals
 
             return result;
         }
-        public static Interval<T>? IntersectOrNull<T>(IEnumerable<Interval<T>> intervals, IComparer<IntervalPoint<T>> comparer)
+        public static List<Interval<T>> Intersect<T>(IEnumerable<Interval<T>> intervals, IComparer<IntervalPoint<T>> comparer)
         {
             if (intervals == null)
                 throw new ArgumentNullException(nameof(intervals));
@@ -106,7 +106,7 @@ namespace Eocron.Algorithms.Intervals
                 if (startCmp > 0 || startCmp == 0 && (curr.StartPoint.IsGougedOut || r.IsGougedOut) ||
                     endCmp < 0 || endCmp == 0 && (curr.EndPoint.IsGougedOut || l.IsGougedOut))
                 {
-                    return null;
+                    return new List<Interval<T>>();
                 }
 
                 l = Max(l, curr.StartPoint, comparer);
@@ -114,7 +114,7 @@ namespace Eocron.Algorithms.Intervals
             }
 
 
-            return Interval<T>.Create(l, r, comparer);
+            return new List<Interval<T>>() {Interval<T>.Create(l, r, comparer)};
         }
 
         public static IntervalPoint<T> Max<T>(IntervalPoint<T> a, IntervalPoint<T> b,
@@ -167,14 +167,11 @@ namespace Eocron.Algorithms.Intervals
         /// <returns>Zero or One or Two intervals.</returns>
         public static List<Interval<T>> Except<T>(Interval<T> a, Interval<T> b, IComparer<IntervalPoint<T>> comparer)
         {
-            var result = new List<Interval<T>>(2);
-            if (!Overlaps(a, b, comparer))
-            {
-                result.Add(a);
-                return result;
-            }
-
-            throw new NotImplementedException();
+            var negated = Negate(b, comparer);
+            var result =
+                Union(
+                    negated.SelectMany(x => Intersect(new[] {x, a}, comparer)), comparer);
+            return result;
         }
     }
 }

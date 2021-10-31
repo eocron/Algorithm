@@ -39,7 +39,7 @@ namespace Eocron.Algorithms.Intervals
             sb.Append(";");
             sb.Append(EndPoint);
             sb.Append(EndPoint.IsGougedOut ? ")" : "]");
-            return base.ToString();
+            return sb.ToString();
         }
 
         public bool Equals(Interval<T> other)

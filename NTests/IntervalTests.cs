@@ -11,11 +11,7 @@ namespace NTests
     [TestFixture]
     public class IntervalTests
     {
-        private static readonly IComparer<IntervalPoint<int>> Comparer =
-            new IntervalPointComparer<int>(Comparer<int>.Default);
 
-        private static readonly IComparer<IntervalPoint<int>> GougedComparer =
-            new IntervalGougedPointComparer<int>(Comparer);
         private static IEnumerable<TestCaseData> GetGougedTests()
         {
             yield return new TestCaseData(1, false, 1, false, 0);
@@ -26,30 +22,34 @@ namespace NTests
             yield return new TestCaseData(2, true, 1, false, 1).SetName("gouged but greater by value");
         }
 
-        
-        private static IEnumerable<TestCaseData> GetIntersectTests()
-        {
-            var prefix = "intersect";
-            yield return CreateSetTest("(0;1)", "(0;1)", prefix);
-            yield return CreateSetTest("(0;1),(1;2)", "", prefix);
-            yield return CreateSetTest("(0;1],(1;2)", "", prefix);
-            yield return CreateSetTest("(0;1],[1;2)", "[1;1]", prefix);
-
-            yield return CreateSetTest("(0;10],[5;20)", "[5;10]", prefix);
-            yield return CreateSetTest("(0;10),[5;20)", "[5;10)", prefix);
-            yield return CreateSetTest("(0;10],(5;20)", "(5;10]", prefix);
-            yield return CreateSetTest("(0;10),(5;20)", "(5;10)", prefix);
-        }
-
-        private static IEnumerable<TestCaseData> GetUnionTests()
+        private static IEnumerable<TestCaseData> GetSetTests()
         {
             var prefix = "union";
             yield return CreateSetTest("(0;1)", "(0;1)", prefix);
             yield return CreateSetTest("(0;1),(1;2)", "(0;1),(1;2)", prefix);
             yield return CreateSetTest("(0;1],(1;2)", "(0;2)", prefix);
             yield return CreateSetTest("(0;1],[1;2)", "(0;2)", prefix);
-
             yield return CreateSetTest("(0;10],[5;20)", "(0;20)", prefix);
+
+            prefix = "intersect";
+            yield return CreateSetTest("(0;1)", "(0;1)", prefix);
+            yield return CreateSetTest("(0;1),(1;2)", "", prefix);
+            yield return CreateSetTest("(0;1],(1;2)", "", prefix);
+            yield return CreateSetTest("(0;1],[1;2)", "[1;1]", prefix);
+            yield return CreateSetTest("(0;10],[5;20)", "[5;10]", prefix);
+            yield return CreateSetTest("(0;10),[5;20)", "[5;10)", prefix);
+            yield return CreateSetTest("(0;10],(5;20)", "(5;10]", prefix);
+            yield return CreateSetTest("(0;10),(5;20)", "(5;10)", prefix);
+
+            prefix = "except";
+            yield return CreateSetTest("(0;1),(1;2)", "(0;1)", prefix);
+            yield return CreateSetTest("(0;1],(1;2)", "(0;1]", prefix);
+            yield return CreateSetTest("(0;1],[1;2)", "(0;1)", prefix);
+            yield return CreateSetTest("(0;10],[5;20)", "(0;5)", prefix);
+            yield return CreateSetTest("(0;10),[5;20)", "(0;5)", prefix);
+            yield return CreateSetTest("(0;10],(5;20)", "(0;5]", prefix);
+            yield return CreateSetTest("(0;10),(5;20)", "(0;5]", prefix);
+            yield return CreateSetTest("(0;10),[5;5]", "(0;5),(5;10)", prefix);
         }
 
         [Test]
@@ -60,24 +60,28 @@ namespace NTests
             var bb = new IntervalPoint<int>(b, gougedB);
             Assert.AreEqual(expected, GougedComparer.Compare(aa, bb));
         }
-        [Test]
-        [TestCaseSource(nameof(GetIntersectTests))]
-        public void IntersectCheck(List<Interval<int>> toIntersect, List<Interval<int>> expected)
-        {
-            var actual = new List<Interval<int>>();
-            var intersection = IntervalHelpers.IntersectOrNull(toIntersect, Comparer);
-            if(intersection != null)
-                actual.Add(intersection.Value);
-            CollectionAssert.AreEqual(expected, actual);
-        }
 
         [Test]
-        [TestCaseSource(nameof(GetUnionTests))]
-        public void UnionCheck(List<Interval<int>> toUnite, List<Interval<int>> expected)
+        [TestCaseSource(nameof(GetSetTests))]
+        public void TestSet(List<Interval<int>> input, List<Interval<int>> output, string prefix)
         {
-            var union = IntervalHelpers.Union(toUnite, Comparer);
-            CollectionAssert.AreEqual(expected, union);
+            if (prefix == "union")
+            {
+                var union = IntervalHelpers.Union(input, Comparer);
+                CollectionAssert.AreEqual(output, union);
+            }
+            else if(prefix == "intersect")
+            {
+                var intersection = IntervalHelpers.Intersect(input, Comparer);
+                CollectionAssert.AreEqual(output, intersection);
+            }
+            else if(prefix == "except")
+            {
+                var except = IntervalHelpers.Except(input[0], input[1], Comparer);
+                CollectionAssert.AreEqual(output, except);
+            }
         }
+        
 
         private static Interval<int> ParseInterval(string input)
         {
@@ -99,7 +103,7 @@ namespace NTests
 
         private static TestCaseData CreateSetTest(string input, string result, string prefix)
         {
-            return new TestCaseData(ParseIntervalSet(input), ParseIntervalSet(result)).SetName(prefix + ":" + input +
+            return new TestCaseData(ParseIntervalSet(input), ParseIntervalSet(result), prefix).SetName(prefix + ":" + input +
                 " -> " + result);
         }
 
@@ -107,5 +111,11 @@ namespace NTests
         {
             return new IntervalPoint<int>(int.Parse(input), gouge);
         }
+
+        private static readonly IComparer<IntervalPoint<int>> Comparer =
+            new IntervalPointComparer<int>(Comparer<int>.Default);
+
+        private static readonly IComparer<IntervalPoint<int>> GougedComparer =
+            new IntervalGougedPointComparer<int>(Comparer);
     }
 }
