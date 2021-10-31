@@ -15,10 +15,8 @@ namespace Eocron.Algorithms
         /// <returns></returns>
         public static async Task<long> GetHashCodeAsync(this FileInfo fileInfo, CancellationToken cancellationToken = default)
         {
-            using (var fs = fileInfo.OpenRead())
-            {
-                return await fs.GetHashCodeAsync(cancellationToken).ConfigureAwait(false);
-            }
+            await using var fs = fileInfo.OpenRead();
+            return await fs.GetHashCodeAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -29,10 +27,8 @@ namespace Eocron.Algorithms
         /// <returns></returns>
         public static long GetHashCode(this FileInfo fileInfo, CancellationToken cancellationToken = default)
         {
-            using (var fs = fileInfo.OpenRead())
-            {
-                return fs.GetHashCode(cancellationToken);
-            }
+            using var fs = fileInfo.OpenRead();
+            return fs.GetHashCode(cancellationToken);
         }
     }
 }
