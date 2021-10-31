@@ -24,6 +24,8 @@ namespace Eocron.Algorithms.Intervals
 
     public sealed class IntervalPointComparer<T> : IComparer<IntervalPoint<T>>
     {
+        public static IntervalPointComparer<T> Default = new IntervalPointComparer<T>(Comparer<T>.Default);
+
         private readonly IComparer<T> _comparer;
 
         public IntervalPointComparer(IComparer<T> comparer)

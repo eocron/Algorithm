@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Eocron.Algorithms.Intervals;
 using NUnit.Framework;
-using NUnit.Framework.Internal;
 
 namespace NTests
 {
@@ -50,6 +49,7 @@ namespace NTests
             yield return CreateSetTest("(0;10],(5;20)", "(0;5]", prefix);
             yield return CreateSetTest("(0;10),(5;20)", "(0;5]", prefix);
             yield return CreateSetTest("(0;10),[5;5]", "(0;5),(5;10)", prefix);
+            yield return CreateSetTest("(0;10),(5;5)", "(0;10)", prefix).SetDescription("Except gouged point - nothing changes");
         }
 
         [Test]
@@ -67,18 +67,22 @@ namespace NTests
         {
             if (prefix == "union")
             {
-                var union = IntervalHelpers.Union(input, Comparer);
+                var union = input.Union();
                 CollectionAssert.AreEqual(output, union);
             }
             else if(prefix == "intersect")
             {
-                var intersection = IntervalHelpers.Intersect(input, Comparer);
+                var intersection = input.Intersect();
                 CollectionAssert.AreEqual(output, intersection);
             }
             else if(prefix == "except")
             {
-                var except = IntervalHelpers.Except(input[0], input[1], Comparer);
+                var except = input[0].Except(input[1]);
                 CollectionAssert.AreEqual(output, except);
+            }
+            else
+            {
+                throw new NotSupportedException(prefix);
             }
         }
         

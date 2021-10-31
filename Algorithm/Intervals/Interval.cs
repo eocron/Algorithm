@@ -1,14 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace Eocron.Algorithms.Intervals
 {
+
+    [DataContract]
     public readonly struct Interval<T> : IEquatable<Interval<T>>
     {
+        [DataMember(Order = 1)]
         public readonly IntervalPoint<T> StartPoint;
 
+        [DataMember(Order = 2)]
         public readonly IntervalPoint<T> EndPoint;
+
+        [IgnoreDataMember]
+        public bool HasStart => !StartPoint.IsInfinity;
+        [IgnoreDataMember]
+        public bool HasEnd => !EndPoint.IsInfinity;
 
         private Interval(IntervalPoint<T> startPoint, IntervalPoint<T> endPoint)
         {
