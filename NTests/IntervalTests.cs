@@ -10,55 +10,50 @@ namespace NTests
     [TestFixture]
     public class IntervalTests
     {
-
-        private static IEnumerable<TestCaseData> GetGougedTests()
-        {
-            yield return new TestCaseData(1, false, 1, false, 0);
-            yield return new TestCaseData(1, false, 2, false, -1);
-            yield return new TestCaseData(2, false, 1, false, 1);
-            yield return new TestCaseData(1, true, 1, false, -1).SetName("gouged should be lower if value equal");
-            yield return new TestCaseData(1, false, 1, true, 1).SetName("not gouged should be greater if value equal");
-            yield return new TestCaseData(2, true, 1, false, 1).SetName("gouged but greater by value");
-        }
-
         private static IEnumerable<TestCaseData> GetSetTests()
         {
+            int counter = 1;
             var prefix = "union";
-            yield return CreateSetTest("(0;1)", "(0;1)", prefix);
-            yield return CreateSetTest("(0;1),(1;2)", "(0;1),(1;2)", prefix);
-            yield return CreateSetTest("(0;1],(1;2)", "(0;2)", prefix);
-            yield return CreateSetTest("(0;1],[1;2)", "(0;2)", prefix);
-            yield return CreateSetTest("(0;10],[5;20)", "(0;20)", prefix);
+            yield return CreateSetTest("(0;1)", "(0;1)", prefix, ref counter);
+            yield return CreateSetTest("(0;1),(1;2)", "(0;1),(1;2)", prefix, ref counter);
+            yield return CreateSetTest("(0;1],(1;2)", "(0;2)", prefix, ref counter);
+            yield return CreateSetTest("(0;1],[1;2)", "(0;2)", prefix, ref counter);
+            yield return CreateSetTest("(0;10],[5;20)", "(0;20)", prefix, ref counter);
 
             prefix = "intersect";
-            yield return CreateSetTest("(0;1)", "(0;1)", prefix);
-            yield return CreateSetTest("(0;1),(1;2)", "", prefix);
-            yield return CreateSetTest("(0;1],(1;2)", "", prefix);
-            yield return CreateSetTest("(0;1],[1;2)", "[1;1]", prefix);
-            yield return CreateSetTest("(0;10],[5;20)", "[5;10]", prefix);
-            yield return CreateSetTest("(0;10),[5;20)", "[5;10)", prefix);
-            yield return CreateSetTest("(0;10],(5;20)", "(5;10]", prefix);
-            yield return CreateSetTest("(0;10),(5;20)", "(5;10)", prefix);
+            yield return CreateSetTest("(0;1)", "(0;1)", prefix, ref counter);
+            yield return CreateSetTest("(0;1),(1;2)", "", prefix, ref counter);
+            yield return CreateSetTest("(0;1],(1;2)", "", prefix, ref counter);
+            yield return CreateSetTest("(0;1],[1;2)", "[1;1]", prefix, ref counter);
+            yield return CreateSetTest("(1;2),[1;2)", "(1;2)", prefix, ref counter);
+            yield return CreateSetTest("[1;2),(1;2)", "(1;2)", prefix, ref counter);
+            yield return CreateSetTest("(0;10],[5;20)", "[5;10]", prefix, ref counter);
+            yield return CreateSetTest("(0;10),[5;20)", "[5;10)", prefix, ref counter);
+            yield return CreateSetTest("(0;10],(5;20)", "(5;10]", prefix, ref counter);
+            yield return CreateSetTest("(0;10),(5;20)", "(5;10)", prefix, ref counter);
 
             prefix = "except";
-            yield return CreateSetTest("(0;1),(1;2)", "(0;1)", prefix);
-            yield return CreateSetTest("(0;1],(1;2)", "(0;1]", prefix);
-            yield return CreateSetTest("(0;1],[1;2)", "(0;1)", prefix);
-            yield return CreateSetTest("(0;10],[5;20)", "(0;5)", prefix);
-            yield return CreateSetTest("(0;10),[5;20)", "(0;5)", prefix);
-            yield return CreateSetTest("(0;10],(5;20)", "(0;5]", prefix);
-            yield return CreateSetTest("(0;10),(5;20)", "(0;5]", prefix);
-            yield return CreateSetTest("(0;10),[5;5]", "(0;5),(5;10)", prefix);
-            yield return CreateSetTest("(0;10),(5;5)", "(0;10)", prefix).SetDescription("Except gouged point - nothing changes");
-        }
+            yield return CreateSetTest("(0;1),(1;2)", "(0;1)", prefix, ref counter);
+            yield return CreateSetTest("(0;1],(1;2)", "(0;1]", prefix, ref counter);
+            yield return CreateSetTest("(0;1],[1;2)", "(0;1)", prefix, ref counter);
+            yield return CreateSetTest("[1;2),(0;1]", "(1;2)", prefix, ref counter);
+            yield return CreateSetTest("(0;10],[5;20)", "(0;5)", prefix, ref counter);
+            yield return CreateSetTest("(0;10),[5;20)", "(0;5)", prefix, ref counter);
+            yield return CreateSetTest("(0;10],(5;20)", "(0;5]", prefix, ref counter);
+            yield return CreateSetTest("(0;10),(5;20)", "(0;5]", prefix, ref counter);
+            yield return CreateSetTest("(0;10),[5;5]", "(0;5),(5;10)", prefix, ref counter);
+            yield return CreateSetTest("(0;10),(5;5)", "(0;10)", prefix, ref counter).SetDescription("Except gouged point - nothing changes");
 
-        [Test]
-        [TestCaseSource(nameof(GetGougedTests))]
-        public void ComparerCheck(int a, bool gougedA, int b, bool gougedB, int expected)
-        {
-            var aa = new IntervalPoint<int>(a, gougedA);
-            var bb = new IntervalPoint<int>(b, gougedB);
-            Assert.AreEqual(expected, GougedComparer.Compare(aa, bb));
+            prefix = "sexcept";
+            yield return CreateSetTest("(0;1),(1;2)", "(0;1),(1;2)", prefix, ref counter);
+            yield return CreateSetTest("(0;1],(1;2)", "(0;2)", prefix, ref counter);
+            yield return CreateSetTest("(0;1],[1;2)", "(0;1),(1;2)", prefix, ref counter);
+            yield return CreateSetTest("(0;10],[5;20)", "(0;5),(10;20)", prefix, ref counter);
+            yield return CreateSetTest("(0;10),[5;20)", "(0;5),[10;20)", prefix, ref counter);
+            yield return CreateSetTest("(0;10],(5;20)", "(0;5],(10;20)", prefix, ref counter);
+            yield return CreateSetTest("(0;10),(5;20)", "(0;5],[10;20)", prefix, ref counter);
+            yield return CreateSetTest("(0;10),[5;5]", "(0;5),(5;10)", prefix, ref counter);
+            yield return CreateSetTest("(0;10),(5;5)", "(0;10)", prefix, ref counter).SetDescription("Except gouged point - nothing changes");
         }
 
         [Test]
@@ -68,29 +63,39 @@ namespace NTests
             if (prefix == "union")
             {
                 var union = input.Union();
-                CollectionAssert.AreEqual(output, union);
+                AssertSets(output, union);
             }
             else if(prefix == "intersect")
             {
-                var intersection = input.Intersect();
-                CollectionAssert.AreEqual(output, intersection);
+                var intersection = input.Intersection();
+                AssertSets(output, intersection);
             }
             else if(prefix == "except")
             {
-                var except = input[0].Except(input[1]);
-                CollectionAssert.AreEqual(output, except);
+                var except = input[0].Difference(input[1]);
+                AssertSets(output, except);
+            }
+            else if (prefix == "sexcept")
+            {
+                var except = input[0].SymmetricDifference(input[1]);
+                AssertSets(output, except);
             }
             else
             {
                 throw new NotSupportedException(prefix);
             }
         }
+
+        private void AssertSets<T>(IEnumerable<Interval<T>> expected, IEnumerable<Interval<T>> actual)
+        {
+            Assert.AreEqual(string.Join(",", expected), string.Join(",", actual));
+        }
         
 
         private static Interval<int> ParseInterval(string input)
         {
             var match = Regex.Match(input,
-                @"^\s*(?<gougeL>[\(\[])\s*(?<L>\-?\d+)\s*;\s*(?<R>\-?\d+)\s*(?<gougeR>[\)\]])\s*$");
+                @"^\s*(?<gougeL>[\(\[])\s*(?<L>[\+\-]?(\d+|inf))\s*;\s*(?<R>[\+\-]?(\d+|inf))\s*(?<gougeR>[\)\]])\s*$");
             if (!match.Success)
                 throw new ArgumentException("Invalid input.");
 
@@ -105,14 +110,18 @@ namespace NTests
             return input.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(ParseInterval).ToList();
         }
 
-        private static TestCaseData CreateSetTest(string input, string result, string prefix)
+        private static TestCaseData CreateSetTest(string input, string result, string prefix, ref int counter)
         {
-            return new TestCaseData(ParseIntervalSet(input), ParseIntervalSet(result), prefix).SetName(prefix + ":" + input +
-                " -> " + result);
+            return new TestCaseData(ParseIntervalSet(input), ParseIntervalSet(result), prefix).SetName(
+                string.Format("[{0:D3}][{1}] {2} -> {3}", counter++, prefix, input, result));
         }
 
         private static IntervalPoint<int> ParsePoint(string input, bool gouge)
         {
+            if(input == "+inf")
+                return IntervalPoint<int>.PositiveInfinity;
+            if(input == "-inf")
+                return IntervalPoint<int>.NegativeInfinity;
             return new IntervalPoint<int>(int.Parse(input), gouge);
         }
 
@@ -120,6 +129,6 @@ namespace NTests
             new IntervalPointComparer<int>(Comparer<int>.Default);
 
         private static readonly IComparer<IntervalPoint<int>> GougedComparer =
-            new IntervalGougedPointComparer<int>(Comparer);
+            new IntervalGougedPointComparer<int>(Comparer, false);
     }
 }

@@ -10,13 +10,13 @@ namespace Eocron.Algorithms.Intervals
         public static readonly IntervalPoint<T> PositiveInfinity = new IntervalPoint<T>(false, true);
         public static readonly IntervalPoint<T> NegativeInfinity = new IntervalPoint<T>(true, false);
 
-        [DataMember(Order = 1)]
+        [DataMember(Order = 1, EmitDefaultValue = false, Name = "v")]
         public readonly T Value;
-        [DataMember(Order = 2, EmitDefaultValue = false)]
+        [DataMember(Order = 2, EmitDefaultValue = false, Name = "g")]
         public readonly bool IsGougedOut;
-        [DataMember(Order = 3, EmitDefaultValue = false)]
+        [DataMember(Order = 3, EmitDefaultValue = false, Name = "ni")]
         public readonly bool IsNegativeInfinity;
-        [DataMember(Order = 4, EmitDefaultValue = false)]
+        [DataMember(Order = 4, EmitDefaultValue = false, Name = "pi")]
         public readonly bool IsPositiveInfinity;
 
         public bool IsInfinity => IsPositiveInfinity || IsNegativeInfinity;
@@ -32,7 +32,7 @@ namespace Eocron.Algorithms.Intervals
         private IntervalPoint(bool isNegativeInfinity, bool isPositiveInfinity)
         {
             Value = default(T);
-            IsGougedOut = true;
+            IsGougedOut = false;
             IsNegativeInfinity = isNegativeInfinity;
             IsPositiveInfinity = isPositiveInfinity;
         }

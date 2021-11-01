@@ -10,10 +10,10 @@ namespace Eocron.Algorithms.Intervals
     [DataContract]
     public readonly struct Interval<T> : IEquatable<Interval<T>>
     {
-        [DataMember(Order = 1)]
+        [DataMember(Order = 1, Name = "s")]
         public readonly IntervalPoint<T> StartPoint;
 
-        [DataMember(Order = 2)]
+        [DataMember(Order = 2, Name = "e")]
         public readonly IntervalPoint<T> EndPoint;
 
         [IgnoreDataMember]
@@ -44,12 +44,12 @@ namespace Eocron.Algorithms.Intervals
         {
             var sb = new StringBuilder();
 
-            sb.Append(StartPoint.IsGougedOut ? "(" : "[");
+            sb.Append(StartPoint.IsGougedOut || StartPoint.IsInfinity ? "(" : "[");
             sb.Append(StartPoint);
 
             sb.Append(";");
             sb.Append(EndPoint);
-            sb.Append(EndPoint.IsGougedOut ? ")" : "]");
+            sb.Append(EndPoint.IsGougedOut || EndPoint.IsInfinity ? ")" : "]");
             return sb.ToString();
         }
 
