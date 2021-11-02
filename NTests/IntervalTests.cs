@@ -56,6 +56,7 @@ namespace NTests
             yield return CreateSetTest("(0;10)^(5;20)", "(0;5],[10;20)", ref counter);
             yield return CreateSetTest("(0;10)^[5;5]", "(0;5),(5;10)", ref counter);
             yield return CreateSetTest("(0;10)^(5;5)", "(0;10)", ref counter);
+            yield return CreateSetTest("(0;10)^(1;2)", "(0;1],[2;10)", ref counter);
         }
 
         [Test]
