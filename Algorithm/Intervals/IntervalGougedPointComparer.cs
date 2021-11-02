@@ -2,7 +2,7 @@
 
 namespace Eocron.Algorithms.Intervals
 {
-    public sealed class IntervalGougedPointComparer<T> : IComparer<IntervalPoint<T>>
+    internal sealed class IntervalGougedPointComparer<T> : IComparer<IntervalPoint<T>>
     {
         private readonly IComparer<IntervalPoint<T>> _comparerImplementation;
         private readonly bool _isLeftGouged;

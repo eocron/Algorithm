@@ -6,7 +6,6 @@ using System.Text;
 
 namespace Eocron.Algorithms.Intervals
 {
-
     [DataContract]
     public readonly struct Interval<T> : IEquatable<Interval<T>>
     {
@@ -27,9 +26,9 @@ namespace Eocron.Algorithms.Intervals
             EndPoint = endPoint;
         }
 
-        public static Interval<T> Create(IntervalPoint<T> startPoint, IntervalPoint<T> endPoint,
-            IComparer<IntervalPoint<T>> comparer)
+        public static Interval<T> Create(IntervalPoint<T> startPoint, IntervalPoint<T> endPoint, IComparer<IntervalPoint<T>> comparer = null)
         {
+            comparer = comparer ?? IntervalPointComparer<T>.Default;
             var cmp = comparer.Compare(startPoint, endPoint);
             if (cmp > 0)
                 throw new ArgumentOutOfRangeException(nameof(startPoint), "startPoint should be lower or equal to endPoint");

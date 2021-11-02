@@ -82,43 +82,34 @@ namespace Eocron.Algorithms.Intervals
         /// <param name="intervals"></param>
         /// <param name="comparer"></param>
         /// <returns></returns>
-        public static List<Interval<T>> Union<T>(this IEnumerable<Interval<T>> intervals, IComparer<IntervalPoint<T>> comparer = null)
+        public static IEnumerable<Interval<T>> Union<T>(this IEnumerable<Interval<T>> intervals, IComparer<IntervalPoint<T>> comparer = null)
         {
             comparer ??= IntervalPointComparer<T>.Default;
-
             if (intervals == null)
                 throw new ArgumentNullException(nameof(intervals));
-            var result = new List<Interval<T>>();
 
+            var orderedIntervals = intervals.OrderBy(x => x.StartPoint, new IntervalGougedPointComparer<T>(comparer, true));
+            using var enumerator = orderedIntervals.GetEnumerator();
+            if(!enumerator.MoveNext())
+                yield break;
 
-            foreach (var interval in intervals)
+            var prev = enumerator.Current;
+            while (enumerator.MoveNext())
             {
-                int idx = -1;
-                for (int i = 0; i < result.Count; i++)
-                {
-                    var candidateToUnite = result[i];
-                    if (Overlaps(candidateToUnite, interval, comparer) || Touches(candidateToUnite, interval, comparer))
-                    {
-                        idx = i;
-                        break;
-                    }
-                }
-
-                if (idx >= 0)
-                {
-                    result[idx] = Interval<T>.Create(
-                        Min(result[idx].StartPoint, interval.StartPoint, true, comparer),
-                        Max(result[idx].EndPoint, interval.EndPoint, false, comparer),
+                var interval = enumerator.Current;
+                if(Overlaps(prev, interval, comparer) || Touches(prev, interval, comparer))
+                    prev = Interval<T>.Create(
+                        Min(prev.StartPoint, interval.StartPoint, true, comparer),
+                        Max(prev.EndPoint, interval.EndPoint, false, comparer),
                         comparer);
-                }
                 else
                 {
-                    result.Add(interval);
+                    yield return prev;
+                    prev = interval;
                 }
             }
 
-
-            return result;
+            yield return prev;
         }
 
         /// <summary>
@@ -128,17 +119,17 @@ namespace Eocron.Algorithms.Intervals
         /// <param name="intervals"></param>
         /// <param name="comparer"></param>
         /// <returns></returns>
-        public static List<Interval<T>> Intersection<T>(this IEnumerable<Interval<T>> intervals, IComparer<IntervalPoint<T>> comparer = null)
+        public static IEnumerable<Interval<T>> Intersection<T>(this IEnumerable<Interval<T>> intervals, IComparer<IntervalPoint<T>> comparer = null)
         {
             comparer ??= IntervalPointComparer<T>.Default;
             if (intervals == null)
                 throw new ArgumentNullException(nameof(intervals));
             using var enumerator = intervals.GetEnumerator();
             if (!enumerator.MoveNext())
-                throw new ArgumentOutOfRangeException("No intervals provided.");
+                yield break;
 
-            IntervalPoint<T> l = enumerator.Current.StartPoint;
-            IntervalPoint<T> r = enumerator.Current.EndPoint;
+            var l = enumerator.Current.StartPoint;
+            var r = enumerator.Current.EndPoint;
 
             while (enumerator.MoveNext())
             {
@@ -147,16 +138,12 @@ namespace Eocron.Algorithms.Intervals
                 var endCmp = comparer.Compare(curr.EndPoint, l);
                 if (startCmp > 0 || startCmp == 0 && (curr.StartPoint.IsGougedOut || r.IsGougedOut) ||
                     endCmp < 0 || endCmp == 0 && (curr.EndPoint.IsGougedOut || l.IsGougedOut))
-                {
-                    return new List<Interval<T>>();
-                }
+                    yield break;
 
                 l = Max(l, curr.StartPoint, true, comparer);
                 r = Min(r, curr.EndPoint, false, comparer);
             }
-
-
-            return new List<Interval<T>>() { Interval<T>.Create(l, r, comparer) };
+            yield return Interval<T>.Create(l, r, comparer);
         }
 
         /// <summary>
@@ -166,26 +153,23 @@ namespace Eocron.Algorithms.Intervals
         /// <param name="interval"></param>
         /// <param name="comparer"></param>
         /// <returns></returns>
-        public static List<Interval<T>> Complement<T>(this Interval<T> interval, IComparer<IntervalPoint<T>> comparer = null)
+        public static IEnumerable<Interval<T>> Complement<T>(this Interval<T> interval, IComparer<IntervalPoint<T>> comparer = null)
         {
             comparer ??= IntervalPointComparer<T>.Default;
-            var result = new List<Interval<T>>(2);
             if (!interval.StartPoint.IsNegativeInfinity)
             {
-                result.Add(Interval<T>.Create(
+                yield return Interval<T>.Create(
                     IntervalPoint<T>.NegativeInfinity,
-                    Negate(interval.StartPoint),
-                    comparer));
+                    Complement(interval.StartPoint),
+                    comparer);
             }
             if (!interval.EndPoint.IsPositiveInfinity)
             {
-                result.Add(Interval<T>.Create(
-                    Negate(interval.EndPoint),
+                yield return Interval<T>.Create(
+                    Complement(interval.EndPoint),
                     IntervalPoint<T>.PositiveInfinity,
-                    comparer));
+                    comparer);
             }
-
-            return result;
         }
 
         /// <summary>
@@ -196,12 +180,10 @@ namespace Eocron.Algorithms.Intervals
         /// <param name="b">B</param>
         /// <param name="comparer"></param>
         /// <returns>Zero or One or Two intervals.</returns>
-        public static List<Interval<T>> Difference<T>(this Interval<T> a, Interval<T> b, IComparer<IntervalPoint<T>> comparer = null)
+        public static IEnumerable<Interval<T>> Difference<T>(this Interval<T> a, Interval<T> b, IComparer<IntervalPoint<T>> comparer = null)
         {
             comparer ??= IntervalPointComparer<T>.Default;
-            var negated = Complement(b, comparer);
-            var intersected = negated.SelectMany(x => Intersection(new[] {x, a}, comparer));
-            return Union(intersected, comparer);
+            return Union(Complement(b, comparer).SelectMany(x => Intersection(new[] { x, a }, comparer)), comparer);
         }
 
         /// <summary>
@@ -212,30 +194,28 @@ namespace Eocron.Algorithms.Intervals
         /// <param name="b">B</param>
         /// <param name="comparer"></param>
         /// <returns></returns>
-        public static List<Interval<T>> SymmetricDifference<T>(this Interval<T> a, Interval<T> b,
+        public static IEnumerable<Interval<T>> SymmetricDifference<T>(this Interval<T> a, Interval<T> b,
             IComparer<IntervalPoint<T>> comparer = null)
         {
             comparer ??= IntervalPointComparer<T>.Default;
-            var left = Difference(a, b, comparer);
-            var right = Difference(b, a, comparer);
-            return Union(left.Union(right), comparer);
+            return Union(Difference(a, b, comparer).Union(Difference(b, a, comparer)), comparer);
         }
 
-        private static IntervalPoint<T> Max<T>(IntervalPoint<T> a, IntervalPoint<T> b, bool isLeftGouged,
+        internal static IntervalPoint<T> Max<T>(IntervalPoint<T> a, IntervalPoint<T> b, bool isLeftGouged,
             IComparer<IntervalPoint<T>> comparer)
         {
             var cmp = new IntervalGougedPointComparer<T>(comparer, isLeftGouged).Compare(a, b);
             return cmp >= 0 ? a : b;
         }
 
-        private static IntervalPoint<T> Min<T>(IntervalPoint<T> a, IntervalPoint<T> b, bool isLeftGouged,
+        internal static IntervalPoint<T> Min<T>(IntervalPoint<T> a, IntervalPoint<T> b, bool isLeftGouged,
             IComparer<IntervalPoint<T>> comparer)
         {
             var cmp = new IntervalGougedPointComparer<T>(comparer, isLeftGouged).Compare(a, b);
             return cmp <= 0 ? a : b;
         }
 
-        private static IntervalPoint<T> Negate<T>(IntervalPoint<T> point)
+        private static IntervalPoint<T> Complement<T>(IntervalPoint<T> point)
         {
             return new IntervalPoint<T>(point.Value, !point.IsGougedOut);
         }
