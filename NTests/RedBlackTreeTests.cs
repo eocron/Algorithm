@@ -1,0 +1,87 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Eocron.Algorithms.Tree;
+using NUnit.Framework;
+
+namespace NTests
+{
+    [TestFixture]
+    public class RedBlackTreeTests
+    {
+        [Test]
+        public void Add()
+        {
+            var items = Enumerable
+                .Range(0, 1000)
+                .Select(x => new KeyValuePair<int, string>(x, Guid.NewGuid().ToString()))
+                .ToList();
+
+            var dict = new RedBlackTree<int, string>(items);
+
+            foreach (var keyValuePair in items)
+            {
+                AssertExist(dict, keyValuePair);
+            }
+            Assert.AreEqual(items.Count, dict.Count);
+            CollectionAssert.AreEquivalent(items, dict);
+        }
+
+        [Test]
+        public void Remove()
+        {
+            var rnd = new Random();
+            var items = Enumerable
+                .Range(0, 1000)
+                .Select(x => new KeyValuePair<int, string>(x, Guid.NewGuid().ToString()))
+                .ToList();
+
+            var dict = new RedBlackTree<int, string>(items);
+
+            var toDelete = Enumerable.Range(0, 200).Select(x=> items[rnd.Next(items.Count)]).ToList();
+            items.RemoveAll(x => toDelete.Contains(x));
+            foreach (var keyValuePair in toDelete)
+            {
+                Assert.IsTrue(dict.Remove(keyValuePair.Key));
+            }
+
+            foreach (var keyValuePair in items)
+            {
+                AssertExist(dict, keyValuePair);
+            }
+
+            foreach (var keyValuePair in toDelete)
+            {
+                AssertNotExist(dict, keyValuePair);
+            }
+            Assert.AreEqual(items.Count, dict.Count);
+            CollectionAssert.AreEquivalent(items, dict);
+        }
+
+        private void AssertNotExist<TKey, TValue>(RedBlackTree<TKey, TValue> dict, KeyValuePair<TKey, TValue> item)
+        {
+            Assert.IsFalse(dict.ContainsKey(item.Key));
+            Assert.Throws<KeyNotFoundException>(()=>
+            {
+                var t = dict[item.Key];
+            });
+            TValue tmp;
+            Assert.IsFalse(dict.TryGetValue(item.Key, out tmp));
+            Assert.AreEqual(default(TValue), tmp);
+            Assert.IsFalse(dict.Contains(item));
+            Assert.IsFalse(dict.Remove(item.Key));
+        }
+
+        private void AssertExist<TKey, TValue>(IDictionary<TKey, TValue> dict, KeyValuePair<TKey, TValue> item)
+        {
+            Assert.IsTrue(dict.ContainsKey(item.Key));
+            Assert.AreEqual(item.Value, dict[item.Key]);
+            TValue tmp;
+            Assert.IsTrue(dict.TryGetValue(item.Key, out tmp));
+            Assert.AreEqual(item.Value, tmp);
+            Assert.IsTrue(dict.Contains(item));
+        }
+    }
+}
