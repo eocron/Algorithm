@@ -16,6 +16,13 @@ https://en.wikipedia.org/wiki/Levenshtein_distance
   - Weight matrix calculation
   - Remarks calculation (sequence of actions to perform to transform source to target)
 
+## Red Black Tree
+
+https://en.wikipedia.org/wiki/Red%E2%80%93black_tree
+
+  - Complete implementation of IDictionary
+  - Duplicate keys are not allowed
+
 ## File system caching of files
 
 This implementation will use file system as storage for really-really-really big files, which can't be stored in-memory, and by all means should reside in file system.

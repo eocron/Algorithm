@@ -11,16 +11,22 @@ namespace NTests
     [TestFixture]
     public class RedBlackTreeTests
     {
-        [Test]
-        public void Add()
+        private List<KeyValuePair<int, string>> GetTestItems()
         {
-            var items = Enumerable
+            return Enumerable
                 .Range(0, 1000)
                 .Select(x => new KeyValuePair<int, string>(x, Guid.NewGuid().ToString()))
                 .ToList();
-
-            var dict = new RedBlackTree<int, string>(items);
-
+        }
+        [Test]
+        public void Add()
+        {
+            var items = GetTestItems();
+            var dict = new RedBlackTree<int, string>();
+            foreach (var keyValuePair in items)
+            {
+                dict.Add(keyValuePair);
+            }
             foreach (var keyValuePair in items)
             {
                 AssertExist(dict, keyValuePair);
@@ -32,14 +38,41 @@ namespace NTests
         }
 
         [Test]
+        public void Clear()
+        {
+            var items = GetTestItems();
+            var dict = new RedBlackTree<int, string>();
+            foreach (var keyValuePair in items)
+            {
+                dict.Add(keyValuePair);
+            }
+            dict.Clear();
+
+            Assert.IsEmpty(dict);
+            Assert.AreEqual(0, dict.Count);
+        }
+
+        [Test]
+        public void Set()
+        {
+            var items = GetTestItems();
+            var dict = new RedBlackTree<int, string>(items);
+
+            foreach (var keyValuePair in items)
+            {
+                dict[keyValuePair.Key] = keyValuePair.Value;
+            }
+            Assert.AreEqual(items.Count, dict.Count);
+            Assert.AreEqual(items.First(), dict.GetMinKeyValuePair());
+            Assert.AreEqual(items.Last(), dict.GetMaxKeyValuePair());
+            CollectionAssert.AreEquivalent(items, dict);
+        }
+
+        [Test]
         public void Remove()
         {
             var rnd = new Random();
-            var items = Enumerable
-                .Range(0, 1000)
-                .Select(x => new KeyValuePair<int, string>(x, Guid.NewGuid().ToString()))
-                .ToList();
-
+            var items = GetTestItems();
             var dict = new RedBlackTree<int, string>(items);
 
             var toDelete = Enumerable.Range(0, 200).Select(x=> items[rnd.Next(items.Count)]).ToList();
@@ -86,6 +119,10 @@ namespace NTests
             Assert.IsTrue(dict.TryGetValue(item.Key, out tmp));
             Assert.AreEqual(item.Value, tmp);
             Assert.IsTrue(dict.Contains(item));
+            Assert.Throws<ArgumentException>(() =>
+            {
+                dict.Add(item);
+            });
         }
     }
 }
