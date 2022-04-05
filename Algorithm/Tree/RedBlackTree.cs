@@ -2,526 +2,532 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Eocron.Algorithms.Tree
 {
     public sealed class RedBlackTree<TKey, TValue> : IRedBlackTree<TKey, TValue>
     {
-        private readonly IComparer<TKey> _comparer;
-        private Node _root;
-        private int _count;
-        public int Count => _count;
-        public ICollection<TKey> Keys => TraverseNodes().Select(x => x.Key).ToList();
-        public ICollection<TValue> Values => TraverseNodes().Select(x => x.Value).ToList();
-        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => TraverseNodes().Select(x => x.Value);
-        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => TraverseNodes().Select(x => x.Key);
-        public bool IsReadOnly => false;
-
         public RedBlackTree(IComparer<TKey> comparer = null)
         {
             _comparer = comparer ?? Comparer<TKey>.Default;
         }
 
-        public RedBlackTree(IEnumerable<KeyValuePair<TKey, TValue>> items, IComparer<TKey> comparer = null) : this(comparer)
+        public RedBlackTree(IEnumerable<KeyValuePair<TKey, TValue>> items, IComparer<TKey> comparer = null) :
+            this(comparer)
         {
-            foreach (var keyValuePair in items)
-            {
-                Add(keyValuePair);
-            }
-        }
-
-        public KeyValuePair<TKey, TValue> MinKeyValue()
-        {
-            if (_root == null)
-                throw new ArgumentException("Tree is empty.");
-            var node = MinValueNode(_root);
-            return new KeyValuePair<TKey, TValue>(node.Key, node.Value);
-        }
-
-        public KeyValuePair<TKey, TValue> MaxKeyValue()
-        {
-            if (_root == null)
-                throw new ArgumentException("Tree is empty.");
-            var node = MaxValueNode(_root);
-            return new KeyValuePair<TKey, TValue>(node.Key, node.Value);
-        }
-
-        public bool Remove(TKey key)
-        {
-            var node = RemoveBst(_root, key);
-            FixDelete(node);
-            if (node != null)
-                _count--;
-            return node != null;
-        }
-
-        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
-        {
-            foreach (var node in TraverseNodes())
-            {
-                array[arrayIndex++] = new KeyValuePair<TKey, TValue>(node.Key, node.Value);
-            }
-        }
-
-        public bool Remove(KeyValuePair<TKey, TValue> keyValuePair)
-        {
-            return Remove(keyValuePair.Key);
-        }
-
-        public void Add(TKey key, TValue value)
-        {
-            Add(new KeyValuePair<TKey, TValue>(key, value));
-        }
-
-        public void Add(KeyValuePair<TKey, TValue> keyValuePair)
-        {
-            var node = new Node {Key = keyValuePair.Key, Value = keyValuePair.Value};
-            _root = AddBst(_root, node);
-            FixInsert(node);
-            _count++;
-        }
-
-        public bool TryGetValue(TKey key, out TValue value)
-        {
-            Node node;
-            if (TryFindNode(key, out node))
-            {
-                value = node.Value;
-                return true;
-            }
-            value = default;
-            return false;
+            foreach (var keyValuePair in items) Add(keyValuePair);
         }
 
         public TValue this[TKey key]
         {
             get
             {
-                Node node;
-                if (TryFindNode(key, out node))
-                    return node.Value;
-                throw new KeyNotFoundException();
+                TValue value;
+                if (TryGetValue(key, out value))
+                    return value;
+                throw KeyNotFound();
             }
-            set
-            {
-                Node node;
-                if (TryFindNode(key, out node))
-                    node.Value = value;
-                else
-                {
-                    Add(key, value);
-                }
-            }
+            set => GetNode(key).Data = value;
         }
 
-        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+
+        public int Count => _count;
+        public bool IsReadOnly => false;
+
+
+        public bool Remove(KeyValuePair<TKey, TValue> item)
         {
-            return TraverseNodes().Select(x=> new KeyValuePair<TKey,TValue>(x.Key, x.Value)).GetEnumerator();
+            return Remove(item.Key);
+        }
+
+
+        public KeyValuePair<TKey, TValue> GetMinKeyValuePair()
+        {
+            var workNode = _treeBaseNode;
+
+            if (workNode == null || workNode == SentinelNode)
+                throw TreeIsEmpty();
+
+            while (workNode.Left != SentinelNode)
+                workNode = workNode.Left;
+
+            return new KeyValuePair<TKey, TValue>(workNode.Key, workNode.Data);
+        }
+
+        public KeyValuePair<TKey, TValue> GetMaxKeyValuePair()
+        {
+            var workNode = _treeBaseNode;
+
+            if (workNode == null || workNode == SentinelNode)
+                throw TreeIsEmpty();
+
+            while (workNode.Right != SentinelNode)
+                workNode = workNode.Right;
+
+            return new KeyValuePair<TKey, TValue>(workNode.Key, workNode.Data);
+        }
+
+        public void Add(KeyValuePair<TKey, TValue> item)
+        {
+            New(item.Key, item.Value);
+        }
+
+
+        public void Clear()
+        {
+            _treeBaseNode = SentinelNode;
+            _count = 0;
+        }
+
+        public bool Contains(KeyValuePair<TKey, TValue> item)
+        {
+            return ContainsKey(item.Key);
+        }
+
+        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+        {
+            if (arrayIndex < 0)
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
+            if (array.Length - arrayIndex < _count)
+                throw new ArgumentOutOfRangeException(nameof(array));
+            var currentPosition = arrayIndex;
+            foreach (var item in GetAll())
+            {
+                array.SetValue(item, currentPosition);
+                currentPosition++;
+            }
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return GetEnumerator();
+            return GetAll().GetEnumerator();
+        }
+
+        IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
+        {
+            return GetAll().GetEnumerator();
         }
 
         public bool ContainsKey(TKey key)
         {
-            var node = _root;
-            while (node != null)
+            var node = GetNode(key);
+            return node != null;
+        }
+
+        public void Add(TKey key, TValue value)
+        {
+            New(key, value);
+        }
+
+
+        public bool Remove(TKey key)
+        {
+            try
             {
-                var cmp = _comparer.Compare(key, node.Key);
-                if (cmp == 0)
-                    return true;
-                if (cmp < 0)
-                    node = node.Left;
-                if (cmp > 0)
-                    node = node.Right;
+                Delete(GetNode(key));
+                return true;
             }
-            return false;
-        }
-
-        public bool Contains(KeyValuePair<TKey, TValue> keyValuePair)
-        {
-            return ContainsKey(keyValuePair.Key);
-        }
-
-        public void Clear()
-        {
-            _root = null;
-            _count = 0;
-        }
-
-        private IEnumerable<Node> TraverseNodes()
-        {
-            if (_root == null)
-                yield break;
-
-            var stack = new Stack<Node>(_count);
-            var iter = _root;
-            while (iter != null || stack.Count > 0)
+            catch (Exception)
             {
-                while (iter != null)
-                {
-                    stack.Push(iter);
-                    iter = iter.Left;
-                }
-                iter = stack.Pop();
-                yield return iter;
-                iter = iter.Right;
+                return false;
             }
         }
 
-        private bool TryFindNode(TKey key, out Node found)
+        public bool TryGetValue(TKey key, out TValue value)
         {
-            var node = _root;
-            while (node != null)
-            {
-                var cmp = _comparer.Compare(key, node.Key);
-                if (cmp == 0)
-                {
-                    found = node;
-                    return true;
-                }
-
-                if (cmp < 0)
-                    node = node.Left;
-                if (cmp > 0)
-                    node = node.Right;
-            }
-
-            found = default;
-            return false;
-        }
-
-        private static NodeColor GetColor(Node node)
-        {
+            value = default;
+            var node = GetNode(key);
             if (node == null)
-                return NodeColor.Black;
-
-            return node.Color;
+                return false;
+            value = node.Data;
+            return true;
         }
 
-        private static void SetColor(Node node, NodeColor color)
+        TValue IDictionary<TKey, TValue>.this[TKey key]
         {
-            if (node == null)
-                return;
-
-            node.Color = color;
+            get => GetNode(key).Data;
+            set => GetNode(key).Data = value;
         }
 
-        private Node AddBst(Node parent, Node node)
-        {
-            if (parent == null)
-                return node;
 
-            var cmp = _comparer.Compare(node.Key, parent.Key);
-            if (cmp < 0)
+        public ICollection<TKey> Keys
+        {
+            get { return GetAll().Select(i => i.Key).ToList(); }
+        }
+
+        public ICollection<TValue> Values
+        {
+            get { return GetAll().Select(i => i.Value).ToList(); }
+        }
+
+        
+
+        #region Private
+
+        private Exception KeyAlreadyExist()
+        {
+            return new ArgumentException("Key already exist.");
+        }
+
+        private Exception KeyNotFound()
+        {
+            return new KeyNotFoundException();
+        }
+
+        private Exception TreeIsEmpty()
+        {
+            return new InvalidOperationException("Tree is empty");
+        }
+
+        private void New(TKey key, TValue data)
+        {
+            var newNode = new RedBlackNode(key, data);
+            var workNode = _treeBaseNode;
+
+            while (workNode != SentinelNode)
             {
-                parent.Left = AddBst(parent.Left, node);
-                parent.Left.Parent = parent;
+                newNode.Parent = workNode;
+                var result = _comparer.Compare(key, workNode.Key);
+                if (result == 0)
+                    throw KeyAlreadyExist();
+                workNode = result > 0
+                    ? workNode.Right
+                    : workNode.Left;
             }
-            else if (cmp > 0)
+
+            if (newNode.Parent != null)
             {
-                parent.Right = AddBst(parent.Right, node);
-                parent.Right.Parent = parent;
+                if (_comparer.Compare(newNode.Key, newNode.Parent.Key) > 0)
+                    newNode.Parent.Right = newNode;
+                else
+                    newNode.Parent.Left = newNode;
             }
             else
             {
-                throw new ArgumentException("Key already exist.");
+                _treeBaseNode = newNode;
             }
-            return parent;
+
+            BalanceTreeAfterInsert(newNode);
+            Interlocked.Increment(ref _count);
         }
 
-        private void RotateLeft(Node node)
+        private void Delete(RedBlackNode deleteNode)
         {
-            var rightChild = node.Right;
-            node.Right = rightChild.Left;
+            RedBlackNode workNode;
 
-            if (node.Right != null)
-                node.Right.Parent = node;
-
-            rightChild.Parent = node.Parent;
-
-            if (node.Parent == null)
-                _root = rightChild;
-            else if (node == node.Parent.Left)
-                node.Parent.Left = rightChild;
-            else
-                node.Parent.Right = rightChild;
-
-            rightChild.Left = node;
-            node.Parent = rightChild;
-        }
-
-        private void RotateRight(Node node)
-        {
-            var leftChild = node.Left;
-            node.Left = leftChild.Right;
-
-            if (node.Left != null)
-                node.Left.Parent = node;
-
-            leftChild.Parent = node.Parent;
-
-            if (node.Parent == null)
-                _root = leftChild;
-            else if (node == node.Parent.Left)
-                node.Parent.Left = leftChild;
-            else
-                node.Parent.Right = leftChild;
-
-            leftChild.Right = node;
-            node.Parent = leftChild;
-        }
-
-        private void FixInsert(Node node)
-        {
-            while (node != _root && GetColor(node) == NodeColor.Red && GetColor(node.Parent) == NodeColor.Red)
+            if (deleteNode.Left == SentinelNode || deleteNode.Right == SentinelNode)
             {
-                var parent = node.Parent;
-                var grandparent = parent.Parent;
-                if (parent == grandparent.Left)
+                workNode = deleteNode;
+            }
+            else
+            {
+                workNode = deleteNode.Right;
+                while (workNode.Left != SentinelNode)
+                    workNode = workNode.Left;
+            }
+
+
+            var linkedNode = workNode.Left != SentinelNode
+                ? workNode.Left
+                : workNode.Right;
+
+            linkedNode.Parent = workNode.Parent;
+            if (workNode.Parent != null)
+                if (workNode == workNode.Parent.Left)
+                    workNode.Parent.Left = linkedNode;
+                else
+                    workNode.Parent.Right = linkedNode;
+            else
+                _treeBaseNode = linkedNode;
+
+            if (workNode != deleteNode)
+            {
+                deleteNode.Key = workNode.Key;
+                deleteNode.Data = workNode.Data;
+            }
+
+            if (workNode.Color == RedBlackNodeType.Black)
+                BalanceTreeAfterDelete(linkedNode);
+
+            Interlocked.Decrement(ref _count);
+        }
+
+        private void BalanceTreeAfterDelete(RedBlackNode linkedNode)
+        {
+            while (linkedNode != _treeBaseNode && linkedNode.Color == RedBlackNodeType.Black)
+            {
+                RedBlackNode workNode;
+                if (linkedNode == linkedNode.Parent.Left)
                 {
-                    var uncle = grandparent.Right;
-                    if (GetColor(uncle) == NodeColor.Red)
+                    workNode = linkedNode.Parent.Right;
+                    if (workNode.Color == RedBlackNodeType.Red)
                     {
-                        SetColor(uncle, NodeColor.Black);
-                        SetColor(parent, NodeColor.Black);
-                        SetColor(grandparent, NodeColor.Red);
-                        node = grandparent;
+                        linkedNode.Parent.Color = RedBlackNodeType.Red;
+                        workNode.Color = RedBlackNodeType.Black;
+                        RotateLeft(linkedNode.Parent);
+                        workNode = linkedNode.Parent.Right;
+                    }
+
+                    if (workNode.Left.Color == RedBlackNodeType.Black &&
+                        workNode.Right.Color == RedBlackNodeType.Black)
+                    {
+                        workNode.Color = RedBlackNodeType.Red;
+                        linkedNode = linkedNode.Parent;
                     }
                     else
                     {
-                        if (node == parent.Right)
+                        if (workNode.Right.Color == RedBlackNodeType.Black)
                         {
-                            RotateLeft(parent);
-                            node = parent;
-                            parent = node.Parent;
+                            workNode.Left.Color = RedBlackNodeType.Black;
+                            workNode.Color = RedBlackNodeType.Red;
+                            RotateRight(workNode);
+                            workNode = linkedNode.Parent.Right;
                         }
 
-                        RotateRight(grandparent);
-                        var tmp = parent.Color;
-                        parent.Color = grandparent.Color;
-                        grandparent.Color = tmp;
-                        node = parent;
+                        linkedNode.Parent.Color = RedBlackNodeType.Black;
+                        workNode.Color = linkedNode.Parent.Color;
+                        workNode.Right.Color = RedBlackNodeType.Black;
+                        RotateLeft(linkedNode.Parent);
+                        linkedNode = _treeBaseNode;
                     }
                 }
                 else
                 {
-                    var uncle = grandparent.Left;
-                    if (GetColor(uncle) == NodeColor.Red)
+                    workNode = linkedNode.Parent.Left;
+                    if (workNode.Color == RedBlackNodeType.Red)
                     {
-                        SetColor(uncle, NodeColor.Black);
-                        SetColor(parent, NodeColor.Black);
-                        SetColor(grandparent, NodeColor.Red);
-                        node = grandparent;
+                        linkedNode.Parent.Color = RedBlackNodeType.Red;
+                        workNode.Color = RedBlackNodeType.Black;
+                        RotateRight(linkedNode.Parent);
+                        workNode = linkedNode.Parent.Left;
+                    }
+
+                    if (workNode.Right.Color == RedBlackNodeType.Black &&
+                        workNode.Left.Color == RedBlackNodeType.Black)
+                    {
+                        workNode.Color = RedBlackNodeType.Red;
+                        linkedNode = linkedNode.Parent;
                     }
                     else
                     {
-                        if (node == parent.Left)
+                        if (workNode.Left.Color == RedBlackNodeType.Black)
                         {
-                            RotateRight(parent);
-                            node = parent;
-                            parent = node.Parent;
+                            workNode.Right.Color = RedBlackNodeType.Black;
+                            workNode.Color = RedBlackNodeType.Red;
+                            RotateLeft(workNode);
+                            workNode = linkedNode.Parent.Left;
                         }
 
-                        RotateLeft(grandparent);
-                        var tmp = parent.Color;
-                        parent.Color = grandparent.Color;
-                        grandparent.Color = tmp;
-                        node = parent;
+                        workNode.Color = linkedNode.Parent.Color;
+                        linkedNode.Parent.Color = RedBlackNodeType.Black;
+                        workNode.Left.Color = RedBlackNodeType.Black;
+                        RotateRight(linkedNode.Parent);
+                        linkedNode = _treeBaseNode;
                     }
                 }
             }
 
-            SetColor(_root, NodeColor.Black);
+            linkedNode.Color = RedBlackNodeType.Black;
         }
 
-        private void FixDelete(Node node)
+        private Stack<KeyValuePair<TKey, TValue>> GetAll()
         {
-            if (node == null)
-                return;
+            var stack = new Stack<KeyValuePair<TKey, TValue>>(_count);
 
-            if (node == _root)
+            if (_treeBaseNode != SentinelNode) WalkNextLevel(_treeBaseNode, stack);
+            return stack;
+        }
+
+        private static void WalkNextLevel(RedBlackNode node, Stack<KeyValuePair<TKey, TValue>> stack)
+        {
+            if (node.Right != SentinelNode)
+                WalkNextLevel(node.Right, stack);
+            stack.Push(new KeyValuePair<TKey, TValue>(node.Key, node.Data));
+            if (node.Left != SentinelNode)
+                WalkNextLevel(node.Left, stack);
+        }
+
+        private RedBlackNode GetNode(TKey key)
+        {
+            var treeNode = _treeBaseNode;
+
+            while (treeNode != SentinelNode)
             {
-                _root = null;
-                return;
+                var result = _comparer.Compare(key, treeNode.Key);
+                if (result == 0) return treeNode;
+                treeNode = result < 0
+                    ? treeNode.Left
+                    : treeNode.Right;
             }
 
-            if (GetColor(node) == NodeColor.Red || GetColor(node.Left) == NodeColor.Red ||
-                GetColor(node.Right) == NodeColor.Red)
-            {
-                var child = node.Left ?? node.Right;
+            return null;
+        }
 
-                if (node == node.Parent.Left)
-                {
-                    node.Parent.Left = child;
-                    if (child != null)
-                        child.Parent = node.Parent;
-                    SetColor(child, NodeColor.Black);
-                }
+        private void RotateRight(RedBlackNode rotateNode)
+        {
+            var workNode = rotateNode.Left;
+
+            rotateNode.Left = workNode.Right;
+
+            if (workNode.Right != SentinelNode)
+                workNode.Right.Parent = rotateNode;
+
+            if (workNode != SentinelNode)
+                workNode.Parent = rotateNode.Parent;
+
+            if (rotateNode.Parent != null)
+            {
+                if (rotateNode == rotateNode.Parent.Right)
+                    rotateNode.Parent.Right = workNode;
                 else
-                {
-                    node.Parent.Right = child;
-                    if (child != null)
-                        child.Parent = node.Parent;
-                    SetColor(child, NodeColor.Black);
-                }
+                    rotateNode.Parent.Left = workNode;
             }
             else
             {
-                var ptr = node;
-                SetColor(ptr, NodeColor.DoubleBlack);
-                while (ptr != _root && GetColor(ptr) == NodeColor.DoubleBlack)
-                {
-                    var parent = ptr.Parent;
-                    Node sibling;
-                    if (ptr == parent.Left)
-                    {
-                        sibling = parent.Right;
-                        if (GetColor(sibling) == NodeColor.Red)
-                        {
-                            SetColor(sibling, NodeColor.Black);
-                            SetColor(parent, NodeColor.Red);
-                            RotateLeft(parent);
-                        }
-                        else
-                        {
-                            if (GetColor(sibling.Left) == NodeColor.Black && GetColor(sibling.Right) == NodeColor.Black)
-                            {
-                                SetColor(sibling, NodeColor.Red);
-                                if (GetColor(parent) == NodeColor.Red)
-                                    SetColor(parent, NodeColor.Black);
-                                else
-                                    SetColor(parent, NodeColor.DoubleBlack);
-                                ptr = parent;
-                            }
-                            else
-                            {
-                                if (GetColor(sibling.Right) == NodeColor.Black)
-                                {
-                                    SetColor(sibling.Left, NodeColor.Black);
-                                    SetColor(sibling, NodeColor.Red);
-                                    RotateRight(sibling);
-                                    sibling = parent.Right;
-                                }
+                _treeBaseNode = workNode;
+            }
 
-                                SetColor(sibling, parent.Color);
-                                SetColor(parent, NodeColor.Black);
-                                SetColor(sibling.Right, NodeColor.Black);
-                                RotateLeft(parent);
-                                break;
-                            }
-                        }
+            workNode.Right = rotateNode;
+            if (rotateNode != SentinelNode)
+                rotateNode.Parent = workNode;
+        }
+
+        private void RotateLeft(RedBlackNode rotateNode)
+        {
+            var workNode = rotateNode.Right;
+
+            rotateNode.Right = workNode.Left;
+
+            if (workNode.Left != SentinelNode)
+                workNode.Left.Parent = rotateNode;
+
+            if (workNode != SentinelNode)
+                workNode.Parent = rotateNode.Parent;
+
+            if (rotateNode.Parent != null)
+            {
+                if (rotateNode == rotateNode.Parent.Left)
+                    rotateNode.Parent.Left = workNode;
+                else
+                    rotateNode.Parent.Right = workNode;
+            }
+            else
+            {
+                _treeBaseNode = workNode;
+            }
+
+            workNode.Left = rotateNode;
+            if (rotateNode != SentinelNode)
+                rotateNode.Parent = workNode;
+        }
+
+        private void BalanceTreeAfterInsert(RedBlackNode insertedNode)
+        {
+            while (insertedNode != _treeBaseNode && insertedNode.Parent.Color == RedBlackNodeType.Red)
+            {
+                RedBlackNode workNode;
+                if (insertedNode.Parent == insertedNode.Parent.Parent.Left)
+                {
+                    workNode = insertedNode.Parent.Parent.Right;
+                    if (workNode != null && workNode.Color == RedBlackNodeType.Red)
+                    {
+                        insertedNode.Parent.Color = RedBlackNodeType.Black;
+                        workNode.Color = RedBlackNodeType.Black;
+                        insertedNode.Parent.Parent.Color = RedBlackNodeType.Red;
+                        insertedNode = insertedNode.Parent.Parent;
                     }
                     else
                     {
-                        sibling = parent.Left;
-                        if (GetColor(sibling) == NodeColor.Red)
+                        if (insertedNode == insertedNode.Parent.Right)
                         {
-                            SetColor(sibling, NodeColor.Black);
-                            SetColor(parent, NodeColor.Red);
-                            RotateRight(parent);
+                            insertedNode = insertedNode.Parent;
+                            RotateLeft(insertedNode);
                         }
-                        else
-                        {
-                            if (GetColor(sibling.Left) == NodeColor.Black && GetColor(sibling.Right) == NodeColor.Black)
-                            {
-                                SetColor(sibling, NodeColor.Red);
-                                if (GetColor(parent) == NodeColor.Red)
-                                    SetColor(parent, NodeColor.Black);
-                                else
-                                    SetColor(parent, NodeColor.DoubleBlack);
-                                ptr = parent;
-                            }
-                            else
-                            {
-                                if (GetColor(sibling.Left) == NodeColor.Black)
-                                {
-                                    SetColor(sibling.Right, NodeColor.Black);
-                                    SetColor(sibling, NodeColor.Red);
-                                    RotateLeft(sibling);
-                                    sibling = parent.Left;
-                                }
 
-                                SetColor(sibling, parent.Color);
-                                SetColor(parent, NodeColor.Black);
-                                SetColor(sibling.Left, NodeColor.Black);
-                                RotateRight(parent);
-                                break;
-                            }
-                        }
+                        insertedNode.Parent.Color = RedBlackNodeType.Black;
+                        insertedNode.Parent.Parent.Color = RedBlackNodeType.Red;
+                        RotateRight(insertedNode.Parent.Parent);
                     }
                 }
-
-                if (node == node.Parent.Left)
-                    node.Parent.Left = null;
                 else
-                    node.Parent.Right = null;
-                SetColor(_root, NodeColor.Black);
+                {
+                    workNode = insertedNode.Parent.Parent.Left;
+                    if (workNode != null && workNode.Color == RedBlackNodeType.Red)
+                    {
+                        insertedNode.Parent.Color = RedBlackNodeType.Black;
+                        workNode.Color = RedBlackNodeType.Black;
+                        insertedNode.Parent.Parent.Color = RedBlackNodeType.Red;
+                        insertedNode = insertedNode.Parent.Parent;
+                    }
+                    else
+                    {
+                        if (insertedNode == insertedNode.Parent.Left)
+                        {
+                            insertedNode = insertedNode.Parent;
+                            RotateRight(insertedNode);
+                        }
+
+                        insertedNode.Parent.Color = RedBlackNodeType.Black;
+                        insertedNode.Parent.Parent.Color = RedBlackNodeType.Red;
+                        RotateLeft(insertedNode.Parent.Parent);
+                    }
+                }
             }
+
+            _treeBaseNode.Color = RedBlackNodeType.Black;
         }
 
-        private Node RemoveBst(Node root, TKey key)
+        private static readonly RedBlackNode SentinelNode =
+            new RedBlackNode
+            {
+                Left = null,
+                Right = null,
+                Parent = null,
+                Color = RedBlackNodeType.Black
+            };
+
+        private readonly IComparer<TKey> _comparer;
+        private int _count;
+        private RedBlackNode _treeBaseNode = SentinelNode;
+
+        private enum RedBlackNodeType
         {
-            if (root == null)
-                return null;
-
-            var cmp = _comparer.Compare(key, root.Key);
-            if (cmp < 0)
-                return RemoveBst(root.Left, key);
-
-            if (cmp > 0)
-                return RemoveBst(root.Right, key);
-
-            if (root.Left == null || root.Right == null)
-                return root;
-
-            var temp = MinValueNode(root.Right);
-            root.Key = temp.Key;
-            root.Value = temp.Value;
-            return RemoveBst(root.Right, temp.Key);
+            Red = 0,
+            Black = 1
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static Node MinValueNode(Node node)
+        private sealed class RedBlackNode
         {
+            public RedBlackNode()
+            {
+                Color = RedBlackNodeType.Red;
 
-            var ptr = node;
+                Right = SentinelNode;
+                Left = SentinelNode;
+            }
 
-            while (ptr.Left != null)
-                ptr = ptr.Left;
+            public RedBlackNode(TKey key, TValue data)
+                : this()
+            {
+                Key = key;
+                Data = data;
+            }
 
-            return ptr;
+            public TValue Data { get; set; }
+
+            public TKey Key { get; set; }
+
+            public RedBlackNodeType Color { get; set; }
+
+            public RedBlackNode Left { get; set; }
+
+            public RedBlackNode Right { get; set; }
+
+            public RedBlackNode Parent { get; set; }
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static Node MaxValueNode(Node node)
-        {
-            var ptr = node;
-
-            while (ptr.Right != null)
-                ptr = ptr.Right;
-
-            return ptr;
-        }
-
-        private enum NodeColor
-        {
-            Black,
-            Red,
-            DoubleBlack
-        }
-
-        private class Node
-        {
-            public TKey Key;
-            public TValue Value;
-            public NodeColor Color;
-            public Node Left;
-            public Node Right;
-            public Node Parent;
-        }
+        #endregion
     }
 }

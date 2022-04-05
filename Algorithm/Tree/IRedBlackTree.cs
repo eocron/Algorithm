@@ -2,10 +2,9 @@
 
 namespace Eocron.Algorithms.Tree
 {
-    public interface IRedBlackTree<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
+    public interface IRedBlackTree<TKey, TValue> : IDictionary<TKey, TValue>
     {
-        KeyValuePair<TKey, TValue> MinKeyValue();
-
-        KeyValuePair<TKey, TValue> MaxKeyValue();
+        KeyValuePair<TKey, TValue> GetMinKeyValuePair();
+        KeyValuePair<TKey, TValue> GetMaxKeyValuePair();
     }
 }

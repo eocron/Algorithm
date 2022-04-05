@@ -26,6 +26,8 @@ namespace NTests
                 AssertExist(dict, keyValuePair);
             }
             Assert.AreEqual(items.Count, dict.Count);
+            Assert.AreEqual(items.First(), dict.GetMinKeyValuePair());
+            Assert.AreEqual(items.Last(), dict.GetMaxKeyValuePair());
             CollectionAssert.AreEquivalent(items, dict);
         }
 
@@ -44,7 +46,7 @@ namespace NTests
             items.RemoveAll(x => toDelete.Contains(x));
             foreach (var keyValuePair in toDelete)
             {
-                Assert.IsTrue(dict.Remove(keyValuePair.Key));
+                dict.Remove(keyValuePair.Key);
             }
 
             foreach (var keyValuePair in items)
@@ -57,6 +59,8 @@ namespace NTests
                 AssertNotExist(dict, keyValuePair);
             }
             Assert.AreEqual(items.Count, dict.Count);
+            Assert.AreEqual(items.First(), dict.GetMinKeyValuePair());
+            Assert.AreEqual(items.Last(), dict.GetMaxKeyValuePair());
             CollectionAssert.AreEquivalent(items, dict);
         }
 
