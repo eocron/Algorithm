@@ -18,6 +18,13 @@ namespace Eocron.Algorithms.Tree
             foreach (var keyValuePair in items) Add(keyValuePair);
         }
 
+        public int Count => _count;
+        public bool IsReadOnly => false;
+        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => GetAll().Select(i => i.Key);
+        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => GetAll().Select(i => i.Value);
+        public ICollection<TKey> Keys => GetAll().Select(i => i.Key).ToList();
+        public ICollection<TValue> Values => GetAll().Select(i => i.Value).ToList();
+
         public TValue this[TKey key]
         {
             get
@@ -29,10 +36,6 @@ namespace Eocron.Algorithms.Tree
             }
             set => AddOrUpdate(key, value);
         }
-
-        public int Count => _count;
-        public bool IsReadOnly => false;
-
 
         public bool Remove(KeyValuePair<TKey, TValue> item)
         {
@@ -111,8 +114,7 @@ namespace Eocron.Algorithms.Tree
 
         public bool ContainsKey(TKey key)
         {
-            var node = FindNodeByKey(key);
-            return node != null;
+            return FindNodeByKey(key) != null;
         }
 
         public void Add(TKey key, TValue value)
@@ -123,15 +125,11 @@ namespace Eocron.Algorithms.Tree
 
         public bool Remove(TKey key)
         {
-            try
-            {
-                Delete(FindNodeByKey(key));
-                return true;
-            }
-            catch (Exception)
-            {
+            var node = FindNodeByKey(key);
+            if (node == null)
                 return false;
-            }
+            Remove(node);
+            return true;
         }
 
         public bool TryGetValue(TKey key, out TValue value)
@@ -149,16 +147,6 @@ namespace Eocron.Algorithms.Tree
             get => FindNodeByKey(key).Value;
             set => FindNodeByKey(key).Value = value;
         }
-
-
-        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => GetAll().Select(i => i.Key);
-
-        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => GetAll().Select(i => i.Value);
-
-        public ICollection<TKey> Keys => GetAll().Select(i => i.Key).ToList();
-        public ICollection<TValue> Values => GetAll().Select(i => i.Value).ToList();
-
-        
 
         #region Private
 
@@ -208,7 +196,7 @@ namespace Eocron.Algorithms.Tree
                 _root = newNode;
             }
 
-            BalanceTreeAfterInsert(newNode);
+            FixAdd(newNode);
             _count++;
         }
         private void AddOrError(TKey key, TValue data)
@@ -239,21 +227,21 @@ namespace Eocron.Algorithms.Tree
                 _root = newNode;
             }
 
-            BalanceTreeAfterInsert(newNode);
+            FixAdd(newNode);
             _count++;
         }
 
-        private void Delete(RedBlackNode deleteNode)
+        private void Remove(RedBlackNode node)
         {
             RedBlackNode workNode;
 
-            if (deleteNode.Left == Null || deleteNode.Right == Null)
+            if (node.Left == Null || node.Right == Null)
             {
-                workNode = deleteNode;
+                workNode = node;
             }
             else
             {
-                workNode = deleteNode.Right;
+                workNode = node.Right;
                 while (workNode.Left != Null)
                     workNode = workNode.Left;
             }
@@ -272,39 +260,39 @@ namespace Eocron.Algorithms.Tree
             else
                 _root = linkedNode;
 
-            if (workNode != deleteNode)
+            if (workNode != node)
             {
-                deleteNode.Key = workNode.Key;
-                deleteNode.Value = workNode.Value;
+                node.Key = workNode.Key;
+                node.Value = workNode.Value;
             }
 
             if (!workNode.Red)
-                BalanceTreeAfterDelete(linkedNode);
+                FixRemove(linkedNode);
 
             _count--;
         }
 
-        private void BalanceTreeAfterDelete(RedBlackNode linkedNode)
+        private void FixRemove(RedBlackNode node)
         {
-            while (linkedNode != _root && !linkedNode.Red)
+            while (node != _root && !node.Red)
             {
                 RedBlackNode workNode;
-                if (linkedNode == linkedNode.Parent.Left)
+                if (node == node.Parent.Left)
                 {
-                    workNode = linkedNode.Parent.Right;
+                    workNode = node.Parent.Right;
                     if (workNode.Red)
                     {
-                        linkedNode.Parent.Red = true;
+                        node.Parent.Red = true;
                         workNode.Red = false;
-                        RotateLeft(linkedNode.Parent);
-                        workNode = linkedNode.Parent.Right;
+                        RotateLeft(node.Parent);
+                        workNode = node.Parent.Right;
                     }
 
                     if (!workNode.Left.Red &&
                         !workNode.Right.Red)
                     {
                         workNode.Red = true;
-                        linkedNode = linkedNode.Parent;
+                        node = node.Parent;
                     }
                     else
                     {
@@ -313,32 +301,32 @@ namespace Eocron.Algorithms.Tree
                             workNode.Left.Red = false;
                             workNode.Red = true;
                             RotateRight(workNode);
-                            workNode = linkedNode.Parent.Right;
+                            workNode = node.Parent.Right;
                         }
 
-                        linkedNode.Parent.Red = false;
-                        workNode.Red = linkedNode.Parent.Red;
+                        node.Parent.Red = false;
+                        workNode.Red = node.Parent.Red;
                         workNode.Right.Red = false;
-                        RotateLeft(linkedNode.Parent);
-                        linkedNode = _root;
+                        RotateLeft(node.Parent);
+                        node = _root;
                     }
                 }
                 else
                 {
-                    workNode = linkedNode.Parent.Left;
+                    workNode = node.Parent.Left;
                     if (workNode.Red)
                     {
-                        linkedNode.Parent.Red = true;
+                        node.Parent.Red = true;
                         workNode.Red = false;
-                        RotateRight(linkedNode.Parent);
-                        workNode = linkedNode.Parent.Left;
+                        RotateRight(node.Parent);
+                        workNode = node.Parent.Left;
                     }
 
                     if (!workNode.Right.Red &&
                         !workNode.Left.Red)
                     {
                         workNode.Red = true;
-                        linkedNode = linkedNode.Parent;
+                        node = node.Parent;
                     }
                     else
                     {
@@ -347,36 +335,35 @@ namespace Eocron.Algorithms.Tree
                             workNode.Right.Red = false;
                             workNode.Red = true;
                             RotateLeft(workNode);
-                            workNode = linkedNode.Parent.Left;
+                            workNode = node.Parent.Left;
                         }
 
-                        workNode.Red = linkedNode.Parent.Red;
-                        linkedNode.Parent.Red = false;
+                        workNode.Red = node.Parent.Red;
+                        node.Parent.Red = false;
                         workNode.Left.Red = false;
-                        RotateRight(linkedNode.Parent);
-                        linkedNode = _root;
+                        RotateRight(node.Parent);
+                        node = _root;
                     }
                 }
             }
 
-            linkedNode.Red = false;
+            node.Red = false;
         }
 
         private Stack<KeyValuePair<TKey, TValue>> GetAll()
         {
             var stack = new Stack<KeyValuePair<TKey, TValue>>(_count);
-
-            if (_root != Null) WalkNextLevel(_root, stack);
+            if (_root != Null) GetAllRecursive(_root, stack);
             return stack;
         }
 
-        private static void WalkNextLevel(RedBlackNode node, Stack<KeyValuePair<TKey, TValue>> stack)
+        private static void GetAllRecursive(RedBlackNode node, Stack<KeyValuePair<TKey, TValue>> stack)
         {
             if (node.Right != Null)
-                WalkNextLevel(node.Right, stack);
+                GetAllRecursive(node.Right, stack);
             stack.Push(new KeyValuePair<TKey, TValue>(node.Key, node.Value));
             if (node.Left != Null)
-                WalkNextLevel(node.Left, stack);
+                GetAllRecursive(node.Left, stack);
         }
 
         private RedBlackNode FindNodeByKey(TKey key)
@@ -424,92 +411,90 @@ namespace Eocron.Algorithms.Tree
                 rotateNode.Parent = workNode;
         }
 
-        private void RotateLeft(RedBlackNode rotateNode)
+        private void RotateLeft(RedBlackNode node)
         {
-            var workNode = rotateNode.Right;
+            var workNode = node.Right;
 
-            rotateNode.Right = workNode.Left;
+            node.Right = workNode.Left;
 
             if (workNode.Left != Null)
-                workNode.Left.Parent = rotateNode;
+                workNode.Left.Parent = node;
 
             if (workNode != Null)
-                workNode.Parent = rotateNode.Parent;
+                workNode.Parent = node.Parent;
 
-            if (rotateNode.Parent != null)
+            if (node.Parent != null)
             {
-                if (rotateNode == rotateNode.Parent.Left)
-                    rotateNode.Parent.Left = workNode;
+                if (node == node.Parent.Left)
+                    node.Parent.Left = workNode;
                 else
-                    rotateNode.Parent.Right = workNode;
+                    node.Parent.Right = workNode;
             }
             else
             {
                 _root = workNode;
             }
 
-            workNode.Left = rotateNode;
-            if (rotateNode != Null)
-                rotateNode.Parent = workNode;
+            workNode.Left = node;
+            if (node != Null)
+                node.Parent = workNode;
         }
 
-        private void BalanceTreeAfterInsert(RedBlackNode insertedNode)
+        private void FixAdd(RedBlackNode node)
         {
-            while (insertedNode != _root && insertedNode.Parent.Red)
+            while (node != _root && node.Parent.Red)
             {
                 RedBlackNode workNode;
-                if (insertedNode.Parent == insertedNode.Parent.Parent.Left)
+                if (node.Parent == node.Parent.Parent.Left)
                 {
-                    workNode = insertedNode.Parent.Parent.Right;
+                    workNode = node.Parent.Parent.Right;
                     if (workNode != null && workNode.Red)
                     {
-                        insertedNode.Parent.Red = false;
+                        node.Parent.Red = false;
                         workNode.Red = false;
-                        insertedNode.Parent.Parent.Red = true;
-                        insertedNode = insertedNode.Parent.Parent;
+                        node.Parent.Parent.Red = true;
+                        node = node.Parent.Parent;
                     }
                     else
                     {
-                        if (insertedNode == insertedNode.Parent.Right)
+                        if (node == node.Parent.Right)
                         {
-                            insertedNode = insertedNode.Parent;
-                            RotateLeft(insertedNode);
+                            node = node.Parent;
+                            RotateLeft(node);
                         }
 
-                        insertedNode.Parent.Red = false;
-                        insertedNode.Parent.Parent.Red = true;
-                        RotateRight(insertedNode.Parent.Parent);
+                        node.Parent.Red = false;
+                        node.Parent.Parent.Red = true;
+                        RotateRight(node.Parent.Parent);
                     }
                 }
                 else
                 {
-                    workNode = insertedNode.Parent.Parent.Left;
+                    workNode = node.Parent.Parent.Left;
                     if (workNode != null && workNode.Red)
                     {
-                        insertedNode.Parent.Red = false;
+                        node.Parent.Red = false;
                         workNode.Red = false;
-                        insertedNode.Parent.Parent.Red = true;
-                        insertedNode = insertedNode.Parent.Parent;
+                        node.Parent.Parent.Red = true;
+                        node = node.Parent.Parent;
                     }
                     else
                     {
-                        if (insertedNode == insertedNode.Parent.Left)
+                        if (node == node.Parent.Left)
                         {
-                            insertedNode = insertedNode.Parent;
-                            RotateRight(insertedNode);
+                            node = node.Parent;
+                            RotateRight(node);
                         }
 
-                        insertedNode.Parent.Red = false;
-                        insertedNode.Parent.Parent.Red = true;
-                        RotateLeft(insertedNode.Parent.Parent);
+                        node.Parent.Red = false;
+                        node.Parent.Parent.Red = true;
+                        RotateLeft(node.Parent.Parent);
                     }
                 }
             }
 
             _root.Red = false;
         }
-
-
 
         private readonly IComparer<TKey> _comparer;
         private int _count;
@@ -536,7 +521,6 @@ namespace Eocron.Algorithms.Tree
             public RedBlackNode()
             {
                 Red = true;
-
                 Right = Null;
                 Left = Null;
             }

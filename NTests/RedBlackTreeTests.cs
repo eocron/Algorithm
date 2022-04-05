@@ -50,14 +50,15 @@ namespace NTests
 
             Assert.IsEmpty(dict);
             Assert.AreEqual(0, dict.Count);
+            Assert.Throws<InvalidOperationException>(() => dict.GetMaxKeyValuePair());
+            Assert.Throws<InvalidOperationException>(() => dict.GetMinKeyValuePair());
         }
 
         [Test]
         public void Set()
         {
             var items = GetTestItems();
-            var dict = new RedBlackTree<int, string>(items);
-
+            var dict = new RedBlackTree<int, string>();
             foreach (var keyValuePair in items)
             {
                 dict[keyValuePair.Key] = keyValuePair.Value;
