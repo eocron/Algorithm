@@ -2,6 +2,7 @@
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Eocron.Algorithms
 {
@@ -165,6 +166,21 @@ namespace Eocron.Algorithms
             if (collection == null || collection.Count == 0)
                 throw new ArgumentNullException(nameof(collection));
             return collection[random.Next(0, collection.Count)];
+        }
+
+        /// <summary>
+        /// Shuffles elements of incoming sequence
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="random">The given random instance</param>
+        /// <param name="enumerable">Incoming sequence</param>
+        /// <returns></returns>
+        public static IEnumerable<T> Shuffle<T>(this Random random, IEnumerable<T> enumerable)
+        {
+            return enumerable
+                    .Select(x => new { Number = random.Next(), Item = x })
+                    .OrderBy(x => x.Number)
+                    .Select(x => x.Item);
         }
     }
 }
