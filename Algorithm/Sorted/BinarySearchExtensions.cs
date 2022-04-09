@@ -14,8 +14,9 @@ namespace Eocron.Algorithms
         /// <param name="collection">Sorted collection.</param>
         /// <param name="value">Value to search.</param>
         /// <param name="comparer">Comparer to compare values.</param>
+        /// <param name="descendingOrder">True if array sorted in descending order.</param>
         /// <returns>Returns index of element if found and -1 otherwise.</returns>
-        public static int BinarySearchIndexOf<T>(this IList<T> collection, T value, IComparer<T> comparer = null)
+        public static int BinarySearchIndexOf<T>(this IList<T> collection, T value, IComparer<T> comparer = null, bool descendingOrder = false)
         {
             if (collection == null)
                 throw new ArgumentNullException(nameof(collection));
@@ -31,6 +32,9 @@ namespace Eocron.Algorithms
             {
                 var middle = lower + ((upper - lower) >> 1);
                 var comparisonResult = comparer.Compare(value, collection[middle]);
+                if (descendingOrder)
+                    comparisonResult = -comparisonResult;
+
                 if (comparisonResult == 0)
                     return middle;
                 else if (comparisonResult < 0)
@@ -51,8 +55,9 @@ namespace Eocron.Algorithms
         /// <param name="collection">Sorted collection.</param>
         /// <param name="value">Value to search.</param>
         /// <param name="comparer">Comparer to compare values.</param>
+        /// <param name="descendingOrder">True if array sorted in descending order.</param>
         /// <returns>Index of last element which is not equal and lower than value. Returns (-1) if value is lower than first value and (Count-1) if it is greater than last value.</returns>
-        public static int LowerBoundIndexOf<T>(this IList<T> collection, T value, IComparer<T> comparer = null)
+        public static int LowerBoundIndexOf<T>(this IList<T> collection, T value, IComparer<T> comparer = null, bool descendingOrder = false)
         {
             if (collection == null)
                 throw new ArgumentNullException(nameof(collection));
@@ -67,6 +72,9 @@ namespace Eocron.Algorithms
             {
                 var middle = lower + ((upper - lower) >> 1);
                 var comparisonResult = comparer.Compare(value, collection[middle]);
+                if (descendingOrder)
+                    comparisonResult = -comparisonResult;
+
                 if (comparisonResult <= 0)
                 {
                     upper = middle;
@@ -88,8 +96,9 @@ namespace Eocron.Algorithms
         /// <param name="collection">Sorted collection.</param>
         /// <param name="value">Value to search.</param>
         /// <param name="comparer">Comparer to compare values.</param>
+        /// <param name="descendingOrder">True if array sorted in descending order.</param>
         /// <returns>Index of first element which is not equal and greater than value. Returns (Count) if value is greater than last value and (0) if it is lower than first value.</returns>
-        public static int UpperBoundIndexOf<T>(this IList<T> collection, T value, IComparer<T> comparer = null)
+        public static int UpperBoundIndexOf<T>(this IList<T> collection, T value, IComparer<T> comparer = null, bool descendingOrder = false)
         {
             if (collection == null)
                 throw new ArgumentNullException(nameof(collection));
@@ -104,6 +113,9 @@ namespace Eocron.Algorithms
             {
                 var middle = lower + ((upper - lower) >> 1);
                 var comparisonResult = comparer.Compare(value, collection[middle]);
+                if (descendingOrder)
+                    comparisonResult = -comparisonResult;
+
                 if (comparisonResult >= 0)
                 {
                     lower = middle + 1;
