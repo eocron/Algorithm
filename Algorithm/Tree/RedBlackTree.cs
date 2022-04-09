@@ -69,6 +69,11 @@ namespace Eocron.Algorithms.Tree
             return new KeyValuePair<TKey, TValue>(workNode.Key, workNode.Value);
         }
 
+        public IEnumerable<KeyValuePair<TKey, TValue>> GetAllKeyValueReversed()
+        {
+            return GetAllReversed();
+        }
+
         public void Add(KeyValuePair<TKey, TValue> item)
         {
             AddOrError(item.Key, item.Value);
@@ -364,6 +369,22 @@ namespace Eocron.Algorithms.Tree
             stack.Push(new KeyValuePair<TKey, TValue>(node.Key, node.Value));
             if (node.Left != Null)
                 GetAllRecursive(node.Left, stack);
+        }
+
+        private Stack<KeyValuePair<TKey, TValue>> GetAllReversed()
+        {
+            var stack = new Stack<KeyValuePair<TKey, TValue>>(_count);
+            if (_root != Null) GetAllReversedRecursive(_root, stack);
+            return stack;
+        }
+
+        private static void GetAllReversedRecursive(RedBlackNode node, Stack<KeyValuePair<TKey, TValue>> stack)
+        {
+            if (node.Left != Null)
+                GetAllReversedRecursive(node.Left, stack);
+            stack.Push(new KeyValuePair<TKey, TValue>(node.Key, node.Value));
+            if (node.Right != Null)
+                GetAllReversedRecursive(node.Right, stack);
         }
 
         private RedBlackNode FindNodeByKey(TKey key)

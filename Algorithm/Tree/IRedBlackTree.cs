@@ -6,5 +6,6 @@ namespace Eocron.Algorithms.Tree
     {
         KeyValuePair<TKey, TValue> GetMinKeyValuePair();
         KeyValuePair<TKey, TValue> GetMaxKeyValuePair();
+        IEnumerable<KeyValuePair<TKey, TValue>> GetAllKeyValueReversed();
     }
 }
