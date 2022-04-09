@@ -64,6 +64,41 @@ namespace NTests.Core
             }
         }
 
+        [Test]
+        public void EnqueueOrUpdate()
+        {
+            var queue = CreateNewQueue();
+            var t = CreateTestCase().ToList();
+
+            Assert.Throws<InvalidOperationException>(() => queue.Peek());
+            Assert.Throws<InvalidOperationException>(() => queue.Dequeue());
+
+            for (var i = 0; i < 100; i++)
+            {
+                var testCase = Rnd.Shuffle(t);
+                var distinctOrderedTestCase = testCase
+                    .OrderBy(x => x.Key)
+                    .GroupBy(x => x.Key)
+                    .Select(x => x.Last())
+                    .ToList();
+                foreach (var keyValuePair in distinctOrderedTestCase)
+                {
+                    queue.EnqueueOrUpdate(keyValuePair, x => keyValuePair);
+                }
+
+                Assert.AreEqual(distinctOrderedTestCase.Count, queue.Count);
+
+                foreach (var keyValuePair in distinctOrderedTestCase)
+                {
+                    Assert.AreEqual(keyValuePair, queue.Peek());
+                    Assert.AreEqual(keyValuePair, queue.Dequeue());
+                }
+
+                Assert.AreEqual(0, queue.Count);
+                Assert.Throws<InvalidOperationException>(() => queue.Peek());
+                Assert.Throws<InvalidOperationException>(() => queue.Dequeue());
+            }
+        }
 
 
         [Test]
