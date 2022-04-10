@@ -1,7 +1,10 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Web;
 using Eocron.Algorithms.Graphs;
 using NUnit.Framework;
 using QuikGraph;
+using QuikGraph.Graphviz;
 
 namespace NTests
 {
@@ -16,6 +19,7 @@ namespace NTests
         public void PathToRome(int[] pathToRome, int expectedMinSteps)
         {
             var graph = ParsePathToRome(pathToRome);
+            Print(graph);
             var source = 0;
             var target = pathToRome.Length - 1;
             var result = DijkstraAlgorithm<int, int>.Search(
@@ -57,6 +61,15 @@ namespace NTests
             }
 
             return result;
+        }
+
+        private static void Print(AdjacencyGraph<int, Edge<int>> graph)
+        {
+            var g = new GraphvizAlgorithm<int, Edge<int>>(graph);
+            var dot = g.Generate();
+            var uri = "https://dreampuf.github.io/GraphvizOnline/#" + Uri.EscapeDataString(dot);
+            Console.WriteLine(uri);
+            Console.WriteLine(dot);
         }
     }
 }
