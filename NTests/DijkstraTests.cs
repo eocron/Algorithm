@@ -29,7 +29,7 @@ namespace NTests
                 x => 0,
                 (x, y) => x.Weight + 1);
 
-            var pathToRome = result.PathFromSourceToTarget.ToList();
+            var pathToRome = result.GetPath(source, target).ToList();
             Print(graph, pathToRome);
             Assert.AreEqual(expectedMinSteps, result.Weights[target]);
         }
