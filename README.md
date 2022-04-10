@@ -84,6 +84,7 @@ https://en.wikipedia.org/wiki/Binary_search_algorithm
   - Search lower bound.
   - Search upper bound.
   - Custom comparer support.
+  - Descending order support.
 
 ## Random class extensions
 
