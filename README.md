@@ -30,6 +30,15 @@ https://en.wikipedia.org/wiki/Fibonacci_heap
   - Enqueue/Dequeue/EnqueueOrUpdate/Peek
   - Simple O(1) amortized time priority queue
 
+## Dijkstra algoritm
+
+https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
+
+  - Advanced version with Fibonacci heap speed up, so complexety is O(E + V*log(V))
+  - Supports infinity graphs, where edges/verticies known only at runtime. Lazy graphs.
+  - Supports various ways to calculate weight in graph: weight of vertex, weight of edge
+  - Supports stop condition on reaching target, eliminating excess calculations.
+
 ## File system caching of files
 
 This implementation will use file system as storage for really-really-really big files, which can't be stored in-memory, and by all means should reside in file system.
