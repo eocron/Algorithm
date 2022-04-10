@@ -38,6 +38,7 @@ https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
   - Supports infinity graphs, where edges/verticies known only at runtime. Lazy graphs.
   - Supports various ways to calculate weight in graph: weight of vertex, weight of edge
   - Supports stop condition on reaching target, eliminating excess calculations.
+  - Supports weight comparer.
 
 ## File system caching of files
 
