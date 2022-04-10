@@ -35,7 +35,7 @@ https://en.wikipedia.org/wiki/Fibonacci_heap
 https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
 
   - Advanced version with Fibonacci heap speed up, so complexety is O(E + V*log(V))
-  - Supports infinity graphs, where edges/verticies known only at runtime. Lazy graphs.
+  - Supports infinity graphs, where edges/verticies known only at runtime: large graphs, dynamic algorithms, greedy algoritms, etc.
   - Supports various ways to calculate weight in graph: weight of vertex, weight of edge
   - Supports stop condition on reaching target, eliminating excess calculations.
   - Supports weight comparer.
