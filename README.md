@@ -23,7 +23,7 @@ https://en.wikipedia.org/wiki/Red%E2%80%93black_tree
   - Complete implementation of IDictionary
   - Duplicate keys are not allowed
 
-## Fibonacci heap as PriorityQueueu
+## Fibonacci heap as PriorityQueue
 
 https://en.wikipedia.org/wiki/Fibonacci_heap
 
