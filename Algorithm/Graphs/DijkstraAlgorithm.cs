@@ -48,20 +48,57 @@ namespace Eocron.Algorithms.Graphs
 
         public class SearchResult
         {
+            public TVertex Source { get; set; }
+
+            public TVertex Target { get; set; }
+
+            public bool IsTargetFound { get; set; }
+
             /// <summary>
             /// All traveled vertex weights. If target condition specified, can contain partial weight matrix.
             /// </summary>
             public Dictionary<TVertex, TWeight> Weights { get; set; }
 
             /// <summary>
-            /// Straight path from source to target.
-            /// </summary>
-            public List<TVertex> PathToTarget { get; set; }
-
-            /// <summary>
             /// Tree of cheapest paths.
             /// </summary>
             public Dictionary<TVertex, TVertex> ReversedPaths { get; set; }
+
+            public IEnumerable<TVertex> PathFromSourceToTarget => IsTargetFound
+                ? GetPath(Source, Target)
+                : Enumerable.Empty<TVertex>();
+
+            public IEnumerable<TVertex> GetPath(TVertex source, TVertex target)
+            {
+                return GetPath(ReversedPaths, Weights, source, target) ?? Enumerable.Empty<TVertex>();
+            }
+            private static IEnumerable<TVertex> GetPath(
+                Dictionary<TVertex, TVertex> paths,
+                Dictionary<TVertex, TWeight> weights,
+                TVertex source,
+                TVertex target)
+            {
+
+                if (paths.Count == 0)
+                    return null;
+
+                var u = target;
+                var isReachable = paths.ContainsKey(u) || source.Equals(u);
+                if (!isReachable)
+                    return null;
+
+                var stack = new Stack<TVertex>();
+                while (weights.ContainsKey(u))
+                {
+                    stack.Push(u);
+                    if (!paths.TryGetValue(u, out u))
+                    {
+                        break;
+                    }
+                }
+
+                return stack;
+            }
         }
 
         public class VertexWeight
@@ -135,9 +172,11 @@ namespace Eocron.Algorithms.Graphs
                 {
                     return new SearchResult
                     {
+                        Source = source,
+                        Target = u,
                         Weights = weights,
-                        PathToTarget = GetPath(paths, weights, source, u).ToList(),
-                        ReversedPaths = paths
+                        ReversedPaths = paths,
+                        IsTargetFound = true
                     };
                 }
 
@@ -163,34 +202,13 @@ namespace Eocron.Algorithms.Graphs
 
             return new SearchResult
             {
+                Source = source,
                 Weights = weights,
-                ReversedPaths = paths,
-                PathToTarget = new List<TVertex>()
+                ReversedPaths = paths
             };
         }
 
-        private static IEnumerable<TVertex> GetPath(
-            Dictionary<TVertex, TVertex> paths, 
-            Dictionary<TVertex, TWeight> weights,
-            TVertex source, 
-            TVertex target)
-        {
 
-            if (paths.Count == 0)
-                yield break;
-
-            var u = target;
-            var isReachable = paths.ContainsKey(u) || source.Equals(u);
-            if (!isReachable)
-                yield break;
-
-            var stack = new Stack<TVertex>();
-            while (weights.ContainsKey(u))
-            {
-                stack.Push(u);
-                u = paths[u];
-            }
-        }
 
         private static IPriorityQueue<TWeight, TVertex> CreateQueue(IComparer<TWeight> comparer)
         {
