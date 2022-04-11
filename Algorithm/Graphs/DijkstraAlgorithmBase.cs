@@ -74,9 +74,9 @@ namespace Eocron.Algorithms.Graphs
             IsTargetVertex isTargetVertex = null,
             IComparer<TWeight> comparer = null)
         {
-            _getEdges = getEdges;
-            _getVertexWeight = getVertexWeight;
-            _getEdgeWeight = getEdgeWeight;
+            _getEdges = getEdges ?? throw new ArgumentNullException(nameof(getEdges));
+            _getVertexWeight = getVertexWeight ?? throw new ArgumentNullException(nameof(getVertexWeight));
+            _getEdgeWeight = getEdgeWeight ?? throw new ArgumentNullException(nameof(getEdgeWeight));
             _isTargetVertex = isTargetVertex;
             _comparer = comparer ?? Comparer<TWeight>.Default;
         }

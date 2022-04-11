@@ -9,7 +9,7 @@ namespace Eocron.Algorithms.Graphs
     /// <summary>
     /// https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
     /// This implementation is finite. Count of verticies should be know beforehand.
-    /// Much faster than infinite one, because allocates memory beforehand.
+    /// Much faster than infinite one, because of efficient memory allocation.
     /// 
     /// Verticies index range: [0,V)
     /// Complexity: O(E + V*log(V))
@@ -23,10 +23,10 @@ namespace Eocron.Algorithms.Graphs
 
         private struct Item
         {
-            public bool WeightInitialized;
-            public TWeight Weight;
             public bool PathInitialized;
+            public bool WeightInitialized;
             public int Path;
+            public TWeight Weight;
         }
 
         public FiniteDijkstraAlgorithm(
@@ -38,6 +38,9 @@ namespace Eocron.Algorithms.Graphs
             IComparer<TWeight> comparer = null)
             : base(getEdges, getVertexWeight, getEdgeWeight, isTargetVertex, comparer)
         {
+            if (vertexCount <= 0)
+                throw new ArgumentOutOfRangeException(nameof(vertexCount));
+
             _pool = ArrayPool<Item>.Shared;
             _items = _pool.Rent(vertexCount);
         }
