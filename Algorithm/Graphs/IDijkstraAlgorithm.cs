@@ -10,7 +10,7 @@ namespace Eocron.Algorithms.Graphs
         bool IsTargetFound { get; }
 
         /// <summary>
-        /// Performs search on this particular algorithm, filling its weight/path matrix.
+        ///     Performs search on this particular algorithm, filling its weight/path matrix.
         /// </summary>
         /// <param name="source">Starting/source vertex.</param>
         void Search(TVertex source);

@@ -1,33 +1,23 @@
 ﻿using System;
 using System.Buffers;
-using System.Collections;
 using System.Collections.Generic;
 using Eocron.Algorithms.Queues;
 
 namespace Eocron.Algorithms.Graphs
 {
     /// <summary>
-    /// https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
-    /// This implementation is finite. Count of verticies should be know beforehand.
-    /// Much faster than infinite one, because of efficient memory allocation.
-    /// 
-    /// Verticies index range: [0,V)
-    /// Complexity: O(E + V*log(V))
-    /// Memory: O(V)
+    ///     https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
+    ///     This implementation is finite. Count of verticies should be know beforehand.
+    ///     Much faster than infinite one, because of efficient memory allocation.
+    ///     Verticies index range: [0,V)
+    ///     Complexity: O(E + V*log(V))
+    ///     Memory: O(V)
     /// </summary>
     /// <typeparam name="TWeight">Weight type</typeparam>
     public class FiniteDijkstraAlgorithm<TWeight> : DijkstraAlgorithmBase<int, TWeight>, IDisposable
     {
-        private readonly ArrayPool<Item> _pool;
         private readonly Item[] _items;
-
-        private struct Item
-        {
-            public bool PathInitialized;
-            public bool WeightInitialized;
-            public int Path;
-            public TWeight Weight;
-        }
+        private readonly ArrayPool<Item> _pool;
 
         public FiniteDijkstraAlgorithm(
             int vertexCount,
@@ -43,6 +33,11 @@ namespace Eocron.Algorithms.Graphs
 
             _pool = ArrayPool<Item>.Shared;
             _items = _pool.Rent(vertexCount);
+        }
+
+        public void Dispose()
+        {
+            _pool.Return(_items);
         }
 
 
@@ -93,9 +88,12 @@ namespace Eocron.Algorithms.Graphs
             base.Clear();
         }
 
-        public void Dispose()
+        private struct Item
         {
-            _pool.Return(_items);
+            public bool PathInitialized;
+            public bool WeightInitialized;
+            public int Path;
+            public TWeight Weight;
         }
     }
 }
