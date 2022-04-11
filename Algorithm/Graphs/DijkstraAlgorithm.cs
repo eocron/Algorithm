@@ -182,7 +182,7 @@ namespace Eocron.Algorithms.Graphs
 
                 var neighbors = getEdges(u);
                 if(neighbors == null)
-                    break;
+                    continue;
 
                 foreach (var v in neighbors)
                 {
