@@ -86,6 +86,7 @@ namespace Eocron.Algorithms.Graphs
             Clear();
             try
             {
+                Source = source;
                 var queue = CreateQueue(_comparer);
                 var w = _getVertexWeight(source);
                 queue.Enqueue(new KeyValuePair<TWeight, TVertex>(w, source));
@@ -97,7 +98,6 @@ namespace Eocron.Algorithms.Graphs
 
                     if (_isTargetVertex?.Invoke(u) ?? false)
                     {
-                        Source = source;
                         Target = u;
                         IsTargetFound = true;
                         _searched = true;
@@ -125,8 +125,7 @@ namespace Eocron.Algorithms.Graphs
                         }
                     }
                 }
-
-                Source = source;
+                
                 _searched = true;
             }
             catch
@@ -178,10 +177,7 @@ namespace Eocron.Algorithms.Graphs
 
         protected abstract void SetPath(TVertex vertex, TVertex other);
 
-        protected virtual bool ContainsPath(TVertex vertex)
-        {
-            return TryGetPath(vertex, out _);
-        }
+        protected abstract bool ContainsPath(TVertex vertex);
 
         protected virtual void Clear()
         {
@@ -195,10 +191,7 @@ namespace Eocron.Algorithms.Graphs
 
         protected abstract bool TryGetPath(TVertex source, out TVertex target);
 
-        protected virtual bool ContainsWeight(TVertex vertex)
-        {
-            return TryGetWeight(vertex, out var _);
-        }
+        protected abstract bool ContainsWeight(TVertex vertex);
 
         protected void ThrowIfNotSearched()
         {

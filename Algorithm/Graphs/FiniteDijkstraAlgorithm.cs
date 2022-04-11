@@ -65,6 +65,16 @@ namespace Eocron.Algorithms.Graphs
             _items[vertex].Path = other;
         }
 
+        protected override bool ContainsPath(int vertex)
+        {
+            return _items[vertex].PathInitialized;
+        }
+
+        protected override bool ContainsWeight(int vertex)
+        {
+            return _items[vertex].WeightInitialized;
+        }
+
         protected override IPriorityQueue<TWeight, int> CreateQueue(IComparer<TWeight> comparer)
         {
             return new FibonacciHeap<TWeight, int>(comparer);
