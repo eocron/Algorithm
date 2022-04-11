@@ -16,15 +16,16 @@ namespace NTests
         [Test]
         public void Empty()
         {
-            var result = DijkstraAlgorithm<int, int>.Search(
-                0,
+            var result = new InfiniteDijkstraAlgorithm<int, int>(
                 x => null,
                 x => 0,
                 (x, y) => x.Weight + 1);
+            result.Search(0);
+
             Assert.AreEqual(1, result.Weights.Count);
             Assert.AreEqual(0, result.Weights[0]);
-            Assert.AreEqual(0, result.ReversedPaths.Count);
-            Assert.AreEqual(0, result.PathFromSourceToTarget.Count());
+            Assert.AreEqual(0, result.Paths.Count);
+            Assert.AreEqual(0, result.GetPathFromSourceToTarget().Count());
             Assert.IsFalse(result.IsTargetFound);
         }
 
@@ -39,11 +40,12 @@ namespace NTests
             var graph = ParsePathToRome(cities);
             var source = 0;
             var target = cities.Length - 1;
-            var result = DijkstraAlgorithm<int, int>.Search(
-                source,
+            using var result = new FiniteDijkstraAlgorithm<int>(
+                cities.Length,
                 x => graph.OutEdges(x).Select(y => y.Target),
                 x => 0,
                 (x, y) => x.Weight + 1);
+            result.Search(source);
 
             var pathToRome = result.GetPath(source, target).ToList();
             Print(graph, pathToRome);
@@ -52,15 +54,14 @@ namespace NTests
 
         [Test]
         [TestCase("kitten", "sitting", 3)]
+        [TestCase("kitten", "kitting", 2)]
         [TestCase("hello", "kelm", 2)]
         [TestCase("asetbaeaefasdfsa", "asdfaew", 12)]
         public void LevenstainDistance(string sourceStr, string targetStr, int expectedMinDistance)
         {
             var source = Tuple.Create(0, 0);
             var target = Tuple.Create(sourceStr.Length - 1, targetStr.Length - 1);
-            var result = DijkstraAlgorithm<Tuple<int, int>, int>
-                .Search(
-                    source,
+            var result = new InfiniteDijkstraAlgorithm<Tuple<int, int>, int>(
                     x =>
                     {
                         var result = new List<Tuple<int, int>>();
@@ -84,6 +85,7 @@ namespace NTests
                     x => sourceStr[x.Item1] == targetStr[x.Item2] ? 0 : 1,
                     (x, y) => x.Weight + (sourceStr[y.Item1] == targetStr[y.Item2] ? 0 : 1),
                     isTargetVertex: x=> x.Equals(target));
+            result.Search(source);
 
             var minDistance = result.Weights[target];
             Assert.AreEqual(expectedMinDistance, minDistance);
@@ -156,7 +158,6 @@ namespace NTests
             var dot = g.Generate();
             var uri = "https://dreampuf.github.io/GraphvizOnline/#" + Uri.EscapeDataString(dot);
             Console.WriteLine(uri);
-            Console.WriteLine(dot);
         }
     }
 }
