@@ -179,7 +179,15 @@ namespace Eocron.Algorithms.Graphs
             return stack;
         }
         
-        protected abstract bool TryGetWeight(TVertex vertex, out TWeight weight);
+        public abstract bool TryGetWeight(TVertex vertex, out TWeight weight);
+
+        public TWeight GetWeight(TVertex vertex)
+        {
+            ThrowIfNotSearched();
+            if (TryGetWeight(vertex, out var tmp))
+                return tmp;
+            throw new IndexOutOfRangeException(vertex.ToString());
+        }
 
         protected abstract void SetWeight(TVertex vertex, TWeight weight);
 

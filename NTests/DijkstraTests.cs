@@ -21,10 +21,8 @@ namespace NTests
                 x => 0,
                 (x, y) => x.Weight + 1);
             result.Search(0);
-
-            Assert.AreEqual(1, result.Weights.Count);
-            Assert.AreEqual(0, result.Weights[0]);
-            Assert.AreEqual(0, result.Paths.Count);
+            
+            Assert.AreEqual(0, result.GetWeight(0));
             Assert.AreEqual(0, result.GetPathFromSourceToTarget().Count());
             Assert.IsFalse(result.IsTargetFound);
         }
@@ -49,7 +47,7 @@ namespace NTests
 
             var pathToRome = result.GetPath(source, target).ToList();
             Print(graph, pathToRome);
-            Assert.AreEqual(expectedMinSteps, result.Weights[target]);
+            Assert.AreEqual(expectedMinSteps, result.GetWeight(target));
         }
 
         [Test]
@@ -87,7 +85,7 @@ namespace NTests
                     isTargetVertex: x=> x.Equals(target));
             result.Search(source);
 
-            var minDistance = result.Weights[target];
+            var minDistance = result.GetWeight(target);
             Assert.AreEqual(expectedMinDistance, minDistance);
         }
 

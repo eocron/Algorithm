@@ -15,8 +15,8 @@ namespace Eocron.Algorithms.Graphs
     /// <typeparam name="TWeight">Weight type</typeparam>
     public class InfiniteDijkstraAlgorithm<TVertex, TWeight> : DijkstraAlgorithmBase<TVertex, TWeight>
     {
-        public IDictionary<TVertex, TWeight> Weights;
-        public IDictionary<TVertex, TVertex> Paths;
+        private IDictionary<TVertex, TWeight> Weights;
+        private IDictionary<TVertex, TVertex> Paths;
         public InfiniteDijkstraAlgorithm(
             GetAllEdges getEdges, 
             GetVertexWeight getVertexWeight, 
@@ -29,7 +29,7 @@ namespace Eocron.Algorithms.Graphs
             Paths = new Dictionary<TVertex, TVertex>();
         }
 
-        protected override bool TryGetWeight(TVertex vertex, out TWeight weight)
+        public override bool TryGetWeight(TVertex vertex, out TWeight weight)
         {
             return Weights.TryGetValue(vertex, out weight);
         }

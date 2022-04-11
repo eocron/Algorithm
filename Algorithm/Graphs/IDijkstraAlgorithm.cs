@@ -20,5 +20,9 @@ namespace Eocron.Algorithms.Graphs
         IEnumerable<TVertex> GetPath(
             TVertex source,
             TVertex target);
+
+        public bool TryGetWeight(TVertex target, out TWeight weight);
+
+        public TWeight GetWeight(TVertex vertex);
     }
 }
