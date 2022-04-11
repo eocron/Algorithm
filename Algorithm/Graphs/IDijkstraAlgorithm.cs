@@ -17,9 +17,7 @@ namespace Eocron.Algorithms.Graphs
 
         IEnumerable<TVertex> GetPathFromSourceToTarget();
 
-        IEnumerable<TVertex> GetPath(
-            TVertex source,
-            TVertex target);
+        IEnumerable<TVertex> GetPath(TVertex source, TVertex target);
 
         public bool TryGetWeight(TVertex target, out TWeight weight);
 

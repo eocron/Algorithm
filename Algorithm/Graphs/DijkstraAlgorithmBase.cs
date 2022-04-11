@@ -200,7 +200,7 @@ namespace Eocron.Algorithms.Graphs
             return TryGetWeight(vertex, out var _);
         }
 
-        private void ThrowIfNotSearched()
+        protected void ThrowIfNotSearched()
         {
             if (!_searched)
                 throw new InvalidOperationException("Perform search.");
