@@ -55,6 +55,7 @@ namespace Eocron.Algorithms.Graphs
 
         private bool _searched;
 
+
         /// <summary>
         ///     Perform search in graph.
         /// </summary>
@@ -67,8 +68,8 @@ namespace Eocron.Algorithms.Graphs
             GetAllEdges getEdges,
             GetVertexWeight getVertexWeight,
             GetEdgeWeight getEdgeWeight,
-            IsTargetVertex isTargetVertex = null,
-            IComparer<TWeight> comparer = null)
+            IsTargetVertex isTargetVertex,
+            IComparer<TWeight> comparer)
         {
             _getEdges = getEdges ?? throw new ArgumentNullException(nameof(getEdges));
             _getVertexWeight = getVertexWeight ?? throw new ArgumentNullException(nameof(getVertexWeight));
@@ -87,14 +88,13 @@ namespace Eocron.Algorithms.Graphs
             try
             {
                 Source = source;
-                var queue = CreateQueue(_comparer);
                 var w = _getVertexWeight(source);
-                queue.Enqueue(new KeyValuePair<TWeight, TVertex>(w, source));
+                Enqueue(new KeyValuePair<TWeight, TVertex>(w, source));
                 SetWeight(source, w);
 
-                while (queue.Count > 0)
+                while (!IsQueueEmpty())
                 {
-                    var u = queue.Dequeue().Value;
+                    var u = Dequeue();
 
                     if (_isTargetVertex?.Invoke(u) ?? false)
                     {
@@ -121,7 +121,7 @@ namespace Eocron.Algorithms.Graphs
                             SetWeight(v, alternativeWeightOfV);
                             SetPath(v, u);
                             var item = new KeyValuePair<TWeight, TVertex>(alternativeWeightOfV, v);
-                            queue.EnqueueOrUpdate(item, x => item); //decrease or add priority
+                            EnqueueOrUpdate(item, x => item); //decrease or add priority
                         }
                     }
                 }
@@ -151,7 +151,7 @@ namespace Eocron.Algorithms.Graphs
             var u = target;
             var isReachable = ContainsPath(u) || source.Equals(u);
             if (!isReachable)
-                return null;
+                return Enumerable.Empty<TVertex>();
 
             var stack = new Stack<TVertex>();
             while (ContainsWeight(u))
@@ -187,7 +187,14 @@ namespace Eocron.Algorithms.Graphs
             _searched = false;
         }
 
-        protected abstract IPriorityQueue<TWeight, TVertex> CreateQueue(IComparer<TWeight> comparer);
+        protected abstract void Enqueue(KeyValuePair<TWeight, TVertex> item);
+
+        protected abstract void EnqueueOrUpdate(KeyValuePair<TWeight, TVertex> item,
+            Func<KeyValuePair<TWeight, TVertex>, KeyValuePair<TWeight, TVertex>> onUpdate);
+
+        protected abstract TVertex Dequeue();
+
+        protected abstract bool IsQueueEmpty();
 
         protected abstract bool TryGetPath(TVertex source, out TVertex target);
 

@@ -28,23 +28,78 @@ namespace NTests
         }
 
         [Test]
+        public void Cyclic()
+        {
+            var graph = new AdjacencyGraph<int, Edge<int>>();
+            for (int i = 0; i < 10; i++)
+            {
+                graph.AddVertex(i);
+            }
+            for (int i = 0; i < 10; i++)
+            {
+                for (int j = 0; j < 10; j++)
+                {
+                    graph.AddEdge(new Edge<int>(i, j));
+                }
+            }
+            var source = 0;
+            var target = 9;
+            var result = new InfiniteDijkstraAlgorithm<int, int>(
+                x => graph.OutEdges(x).Select(y => y.Target),
+                x => 0,
+                (x, y) => x.Weight + 1);
+            result.Search(source);
+            var pathToRome = result.GetPath(source, target).ToList();
+            Assert.AreEqual(1, result.GetWeight(target));
+            Assert.AreEqual(new[]{source, target}, pathToRome);
+            Print(graph, pathToRome);
+        }
+
+        [Test]
         [TestCase(new[] {1, 1, 1, 1}, 3)]
         [TestCase(new[] {2, 1, 1, 1}, 2)]
         [TestCase(new[] {1, 2, 3, 4}, 2)]
         [TestCase(new[] {4, 3, 2, 1}, 1)]
         [TestCase(new[] {2, 2, 1, 3, 3, 2, 1}, 3)]
-        public void PathToRome(int[] cities, int expectedMinSteps)
+        [TestCase(new[] {2, 0, 1, 1}, 1)]
+        public void PathToNearCity(int[] cities, int expectedMinSteps)
         {
             var graph = ParsePathToRome(cities);
             var source = 0;
-            var target = cities.Length - 1;
-            using var result = new FiniteDijkstraAlgorithm<int>(
-                cities.Length,
+            var targets = cities
+                .Select((x, i) => new {x, i})
+                .Where(x => x.x == 0)
+                .Select(x => x.i)
+                .Concat(new[] {cities.Length - 1})
+                .ToList();
+            var result = new InfiniteDijkstraAlgorithm<int, int>(
                 x => graph.OutEdges(x).Select(y => y.Target),
                 x => 0,
                 (x, y) => x.Weight + 1);
             result.Search(source);
+            var target = targets.OrderBy(x => result.GetWeight(x)).First();
+            var pathToRome = result.GetPath(source, target).ToList();
+            Print(graph, pathToRome);
+            Assert.AreEqual(expectedMinSteps, result.GetWeight(target));
+        }
 
+        [Test]
+        [TestCase(new[] { 1, 1, 1, 1 }, 3)]
+        [TestCase(new[] { 2, 1, 1, 1 }, 2)]
+        [TestCase(new[] { 1, 2, 3, 4 }, 2)]
+        [TestCase(new[] { 4, 3, 2, 1 }, 1)]
+        [TestCase(new[] { 2, 2, 1, 3, 3, 2, 1 }, 3)]
+        [TestCase(new[] { 2, 0, 1, 1 }, 2)]
+        public void PathToRome(int[] cities, int expectedMinSteps)
+        {
+            var graph = ParsePathToRome(cities);
+            var source = 0;
+            var result = new InfiniteDijkstraAlgorithm<int, int>(
+                x => graph.OutEdges(x).Select(y => y.Target),
+                x => 0,
+                (x, y) => x.Weight + 1);
+            result.Search(source);
+            var target = cities.Length - 1;
             var pathToRome = result.GetPath(source, target).ToList();
             Print(graph, pathToRome);
             Assert.AreEqual(expectedMinSteps, result.GetWeight(target));
@@ -89,6 +144,34 @@ namespace NTests
             Assert.AreEqual(expectedMinDistance, minDistance);
         }
 
+        [Test, Explicit]
+        public void Debug()
+        {
+            var rnd = new Random(42);
+            var cities = Enumerable.Range(0, 30).Select(x => rnd.Next(0, 10)).ToList();
+            var graph = ParsePathToRome(cities);
+            var source = 0;
+            var targets = cities
+                .Select((x, i) => new { x, i })
+                .Where(x => x.x == 0)
+                .Select(x => x.i)
+                .Concat(new[] { cities.Count - 1 })
+                .ToList();
+            var result = new InfiniteDijkstraAlgorithm<int, int>(
+                x => graph.OutEdges(x).Select(y => y.Target),
+                x => 0,
+                (x, y) => x.Weight + 1,
+                buildShortestPathTree:true);
+            result.Search(source);
+
+            
+            //Print(graph, null);
+
+            var target = graph.VertexCount - 1;//targets.OrderBy(x => result.GetWeight(x)).First();
+            var pathToRome = result.GetPath(source, target).ToList();
+            Print(graph, pathToRome);
+        }
+
         /// <summary>
         /// Path to rome is a game. Each index represents city, each value represents range of adjacent cities (i.e from i+1 to i+array[i]).
         /// Last index is Rome. You need to travel from first index to last in least amount of steps.
@@ -106,13 +189,13 @@ namespace NTests
         /// </summary>
         /// <param name="paths"></param>
         /// <returns></returns>
-        private static AdjacencyGraph<int, Edge<int>> ParsePathToRome(int[] paths)
+        public static AdjacencyGraph<int, Edge<int>> ParsePathToRome(IList<int> paths)
         {
             var result = new AdjacencyGraph<int, Edge<int>>();
-            for (int i = 0; i < paths.Length; i++)
+            for (int i = 0; i < paths.Count; i++)
             {
                 result.AddVertex(i);
-                for (int j = i+1; j < paths.Length && j <= i+paths[i]; j++)
+                for (int j = i+1; j < paths.Count && j <= i+paths[i]; j++)
                 {
                     result.AddVertex(j);
                     result.AddEdge(new Edge<int>(i,j));
@@ -122,6 +205,7 @@ namespace NTests
             return result;
         }
 
+
         private static void Print(AdjacencyGraph<int, Edge<int>> graph, List<int> path)
         {
             var g = new GraphvizAlgorithm<int, Edge<int>>(graph);
@@ -129,30 +213,34 @@ namespace NTests
             g.CommonVertexFormat.Shape = GraphvizVertexShape.Circle;
             g.CommonEdgeFormat.Direction = GraphvizEdgeDirection.Forward;
 
-            g.FormatVertex += (_, args) =>
+            if (path != null && path.Any())
             {
-                if (path.Contains(args.Vertex))
+                g.FormatVertex += (_, args) =>
                 {
-                    args.VertexFormat.FontColor = GraphvizColor.Red;
-                    args.VertexFormat.StrokeColor = GraphvizColor.Green;
-                }
+                    if (path.Contains(args.Vertex))
+                    {
+                        args.VertexFormat.FontColor = GraphvizColor.Red;
+                        args.VertexFormat.StrokeColor = GraphvizColor.Green;
+                    }
 
-                if (args.Vertex == path.Last())
-                {
-                    args.VertexFormat.Shape = GraphvizVertexShape.DoubleCircle;
-                }
-            };
+                    if (args.Vertex == path.Last())
+                    {
+                        args.VertexFormat.Shape = GraphvizVertexShape.DoubleCircle;
+                    }
+                };
 
-            g.FormatEdge += (_, args) =>
-            {
-                var ids = path.IndexOf(args.Edge.Source);
-                var idt = path.IndexOf(args.Edge.Target);
-                if (ids >=0 && idt >= 0 && ids+1 == idt)
+                g.FormatEdge += (_, args) =>
                 {
-                    args.EdgeFormat.FontColor = GraphvizColor.Green;
-                    args.EdgeFormat.StrokeColor = GraphvizColor.Green;
-                }
-            };
+                    var ids = path.IndexOf(args.Edge.Source);
+                    var idt = path.IndexOf(args.Edge.Target);
+                    if (ids >= 0 && idt >= 0 && ids + 1 == idt)
+                    {
+                        args.EdgeFormat.FontColor = GraphvizColor.Green;
+                        args.EdgeFormat.StrokeColor = GraphvizColor.Green;
+                    }
+                };
+            }
+
             var dot = g.Generate();
             var uri = "https://dreampuf.github.io/GraphvizOnline/#" + Uri.EscapeDataString(dot);
             Console.WriteLine(uri);

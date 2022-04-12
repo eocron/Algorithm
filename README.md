@@ -38,6 +38,7 @@ https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
   - Supports infinity graphs, where edges/verticies known only at runtime: large graphs, dynamic algorithms, greedy algoritms, etc.
   - Supports various ways to calculate weight in graph: weight of vertex, weight of edge
   - Supports stop condition on reaching target, eliminating excess calculations.
+  - Supports search everything to build shortest path tree (useful for finding shortest path to any node).
   - Supports weight comparer.
 
 ## File system caching of files

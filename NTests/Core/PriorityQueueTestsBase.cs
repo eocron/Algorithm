@@ -101,6 +101,7 @@ namespace NTests.Core
         }
 
 
+
         [Test]
         public void Clear()
         {

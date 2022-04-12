@@ -22,5 +22,19 @@ namespace NTests
         }
 
         public override bool IsStable => false;
+
+        [Test]
+        public void SameDequeue()
+        {
+            var queue = CreateNewQueue();
+            queue.Enqueue(new KeyValuePair<int, Guid>(1, Guid.NewGuid()));
+            queue.Enqueue(new KeyValuePair<int, Guid>(1, Guid.NewGuid()));
+
+            Assert.AreEqual(2, queue.Count);
+            queue.Dequeue();
+            Assert.AreEqual(1, queue.Count);
+            queue.Dequeue();
+            Assert.AreEqual(0, queue.Count);
+        }
     }
 }

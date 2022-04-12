@@ -3,7 +3,6 @@ using NTests.Core;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 
 namespace NTests
@@ -11,7 +10,6 @@ namespace NTests
     [TestFixture, Category("Performance"), Explicit]
     public class ByteArrayEqualityComparerPerformanceTests
     {
-
         public List<byte[]> ArrayPool;
         public IEqualityComparer<ArraySegment<byte>> Comparer;
 

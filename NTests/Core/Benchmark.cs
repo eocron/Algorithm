@@ -28,6 +28,7 @@ namespace NTests.Core
                 }
             }
             var results = new List<double>(10000);
+            var memoryResults = new List<long>(10000);
             var watch = new BenchmarkContext();
 
             GC.Collect();  // compact Heap
@@ -35,6 +36,7 @@ namespace NTests.Core
             GC.Collect();
             while(!token.IsCancellationRequested)
             {
+                var prev = GC.GetTotalMemory(false);
                 watch.Start();
                 try
                 {
@@ -48,14 +50,26 @@ namespace NTests.Core
                 {
                     watch.Stop();
                 }
+                var next = GC.GetTotalMemory(false);
                 results.Add(watch.TotalCount / watch.Stopwatch.Elapsed.TotalSeconds);
+                memoryResults.Add(prev - next);
             }
             results.Sort();
-            Console.WriteLine("Max:\t{0:F0} op/sec", results.Last());
-            Console.WriteLine("Min:\t{0:F0} op/sec", results.First());
-            Console.WriteLine("Avg:\t{0:F0} op/sec", results.Sum() / results.Count);
-            Console.WriteLine("Med:\t{0:F0} op/sec", results[results.Count/2]);
+            memoryResults.Sort();
+
+            Console.WriteLine("Rps:");
+            Console.WriteLine("Max:\t{0:F0} rps", results.Last());
+            Console.WriteLine("Min:\t{0:F0} rps", results.First());
+            Console.WriteLine("Avg:\t{0:F0} rps", results.Sum() / results.Count);
+            Console.WriteLine("Med:\t{0:F0} rps", results[results.Count/2]);
+
+            Console.WriteLine("Memory:");
+            Console.WriteLine("Max:\t{0:F0} bps", memoryResults.Last());
+            Console.WriteLine("Min:\t{0:F0} bps", memoryResults.First());
+            Console.WriteLine("Avg:\t{0:F0} bps", memoryResults.Sum() / memoryResults.Count);
+            Console.WriteLine("Med:\t{0:F0} bps", memoryResults[memoryResults.Count / 2]);
         }
+
 
         /// <summary>
         /// Performs infinite measure of method execution with warmup, until cancellation is requested.

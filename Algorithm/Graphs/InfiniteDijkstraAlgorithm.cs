@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Eocron.Algorithms.Queues;
 
 namespace Eocron.Algorithms.Graphs
@@ -12,21 +14,49 @@ namespace Eocron.Algorithms.Graphs
     /// </summary>
     /// <typeparam name="TVertex">Vertex type</typeparam>
     /// <typeparam name="TWeight">Weight type</typeparam>
-    public class InfiniteDijkstraAlgorithm<TVertex, TWeight> : DijkstraAlgorithmBase<TVertex, TWeight>
+    public sealed class InfiniteDijkstraAlgorithm<TVertex, TWeight> : DijkstraAlgorithmBase<TVertex, TWeight>
     {
+        private readonly bool _searchAll;
         private readonly IDictionary<TVertex, TVertex> _paths;
         private readonly IDictionary<TVertex, TWeight> _weights;
+        private readonly IPriorityQueue<TWeight, TVertex> _priorityQueue;
+        private readonly Queue<TVertex> _simpleQueue;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="getEdges">Get all outgoing edges.</param>
+        /// <param name="getVertexWeight">Get vertex weight.</param>
+        /// <param name="getEdgeWeight">Get edge weight from X vertex to Y vertex.</param>
+        /// <param name="isTargetVertex">Checks if target is found.</param>
+        /// <param name="weightComparer">Weight comparer.</param>
+        /// <param name="vertexEqualityComparer">Vertex equality comparer.</param>
+        /// <param name="count">Count of verticies, if known</param>
+        /// <param name="buildShortestPathTree">Should algorithm find all shortests paths</param>
         public InfiniteDijkstraAlgorithm(
             GetAllEdges getEdges,
             GetVertexWeight getVertexWeight,
             GetEdgeWeight getEdgeWeight,
             IsTargetVertex isTargetVertex = null,
-            IComparer<TWeight> comparer = null)
-            : base(getEdges, getVertexWeight, getEdgeWeight, isTargetVertex, comparer)
+            IComparer<TWeight> weightComparer = null,
+            IEqualityComparer<TVertex> vertexEqualityComparer = null,
+            int count = 0,
+            bool buildShortestPathTree = false)
+            : base(getEdges, getVertexWeight, getEdgeWeight, isTargetVertex, weightComparer)
         {
-            _weights = new Dictionary<TVertex, TWeight>();
-            _paths = new Dictionary<TVertex, TVertex>();
+            _searchAll = buildShortestPathTree;
+            vertexEqualityComparer ??= EqualityComparer<TVertex>.Default;
+            if (!_searchAll)
+            {
+                _priorityQueue = new FibonacciHeap<TWeight, TVertex>(weightComparer);
+            }
+            else
+            {
+                _simpleQueue = count <= 0 ? new Queue<TVertex>() : new Queue<TVertex>(count);
+            }
+
+            _weights = count <= 0 ? new Dictionary<TVertex, TWeight>(vertexEqualityComparer) : new Dictionary<TVertex, TWeight>(count, vertexEqualityComparer);
+            _paths = count <= 0 ? new Dictionary<TVertex, TVertex>(vertexEqualityComparer) : new Dictionary<TVertex, TVertex>(count, vertexEqualityComparer);
         }
 
         public override bool TryGetWeight(TVertex vertex, out TWeight weight)
@@ -53,12 +83,47 @@ namespace Eocron.Algorithms.Graphs
         {
             _paths.Clear();
             _weights.Clear();
+            _priorityQueue?.Clear();
+            _simpleQueue?.Clear();
             base.Clear();
         }
 
-        protected override IPriorityQueue<TWeight, TVertex> CreateQueue(IComparer<TWeight> comparer)
+        protected override void Enqueue(KeyValuePair<TWeight, TVertex> item)
         {
-            return new FibonacciHeap<TWeight, TVertex>(comparer);
+            if (_searchAll)
+            {
+                _simpleQueue.Enqueue(item.Value);
+            }
+            else
+            {
+                _priorityQueue.Enqueue(item);
+            }
+        }
+
+        protected override void EnqueueOrUpdate(KeyValuePair<TWeight, TVertex> item, Func<KeyValuePair<TWeight, TVertex>, KeyValuePair<TWeight, TVertex>> onUpdate)
+        {
+            if (_searchAll)
+            {
+                _simpleQueue.Enqueue(item.Value);
+            }
+            else
+            {
+                _priorityQueue.EnqueueOrUpdate(item, onUpdate);
+            }
+        }
+
+        protected override TVertex Dequeue()
+        {
+            if (_searchAll)
+                return _simpleQueue.Dequeue();
+            return _priorityQueue.Dequeue().Value;
+        }
+
+        protected override bool IsQueueEmpty()
+        {
+            if (_searchAll)
+                return _simpleQueue.Count == 0;
+            return _priorityQueue.Count == 0;
         }
 
         protected override bool TryGetPath(TVertex source, out TVertex target)
