@@ -5,14 +5,6 @@ using Eocron.Algorithms.Queues;
 
 namespace Eocron.Algorithms.Graphs
 {
-    /// <summary>
-    ///     https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
-    ///     This implementation is infinite one. This means its not necessary to know entire graph at source and you
-    ///     can provide more data as you go deeper in graph.
-    ///     This base class allow you to allocate any vertex/edge/weights containers you like.
-    /// </summary>
-    /// <typeparam name="TVertex">Vertex type</typeparam>
-    /// <typeparam name="TWeight">Weight type</typeparam>
     public abstract class DijkstraAlgorithmBase<TVertex, TWeight> : IDijkstraAlgorithm<TVertex, TWeight>
     {
         /// <summary>
@@ -55,15 +47,6 @@ namespace Eocron.Algorithms.Graphs
 
         private bool _searched;
 
-
-        /// <summary>
-        ///     Perform search in graph.
-        /// </summary>
-        /// <param name="getEdges">Get all outgoing edges.</param>
-        /// <param name="getVertexWeight">Get vertex weight.</param>
-        /// <param name="getEdgeWeight">Get edge weight from X vertex to Y vertex.</param>
-        /// <param name="isTargetVertex">Checks if target is found.</param>
-        /// <param name="comparer">Weight comparer.</param>
         protected DijkstraAlgorithmBase(
             GetAllEdges getEdges,
             GetVertexWeight getVertexWeight,
@@ -108,11 +91,14 @@ namespace Eocron.Algorithms.Graphs
                     if (neighbors == null)
                         continue;
 
+                    if (!TryGetWeight(u, out var uWeight))
+                    {
+                        uWeight = _getVertexWeight(u);
+                        SetWeight(u, uWeight);
+                    }
+
                     foreach (var v in neighbors)
                     {
-                        if (!TryGetWeight(u, out var uWeight))
-                            continue; //u not initialized -> infinity in alt -> no reason to move on with this vertex comparison
-
                         var alternativeWeightOfV = _getEdgeWeight(new VertexWeight(uWeight, u), v);
                         if (!TryGetWeight(v, out var vWeight) ||
                             _comparer.Compare(alternativeWeightOfV, vWeight) <
