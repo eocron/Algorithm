@@ -8,6 +8,7 @@ namespace Eocron.Algorithms.Graphs
     ///     https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
     ///     This implementation is infinite one. This means its not necessary to know entire graph at source and you
     ///     can provide more data as you go deeper in graph.
+    ///     It will always find shortest path in VISITED nodes. So to find shortest out of shortest path you actually need to visit ALL nodes.
     ///     Complexity: O(E + V*log(V))
     ///     Memory: O(V)
     /// </summary>
