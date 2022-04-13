@@ -31,19 +31,20 @@ namespace NTests
         public void Cyclic()
         {
             var graph = new AdjacencyGraph<int, Edge<int>>();
-            for (int i = 0; i < 10; i++)
+            int count = 4;
+            for (int i = 0; i < count; i++)
             {
                 graph.AddVertex(i);
             }
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < count; i++)
             {
-                for (int j = 0; j < 10; j++)
+                for (int j = 0; j < count; j++)
                 {
                     graph.AddEdge(new Edge<int>(i, j));
                 }
             }
             var source = 0;
-            var target = 9;
+            var target = count-1;
             var result = new InfiniteDijkstraAlgorithm<int, int>(
                 x => graph.OutEdges(x).Select(y => y.Target),
                 x => 0,
@@ -97,7 +98,8 @@ namespace NTests
             var result = new InfiniteDijkstraAlgorithm<int, int>(
                 x => graph.OutEdges(x).Select(y => y.Target),
                 x => 0,
-                (x, y) => x.Weight + 1);
+                (x, y) => x.Weight + 1,
+                buildShortestPathTree:true);
             result.Search(source);
             var target = cities.Length - 1;
             var pathToRome = result.GetPath(source, target).ToList();
@@ -105,45 +107,46 @@ namespace NTests
             Assert.AreEqual(expectedMinSteps, result.GetWeight(target));
         }
 
-        [Test, Ignore("some bug")]
+        [Test]
         [TestCase("kitten", "sitting", 3)]
         [TestCase("kitten", "kitting", 2)]
-        [TestCase("hello", "kelm", 2)]
+        [TestCase("hello", "kelm", 3)]
         [TestCase("asetbaeaefasdfsa", "asdfaew", 12)]
         [TestCase("aaaa", "a", 3)]
+        [TestCase("a", "a", 0)]
+        [TestCase("a", "b", 1)]
         public void LevenstainDistance(string sourceStr, string targetStr, int expectedMinDistance)
         {
             var source = Tuple.Create(0, 0);
-            var target = Tuple.Create(sourceStr.Length - 1, targetStr.Length - 1);
+            var target = Tuple.Create(sourceStr.Length, targetStr.Length);
             var result = new InfiniteDijkstraAlgorithm<Tuple<int, int>, int>(
-                    x =>
+                x =>
+                {
+                    var list = new List<Tuple<int, int>>();
+                    if (x.Item2 < targetStr.Length)
+                        list.Add(Tuple.Create(x.Item1, x.Item2 + 1));
+                    if (x.Item1 < sourceStr.Length)
+                        list.Add(Tuple.Create(x.Item1 + 1, x.Item2));
+                    if (x.Item1 < sourceStr.Length && x.Item2 < targetStr.Length)
+                        list.Add(Tuple.Create(x.Item1 + 1, x.Item2 + 1));
+                    return list;
+                },
+                x => 0,
+                (xw, y) =>
+                {
+                    var x = xw.Vertex;
+                    if (x.Item1 < sourceStr.Length
+                        && x.Item2 < targetStr.Length
+                        && sourceStr[x.Item1] == targetStr[x.Item2]
+                        && (y.Item1 - 1) == x.Item1
+                        && (y.Item2 - 1) == x.Item2)
                     {
-                        var result = new List<Tuple<int, int>>();
-                        if (x.Item2 < targetStr.Length - 1)
-                        {
-                            result.Add(Tuple.Create(x.Item1, x.Item2 + 1));
-                        }
+                        return xw.Weight;
+                    }
 
-                        if (x.Item1 < sourceStr.Length - 1)
-                        {
-                            result.Add(Tuple.Create(x.Item1 + 1, x.Item2));
-                        }
-
-                        if (x.Item1 < sourceStr.Length - 1 && x.Item2 < targetStr.Length - 1)
-                        {
-                            result.Add(Tuple.Create(x.Item1 + 1, x.Item2 + 1));
-                        }
-
-                        return result;
-                    },
-                    x => 0,
-                    (x, y) =>
-                    {
-                        var weight = x.Weight;
-                        if (sourceStr[x.Vertex.Item1] != targetStr[x.Vertex.Item2])
-                            weight++;
-                        return weight;
-                    });
+                    return xw.Weight + 1;
+                },
+                buildShortestPathTree: true);
             result.Search(source);
 
             var minDistance = result.GetWeight(target);
@@ -225,7 +228,7 @@ namespace NTests
                 {
                     if (path.Contains(args.Vertex))
                     {
-                        args.VertexFormat.FontColor = GraphvizColor.Red;
+                        args.VertexFormat.FontColor = GraphvizColor.Green;
                         args.VertexFormat.StrokeColor = GraphvizColor.Green;
                     }
 

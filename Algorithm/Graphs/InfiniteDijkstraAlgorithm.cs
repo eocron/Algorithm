@@ -19,7 +19,6 @@ namespace Eocron.Algorithms.Graphs
         private readonly IDictionary<TVertex, TVertex> _paths;
         private readonly IDictionary<TVertex, TWeight> _weights;
         private readonly IPriorityQueue<TWeight, TVertex> _priorityQueue;
-        private readonly Queue<TVertex> _simpleQueue;
 
         /// <summary>
         /// 
@@ -45,15 +44,7 @@ namespace Eocron.Algorithms.Graphs
         {
             _searchAll = buildShortestPathTree;
             vertexEqualityComparer ??= EqualityComparer<TVertex>.Default;
-            if (!_searchAll)
-            {
-                _priorityQueue = new FibonacciHeap<TWeight, TVertex>(weightComparer);
-            }
-            else
-            {
-                _simpleQueue = count <= 0 ? new Queue<TVertex>() : new Queue<TVertex>(count);
-            }
-
+            _priorityQueue = new FibonacciHeap<TWeight, TVertex>(weightComparer);
             _weights = count <= 0 ? new Dictionary<TVertex, TWeight>(vertexEqualityComparer) : new Dictionary<TVertex, TWeight>(count, vertexEqualityComparer);
             _paths = count <= 0 ? new Dictionary<TVertex, TVertex>(vertexEqualityComparer) : new Dictionary<TVertex, TVertex>(count, vertexEqualityComparer);
         }
@@ -83,27 +74,19 @@ namespace Eocron.Algorithms.Graphs
             _paths.Clear();
             _weights.Clear();
             _priorityQueue?.Clear();
-            _simpleQueue?.Clear();
             base.Clear();
         }
 
         protected override void Enqueue(KeyValuePair<TWeight, TVertex> item)
         {
-            if (_searchAll)
-            {
-                _simpleQueue.Enqueue(item.Value);
-            }
-            else
-            {
-                _priorityQueue.Enqueue(item);
-            }
+            _priorityQueue.Enqueue(item);
         }
 
         protected override void EnqueueOrUpdate(KeyValuePair<TWeight, TVertex> item, Func<KeyValuePair<TWeight, TVertex>, KeyValuePair<TWeight, TVertex>> onUpdate)
         {
             if (_searchAll)
             {
-                _simpleQueue.Enqueue(item.Value);
+                _priorityQueue.Enqueue(item);
             }
             else
             {
@@ -113,15 +96,11 @@ namespace Eocron.Algorithms.Graphs
 
         protected override TVertex Dequeue()
         {
-            if (_searchAll)
-                return _simpleQueue.Dequeue();
             return _priorityQueue.Dequeue().Value;
         }
 
         protected override bool IsQueueEmpty()
         {
-            if (_searchAll)
-                return _simpleQueue.Count == 0;
             return _priorityQueue.Count == 0;
         }
 

@@ -156,7 +156,7 @@ namespace Eocron.Algorithms.Graphs
             ThrowIfNotSearched();
             if (TryGetWeight(vertex, out var tmp))
                 return tmp;
-            throw new IndexOutOfRangeException(vertex.ToString());
+            throw new KeyNotFoundException(vertex.ToString());
         }
 
         protected abstract void SetWeight(TVertex vertex, TWeight weight);
