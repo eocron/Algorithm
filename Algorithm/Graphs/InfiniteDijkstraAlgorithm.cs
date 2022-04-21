@@ -95,9 +95,9 @@ namespace Eocron.Algorithms.Graphs
             }
         }
 
-        protected override TVertex Dequeue()
+        protected override KeyValuePair<TWeight, TVertex> Dequeue()
         {
-            return _priorityQueue.Dequeue().Value;
+            return _priorityQueue.Dequeue();
         }
 
         protected override bool IsQueueEmpty()

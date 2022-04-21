@@ -35,9 +35,8 @@ namespace Eocron.Algorithms.Graphs
         ///     Checks if vertex is final and algorithm can stop traveling infinite/finite graph.
         ///     Basically searching behavior limiter.
         /// </summary>
-        /// <param name="vertex"></param>
         /// <returns></returns>
-        public delegate bool IsTargetVertex(TVertex vertex);
+        public delegate bool IsTargetVertex(VertexWeight vertexAndItsCurrentWeight);
 
         private readonly IComparer<TWeight> _comparer;
         private readonly GetAllEdges _getEdges;
@@ -77,35 +76,29 @@ namespace Eocron.Algorithms.Graphs
 
                 while (!IsQueueEmpty())
                 {
-                    var u = Dequeue();
-
+                    var wu = Dequeue();
+                    var u = new VertexWeight(wu.Key, wu.Value);
                     if (_isTargetVertex?.Invoke(u) ?? false)
                     {
-                        Target = u;
+                        Target = u.Vertex;
                         IsTargetFound = true;
                         _searched = true;
                         return;
                     }
 
-                    var neighbors = _getEdges(u);
+                    var neighbors = _getEdges(u.Vertex);
                     if (neighbors == null)
                         continue;
 
-                    if (!TryGetWeight(u, out var uWeight))
-                    {
-                        uWeight = _getVertexWeight(u);
-                        SetWeight(u, uWeight);
-                    }
-
                     foreach (var v in neighbors)
                     {
-                        var alternativeWeightOfV = _getEdgeWeight(new VertexWeight(uWeight, u), v);
+                        var alternativeWeightOfV = _getEdgeWeight(u, v);
                         if (!TryGetWeight(v, out var vWeight) ||
                             _comparer.Compare(alternativeWeightOfV, vWeight) <
                             0) //if v is not initialized (infinity) or v cost lower than alternative
                         {
                             SetWeight(v, alternativeWeightOfV);
-                            SetPath(v, u);
+                            SetPath(v, u.Vertex);
                             var item = new KeyValuePair<TWeight, TVertex>(alternativeWeightOfV, v);
                             EnqueueOrUpdate(item, x => item); //decrease or add priority
                         }
@@ -178,7 +171,7 @@ namespace Eocron.Algorithms.Graphs
         protected abstract void EnqueueOrUpdate(KeyValuePair<TWeight, TVertex> item,
             Func<KeyValuePair<TWeight, TVertex>, KeyValuePair<TWeight, TVertex>> onUpdate);
 
-        protected abstract TVertex Dequeue();
+        protected abstract KeyValuePair<TWeight, TVertex> Dequeue();
 
         protected abstract bool IsQueueEmpty();
 
