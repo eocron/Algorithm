@@ -2,8 +2,10 @@
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Eocron.Algorithms;
 using Eocron.Algorithms.Streams;
 using NUnit.Framework;
 
@@ -13,6 +15,7 @@ namespace NTests
     public class StreamTests
     {
         private byte[] TestData { get; set; }
+        private string TestDataString { get; set; }
 
         [OneTimeSetUp]
         public void Setup()
@@ -23,6 +26,8 @@ namespace NTests
 
             TestData = new byte[rnd.Next(1000, 100000)];
             rnd.NextBytes(TestData);
+
+            TestDataString = rnd.NextString(rnd.Next(100, 500));
         }
 
         [Test]
@@ -30,7 +35,7 @@ namespace NTests
         {
             var testStream = new TestReadStream(new MemoryStream(new byte[] { 1, 2, 3, 4, 5 }));
             var result = testStream
-                .AsEnumerable(() => new Memory<byte>(new byte[2]))
+                .AsEnumerable(_ => new Memory<byte>(new byte[2]))
                 .Select(x => x.ToArray())
                 .ToList();
             Assert.AreEqual(3, result.Count);
@@ -48,7 +53,7 @@ namespace NTests
         {
             using var testStream = new TestReadStream(new MemoryStream(new byte[] { 1, 2, 3, 4, 5 }));
             var result = testStream
-                .AsEnumerable(() => new Memory<byte>(new byte[2]), true)
+                .AsEnumerable(_ => new Memory<byte>(new byte[2]), true)
                 .Select(x => x.ToArray())
                 .ToList();
             Assert.AreEqual(3, result.Count);
@@ -135,6 +140,34 @@ namespace NTests
             Assert.AreEqual(0, testStream.CloseCallCount);
             Assert.AreEqual(0, testStream.DisposeAsyncCallCount);
             Assert.AreEqual(0, testStream.DisposeCallCount);
+        }
+
+        [Test]
+        public void String()
+        {
+            var actual = new[] { new Memory<char>(TestDataString.ToCharArray()) }
+                .AsEnumerable()
+                .Convert(Encoding.Default)
+                .GZip(CompressionMode.Compress)
+                .GZip(CompressionMode.Decompress)
+                .Convert(Encoding.Default)
+                .BuildString();
+
+            Assert.AreEqual(TestDataString, actual);
+        }
+
+        [Test]
+        public async Task StringAsync()
+        {
+            var actual = await new[] { new Memory<char>(TestDataString.ToCharArray()) }
+                .AsAsyncEnumerable()
+                .Convert(Encoding.Default)
+                .GZip(CompressionMode.Compress)
+                .GZip(CompressionMode.Decompress)
+                .Convert(Encoding.Default)
+                .BuildStringAsync(CancellationToken.None);
+
+            Assert.AreEqual(TestDataString, actual);
         }
 
         private TestReadStream GetTestStream()

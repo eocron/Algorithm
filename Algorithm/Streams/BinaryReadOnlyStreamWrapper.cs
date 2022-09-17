@@ -10,9 +10,9 @@ namespace Eocron.Algorithms.Streams
     public sealed class BinaryReadOnlyStreamWrapper : IReadOnlyStream<Memory<byte>>
     {
         private readonly Func<Stream> _innerFactory;
-        private readonly Func<Memory<byte>> _bufferProvider;
+        private readonly BufferProvider<byte> _bufferProvider;
 
-        public BinaryReadOnlyStreamWrapper(Func<Stream> innerFactory, Func<Memory<byte>> bufferProvider)
+        public BinaryReadOnlyStreamWrapper(Func<Stream> innerFactory, BufferProvider<byte> bufferProvider)
         {
             _innerFactory = innerFactory;
             _bufferProvider = bufferProvider;
@@ -41,11 +41,13 @@ namespace Eocron.Algorithms.Streams
             private readonly CancellationToken _ct;
             private Memory<byte> _current;
 
-            public BinaryReadOnlyStreamWrapperEnumerator(Func<Stream> innerFactory, Func<Memory<byte>> bufferProvider,
+            public BinaryReadOnlyStreamWrapperEnumerator(
+                Func<Stream> innerFactory, 
+                BufferProvider<byte> bufferProvider,
                 CancellationToken ct)
             {
                 _inner = new Lazy<Stream>(innerFactory);
-                _buffer = new Lazy<Memory<byte>>(bufferProvider);
+                _buffer = new Lazy<Memory<byte>>(()=> bufferProvider());
                 _ct = ct;
             }
 

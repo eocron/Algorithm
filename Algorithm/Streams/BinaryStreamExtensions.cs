@@ -8,11 +8,12 @@ using System.Threading.Tasks;
 
 namespace Eocron.Algorithms.Streams
 {
-    public static class BinaryReadOnlyStreamWrapperExtensions
+    public delegate Memory<T> BufferProvider<T>(int desiredSize = 8 * 1024);
+    public static class BinaryStreamExtensions
     {
-        private static Memory<byte> DefaultBufferProvider()
+        internal static Memory<T> DefaultBufferProvider<T>(int desiredSize = 8*1024)
         {
-            return new Memory<byte>(new byte[8 * 1024]);
+            return new Memory<T>(new T[desiredSize]);
         }
 
 
@@ -23,11 +24,11 @@ namespace Eocron.Algorithms.Streams
         /// <param name="bufferProvider"></param>
         /// <param name="leaveOpen"></param>
         /// <returns></returns>
-        public static IEnumerable<Memory<byte>> AsEnumerable(this Stream stream, Func<Memory<byte>> bufferProvider = null, bool leaveOpen = false)
+        public static IEnumerable<Memory<byte>> AsEnumerable(this Stream stream, BufferProvider<byte> bufferProvider = null, bool leaveOpen = false)
         {
             if(stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            return new BinaryReadOnlyStreamWrapper(() => leaveOpen ? new NonDisposableStream(stream) : stream, bufferProvider ?? DefaultBufferProvider);
+            return new BinaryReadOnlyStreamWrapper(() => leaveOpen ? new NonDisposableStream(stream) : stream, bufferProvider ?? DefaultBufferProvider<byte>);
         }
 
         /// <summary>
@@ -37,11 +38,11 @@ namespace Eocron.Algorithms.Streams
         /// <param name="bufferProvider"></param>
         /// <param name="leaveOpen"></param>
         /// <returns></returns>
-        public static IAsyncEnumerable<Memory<byte>> AsAsyncEnumerable(this Stream stream, Func<Memory<byte>> bufferProvider = null, bool leaveOpen = false)
+        public static IAsyncEnumerable<Memory<byte>> AsAsyncEnumerable(this Stream stream, BufferProvider<byte> bufferProvider = null, bool leaveOpen = false)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            return new BinaryReadOnlyStreamWrapper(() => leaveOpen ? new NonDisposableStream(stream) : stream, bufferProvider ?? DefaultBufferProvider);
+            return new BinaryReadOnlyStreamWrapper(() => leaveOpen ? new NonDisposableStream(stream) : stream, bufferProvider ?? DefaultBufferProvider<byte>);
         }
 
         public static byte[] ToByteArray(this IEnumerable<Memory<byte>> stream)
@@ -81,7 +82,7 @@ namespace Eocron.Algorithms.Streams
                         () => new EnumerableStream(stream),
                         (x, ct) => x.FlushAsync(ct),
                         x => x.Flush()),
-                DefaultBufferProvider);
+                DefaultBufferProvider<byte>);
         }
 
         public static IAsyncEnumerable<Memory<byte>> GZip(this IAsyncEnumerable<Memory<byte>> stream, CompressionMode mode)
@@ -96,7 +97,7 @@ namespace Eocron.Algorithms.Streams
                         () => new EnumerableStream(stream),
                         (x, ct) => x.FlushAsync(ct),
                         x => x.Flush()),
-                DefaultBufferProvider);
+                DefaultBufferProvider<byte>);
         }
 
         public static IEnumerable<Memory<byte>> CryptoTransform(this IEnumerable<Memory<byte>> stream,
@@ -114,7 +115,7 @@ namespace Eocron.Algorithms.Streams
                         () => new EnumerableStream(stream),
                         async (x, ct) => x.FlushFinalBlock(),
                         x => x.FlushFinalBlock()),
-                DefaultBufferProvider);
+                DefaultBufferProvider<byte>);
         }
 
         public static IAsyncEnumerable<Memory<byte>> CryptoTransform(this IAsyncEnumerable<Memory<byte>> stream,
@@ -132,7 +133,7 @@ namespace Eocron.Algorithms.Streams
                         () => new EnumerableStream(stream),
                         async (x, ct) => x.FlushFinalBlock(),
                         x => x.FlushFinalBlock()),
-                DefaultBufferProvider);
+                DefaultBufferProvider<byte>);
         }
     }
 }

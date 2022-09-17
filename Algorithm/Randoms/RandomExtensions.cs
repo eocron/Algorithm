@@ -20,7 +20,10 @@ namespace Eocron.Algorithms
         /// <returns></returns>
         public static string NextString(this Random random, int size, params char[] domain)
         {
-            domain = domain ?? DefaultStringDomain;
+            if (domain == null || domain.Length == 0)
+            {
+                domain = DefaultStringDomain;
+            }
             if (domain == null || domain.Length == 0)
                 throw new ArgumentOutOfRangeException(nameof(domain));
             if (size == 0)
