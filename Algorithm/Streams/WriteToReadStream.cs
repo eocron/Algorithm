@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Eocron.Algorithms.Streams
 {
     public sealed class WriteToReadStream<T> : Stream
-    where T : Stream
+        where T : Stream
     {
         private readonly Func<T, CancellationToken, Task> _onEosAsync;
         private readonly Action<T> _onEos;
@@ -18,26 +18,26 @@ namespace Eocron.Algorithms.Streams
         private byte[] _transferBuffer;
         private bool _eos;
 
-        public WriteToReadStream(Func<Stream, T> writableStreamProvider, Func<Stream> dataSourceProvider, Func<T, CancellationToken, Task> onEosAsync, Action<T> onEos)
+        public WriteToReadStream(
+            Func<Stream, T> writableStreamProvider, 
+            Func<Stream> dataSourceProvider,
+            Func<T, CancellationToken, Task> onEosAsync, 
+            Action<T> onEos)
         {
             _onEosAsync = onEosAsync;
             _onEos = onEos;
             _dataSource = new Lazy<Stream>(dataSourceProvider);
             _readable = new MemoryStream();
-            _writable = new Lazy<T>(()=> writableStreamProvider(_readable));
+            _writable = new Lazy<T>(() => writableStreamProvider(_readable));
             _currentReadableBuffer = null;
         }
 
-        public override void Flush()
+        public override int Read(byte[] buffer, int offset, int count)
         {
-            throw new NotSupportedException();
-        }
-
-        public override int Read(Span<byte> dst)
-        {
+            var dst = new Memory<byte>(buffer, offset, count);
             EnsureTransferBuffer(dst.Length);
             int read = 0;
-            
+
             while (true)
             {
                 if (_currentReadableBuffer != null)
@@ -45,14 +45,14 @@ namespace Eocron.Algorithms.Streams
                     var src = _currentReadableBuffer.Value;
                     if (src.Length > dst.Length)
                     {
-                        src.Slice(0, dst.Length).Span.CopyTo(dst);
+                        src.Slice(0, dst.Length).CopyTo(dst);
                         read += dst.Length;
                         _currentReadableBuffer = src.Slice(dst.Length, src.Length - dst.Length);
                         break;
                     }
                     else if (src.Length < dst.Length)
                     {
-                        src.Span.CopyTo(dst);
+                        src.CopyTo(dst);
                         dst = dst.Slice(src.Length, dst.Length - src.Length);
                         read += src.Length;
                         _currentReadableBuffer = null;
@@ -60,7 +60,7 @@ namespace Eocron.Algorithms.Streams
                     }
                     else
                     {
-                        src.Span.CopyTo(dst);
+                        src.CopyTo(dst);
                         read += src.Length;
                         _currentReadableBuffer = null;
                         break;
@@ -82,15 +82,13 @@ namespace Eocron.Algorithms.Streams
             return read;
         }
 
-        public override int Read(byte[] buffer, int offset, int count)
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count,
+            CancellationToken cancellationToken)
         {
-            return Read(buffer.AsSpan(offset, count));
-        }
-
-        public override async ValueTask<int> ReadAsync(Memory<byte> dst, CancellationToken cancellationToken = new CancellationToken())
-        {
+            var dst = new Memory<byte>(buffer, offset, count);
             EnsureTransferBuffer(dst.Length);
             int read = 0;
+
             while (true)
             {
                 if (_currentReadableBuffer != null)
@@ -133,11 +131,6 @@ namespace Eocron.Algorithms.Streams
             }
 
             return read;
-        }
-
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        {
-            return await ReadAsync(new Memory<byte>(buffer, offset, count), cancellationToken).ConfigureAwait(false);
         }
 
         private void Transform()
@@ -214,9 +207,14 @@ namespace Eocron.Algorithms.Streams
             throw new NotSupportedException();
         }
 
+        public override void Flush()
+        {
+            throw new NotSupportedException();
+        }
+
         public override void Close()
         {
-            if(_writable.IsValueCreated)
+            if (_writable.IsValueCreated)
                 _writable.Value.Close();
             if (_dataSource.IsValueCreated)
                 _dataSource.Value.Close();
@@ -226,7 +224,7 @@ namespace Eocron.Algorithms.Streams
 
         public override async ValueTask DisposeAsync()
         {
-            if(_writable.IsValueCreated)
+            if (_writable.IsValueCreated)
                 await _writable.Value.DisposeAsync().ConfigureAwait(false);
             if (_dataSource.IsValueCreated)
                 await _dataSource.Value.DisposeAsync().ConfigureAwait(false);

@@ -15,14 +15,14 @@ namespace Eocron.Algorithms.Streams
             return new Memory<byte>(new byte[8 * 1024]);
         }
 
-        public static IEnumerable<Memory<byte>> AsEnumerable(this Stream stream)
+        public static IEnumerable<Memory<byte>> AsEnumerable(this Stream stream, Func<Memory<byte>> bufferProvider = null)
         {
-            return new BinaryReadOnlyStreamWrapper(() => stream, DefaultBufferProvider);
+            return new BinaryReadOnlyStreamWrapper(() => stream, bufferProvider ?? DefaultBufferProvider);
         }
 
-        public static IAsyncEnumerable<Memory<byte>> AsAsyncEnumerable(this Stream stream)
+        public static IAsyncEnumerable<Memory<byte>> AsAsyncEnumerable(this Stream stream, Func<Memory<byte>> bufferProvider = null)
         {
-            return new BinaryReadOnlyStreamWrapper(() => stream, DefaultBufferProvider);
+            return new BinaryReadOnlyStreamWrapper(() => stream, bufferProvider ?? DefaultBufferProvider);
         }
 
         public static byte[] ToByteArray(this IEnumerable<Memory<byte>> stream)
@@ -32,7 +32,6 @@ namespace Eocron.Algorithms.Streams
             {
                 ms.Write(memory.Span);
             }
-
             return ms.ToArray();
         }
 
@@ -44,7 +43,6 @@ namespace Eocron.Algorithms.Streams
             {
                 ms.Write(memory.Span);
             }
-
             return ms.ToArray();
         }
 
@@ -65,10 +63,10 @@ namespace Eocron.Algorithms.Streams
         {
             return new BinaryReadOnlyStreamWrapper(
                 () => mode == CompressionMode.Decompress
-                    ? (Stream)new GZipStream(new AsyncEnumerableStream(stream), mode, false)
+                    ? (Stream)new GZipStream(new EnumerableStream(stream), mode, false)
                     : (Stream)new WriteToReadStream<GZipStream>(
                         x => new GZipStream(x, mode, false),
-                        () => new AsyncEnumerableStream(stream),
+                        () => new EnumerableStream(stream),
                         (x, ct) => x.FlushAsync(ct),
                         x => x.Flush()),
                 DefaultBufferProvider);
@@ -93,10 +91,10 @@ namespace Eocron.Algorithms.Streams
         {
             return new BinaryReadOnlyStreamWrapper(
                 () => mode == CryptoStreamMode.Read
-                    ? (Stream)new CryptoStream(new AsyncEnumerableStream(stream), transform, mode, false)
+                    ? (Stream)new CryptoStream(new EnumerableStream(stream), transform, mode, false)
                     : (Stream)new WriteToReadStream<CryptoStream>(
                         x => new CryptoStream(x, transform, mode, false),
-                        () => new AsyncEnumerableStream(stream),
+                        () => new EnumerableStream(stream),
                         async (x, ct) => x.FlushFinalBlock(),
                         x => x.FlushFinalBlock()),
                 DefaultBufferProvider);
