@@ -18,10 +18,9 @@ namespace Eocron.Algorithms.Streams
         private byte[] _transferBuffer;
         private bool _eos;
 
-        public WriteToReadStream(
-            Func<Stream, T> writableStreamProvider, 
+        public WriteToReadStream(Func<Stream, T> writableStreamProvider,
             Func<Stream> dataSourceProvider,
-            Func<T, CancellationToken, Task> onEosAsync, 
+            Func<T, CancellationToken, Task> onEosAsync,
             Action<T> onEos)
         {
             _onEosAsync = onEosAsync;
@@ -212,31 +211,11 @@ namespace Eocron.Algorithms.Streams
             throw new NotSupportedException();
         }
 
-        public override void Close()
-        {
-            if (_writable.IsValueCreated)
-                _writable.Value.Close();
-            if (_dataSource.IsValueCreated)
-                _dataSource.Value.Close();
-            _readable.Close();
-            base.Close();
-        }
-
-        public override async ValueTask DisposeAsync()
-        {
-            if (_writable.IsValueCreated)
-                await _writable.Value.DisposeAsync().ConfigureAwait(false);
-            if (_dataSource.IsValueCreated)
-                await _dataSource.Value.DisposeAsync().ConfigureAwait(false);
-            await _readable.DisposeAsync().ConfigureAwait(false);
-            await base.DisposeAsync().ConfigureAwait(false);
-        }
-
         protected override void Dispose(bool disposing)
         {
             if (_writable.IsValueCreated)
                 _writable.Value.Dispose();
-            if (_dataSource.IsValueCreated)
+            if(_dataSource.IsValueCreated)
                 _dataSource.Value.Dispose();
             _readable.Dispose();
             base.Dispose(disposing);

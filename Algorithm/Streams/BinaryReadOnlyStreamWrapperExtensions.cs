@@ -15,11 +15,24 @@ namespace Eocron.Algorithms.Streams
             return new Memory<byte>(new byte[8 * 1024]);
         }
 
+
+        /// <summary>
+        /// Produce single call enumerable
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <param name="bufferProvider"></param>
+        /// <returns></returns>
         public static IEnumerable<Memory<byte>> AsEnumerable(this Stream stream, Func<Memory<byte>> bufferProvider = null)
         {
             return new BinaryReadOnlyStreamWrapper(() => stream, bufferProvider ?? DefaultBufferProvider);
         }
 
+        /// <summary>
+        /// Produce single call enumerable
+        /// </summary>
+        /// <param name="stream"></param>
+        /// <param name="bufferProvider"></param>
+        /// <returns></returns>
         public static IAsyncEnumerable<Memory<byte>> AsAsyncEnumerable(this Stream stream, Func<Memory<byte>> bufferProvider = null)
         {
             return new BinaryReadOnlyStreamWrapper(() => stream, bufferProvider ?? DefaultBufferProvider);

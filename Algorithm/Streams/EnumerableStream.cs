@@ -170,16 +170,6 @@ namespace Eocron.Algorithms.Streams
             base.Dispose(disposing);
         }
 
-        public override async ValueTask DisposeAsync()
-        {
-            if (_asyncEnumerator != null)
-            {
-                await _asyncEnumerator.DisposeAsync().ConfigureAwait(false);
-            }
-            _enumerator?.Dispose();
-            await base.DisposeAsync().ConfigureAwait(false);
-        }
-
         public override bool CanRead => true;
         public override bool CanSeek => false;
         public override bool CanWrite => false;
