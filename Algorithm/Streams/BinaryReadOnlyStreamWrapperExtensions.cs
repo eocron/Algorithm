@@ -24,6 +24,8 @@ namespace Eocron.Algorithms.Streams
         /// <returns></returns>
         public static IEnumerable<Memory<byte>> AsEnumerable(this Stream stream, Func<Memory<byte>> bufferProvider = null)
         {
+            if(stream == null)
+                throw new ArgumentNullException(nameof(stream));
             return new BinaryReadOnlyStreamWrapper(() => stream, bufferProvider ?? DefaultBufferProvider);
         }
 
@@ -35,11 +37,15 @@ namespace Eocron.Algorithms.Streams
         /// <returns></returns>
         public static IAsyncEnumerable<Memory<byte>> AsAsyncEnumerable(this Stream stream, Func<Memory<byte>> bufferProvider = null)
         {
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
             return new BinaryReadOnlyStreamWrapper(() => stream, bufferProvider ?? DefaultBufferProvider);
         }
 
         public static byte[] ToByteArray(this IEnumerable<Memory<byte>> stream)
         {
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
             using var ms = new MemoryStream();
             foreach (var memory in stream)
             {
@@ -51,6 +57,8 @@ namespace Eocron.Algorithms.Streams
         public static async Task<byte[]> ToByteArrayAsync(this IAsyncEnumerable<Memory<byte>> stream,
             CancellationToken ct = default)
         {
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
             using var ms = new MemoryStream();
             await foreach (var memory in stream.WithCancellation(ct).ConfigureAwait(false))
             {
@@ -61,6 +69,8 @@ namespace Eocron.Algorithms.Streams
 
         public static IEnumerable<Memory<byte>> GZip(this IEnumerable<Memory<byte>> stream, CompressionMode mode)
         {
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
             return new BinaryReadOnlyStreamWrapper(
                 () => mode == CompressionMode.Decompress
                     ? (Stream)new GZipStream(new EnumerableStream(stream), mode, false)
@@ -74,6 +84,8 @@ namespace Eocron.Algorithms.Streams
 
         public static IAsyncEnumerable<Memory<byte>> GZip(this IAsyncEnumerable<Memory<byte>> stream, CompressionMode mode)
         {
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
             return new BinaryReadOnlyStreamWrapper(
                 () => mode == CompressionMode.Decompress
                     ? (Stream)new GZipStream(new EnumerableStream(stream), mode, false)
@@ -88,6 +100,10 @@ namespace Eocron.Algorithms.Streams
         public static IEnumerable<Memory<byte>> CryptoTransform(this IEnumerable<Memory<byte>> stream,
             ICryptoTransform transform, CryptoStreamMode mode)
         {
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
+            if (transform == null)
+                throw new ArgumentNullException(nameof(transform));
             return new BinaryReadOnlyStreamWrapper(
                 () => mode == CryptoStreamMode.Read
                     ? (Stream)new CryptoStream(new EnumerableStream(stream), transform, mode, false)
@@ -102,6 +118,10 @@ namespace Eocron.Algorithms.Streams
         public static IAsyncEnumerable<Memory<byte>> CryptoTransform(this IAsyncEnumerable<Memory<byte>> stream,
             ICryptoTransform transform, CryptoStreamMode mode)
         {
+            if (stream == null)
+                throw new ArgumentNullException(nameof(stream));
+            if (transform == null)
+                throw new ArgumentNullException(nameof(transform));
             return new BinaryReadOnlyStreamWrapper(
                 () => mode == CryptoStreamMode.Read
                     ? (Stream)new CryptoStream(new EnumerableStream(stream), transform, mode, false)
