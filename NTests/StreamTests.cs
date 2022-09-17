@@ -43,6 +43,23 @@ namespace NTests
             Assert.AreEqual(1, testStream.DisposeCallCount);
         }
 
+        [Test]
+        public void ReadNonDisposable()
+        {
+            using var testStream = new TestReadStream(new MemoryStream(new byte[] { 1, 2, 3, 4, 5 }));
+            var result = testStream
+                .AsEnumerable(() => new Memory<byte>(new byte[2]), true)
+                .Select(x => x.ToArray())
+                .ToList();
+            Assert.AreEqual(3, result.Count);
+            CollectionAssert.AreEqual(new[] { 1, 2 }, result[0]);
+            CollectionAssert.AreEqual(new[] { 3, 4 }, result[1]);
+            CollectionAssert.AreEqual(new[] { 5 }, result[2]);
+
+            Assert.AreEqual(0, testStream.CloseCallCount);
+            Assert.AreEqual(0, testStream.DisposeAsyncCallCount);
+            Assert.AreEqual(0, testStream.DisposeCallCount);
+        }
 
         [Test]
         public void GZip()
@@ -64,6 +81,25 @@ namespace NTests
         }
 
         [Test]
+        public void GZipNonDisposable()
+        {
+            using var testStream = GetTestStream();
+            var actual = testStream
+                .AsEnumerable(leaveOpen:true)
+                .GZip(CompressionMode.Compress)
+                .GZip(CompressionMode.Decompress)
+                .GZip(CompressionMode.Compress)
+                .GZip(CompressionMode.Decompress)
+                .GZip(CompressionMode.Compress)
+                .GZip(CompressionMode.Decompress)
+                .ToByteArray();
+            CollectionAssert.AreEqual(TestData, actual);
+            Assert.AreEqual(0, testStream.CloseCallCount);
+            Assert.AreEqual(0, testStream.DisposeAsyncCallCount);
+            Assert.AreEqual(0, testStream.DisposeCallCount);
+        }
+
+        [Test]
         public async Task GZipAsync()
         {
             var testStream = GetTestStream();
@@ -80,6 +116,25 @@ namespace NTests
             Assert.AreEqual(1, testStream.CloseCallCount);
             Assert.AreEqual(1, testStream.DisposeAsyncCallCount);
             Assert.AreEqual(1, testStream.DisposeCallCount);
+        }
+
+        [Test]
+        public async Task GZipNonDisposableAsync()
+        {
+            await using var testStream = GetTestStream();
+            var actual = await testStream
+                .AsAsyncEnumerable(leaveOpen:true)
+                .GZip(CompressionMode.Compress)
+                .GZip(CompressionMode.Decompress)
+                .GZip(CompressionMode.Compress)
+                .GZip(CompressionMode.Decompress)
+                .GZip(CompressionMode.Compress)
+                .GZip(CompressionMode.Decompress)
+                .ToByteArrayAsync(CancellationToken.None);
+            CollectionAssert.AreEqual(TestData, actual);
+            Assert.AreEqual(0, testStream.CloseCallCount);
+            Assert.AreEqual(0, testStream.DisposeAsyncCallCount);
+            Assert.AreEqual(0, testStream.DisposeCallCount);
         }
 
         private TestReadStream GetTestStream()

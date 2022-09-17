@@ -21,12 +21,13 @@ namespace Eocron.Algorithms.Streams
         /// </summary>
         /// <param name="stream"></param>
         /// <param name="bufferProvider"></param>
+        /// <param name="leaveOpen"></param>
         /// <returns></returns>
-        public static IEnumerable<Memory<byte>> AsEnumerable(this Stream stream, Func<Memory<byte>> bufferProvider = null)
+        public static IEnumerable<Memory<byte>> AsEnumerable(this Stream stream, Func<Memory<byte>> bufferProvider = null, bool leaveOpen = false)
         {
             if(stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            return new BinaryReadOnlyStreamWrapper(() => stream, bufferProvider ?? DefaultBufferProvider);
+            return new BinaryReadOnlyStreamWrapper(() => leaveOpen ? new NonDisposableStream(stream) : stream, bufferProvider ?? DefaultBufferProvider);
         }
 
         /// <summary>
@@ -34,12 +35,13 @@ namespace Eocron.Algorithms.Streams
         /// </summary>
         /// <param name="stream"></param>
         /// <param name="bufferProvider"></param>
+        /// <param name="leaveOpen"></param>
         /// <returns></returns>
-        public static IAsyncEnumerable<Memory<byte>> AsAsyncEnumerable(this Stream stream, Func<Memory<byte>> bufferProvider = null)
+        public static IAsyncEnumerable<Memory<byte>> AsAsyncEnumerable(this Stream stream, Func<Memory<byte>> bufferProvider = null, bool leaveOpen = false)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            return new BinaryReadOnlyStreamWrapper(() => stream, bufferProvider ?? DefaultBufferProvider);
+            return new BinaryReadOnlyStreamWrapper(() => leaveOpen ? new NonDisposableStream(stream) : stream, bufferProvider ?? DefaultBufferProvider);
         }
 
         public static byte[] ToByteArray(this IEnumerable<Memory<byte>> stream)
