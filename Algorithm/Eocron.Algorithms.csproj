@@ -18,7 +18,7 @@
 		<Version>1.7.2</Version>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<PackageReadmeFile>..\README.md</PackageReadmeFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<ItemGroup>
