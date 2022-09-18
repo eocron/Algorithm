@@ -11,8 +11,7 @@ namespace Eocron.Algorithms.Streams
 {
     public static class BinaryStreamExtensions
     {
-        private static MemoryPool<byte> DefaultMemoryPool => MemoryPool<byte>.Shared;
-        private const int DefaultBufferSize = 8 * 1024;
+
 
         /// <summary>
         /// Produce single call enumerable
@@ -26,8 +25,11 @@ namespace Eocron.Algorithms.Streams
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            return new StreamEnumerable(() => leaveOpen ? new NonDisposableStream(stream) : stream,
-                pool ?? DefaultMemoryPool, DefaultBufferSize);
+            return new StreamEnumerable(() => leaveOpen
+                    ? new NonDisposableStream(stream)
+                    : stream,
+                pool ?? BufferingConstants<byte>.DefaultMemoryPool,
+                BufferingConstants<byte>.DefaultBufferSize);
         }
 
         /// <summary>
@@ -42,8 +44,11 @@ namespace Eocron.Algorithms.Streams
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            return new StreamEnumerable(() => leaveOpen ? new NonDisposableStream(stream) : stream,
-                pool ?? DefaultMemoryPool, DefaultBufferSize);
+            return new StreamEnumerable(() => leaveOpen
+                    ? new NonDisposableStream(stream)
+                    : stream,
+                pool ?? BufferingConstants<byte>.DefaultMemoryPool,
+                BufferingConstants<byte>.DefaultBufferSize);
         }
 
         public static Stream AsStream(IEnumerable<Memory<byte>> enumerable)
@@ -100,9 +105,9 @@ namespace Eocron.Algorithms.Streams
                         x => new GZipStream(x, mode, false),
                         (x, ct) => x.FlushAsync(ct),
                         x => x.Flush(),
-                        DefaultMemoryPool),
-                DefaultMemoryPool,
-                DefaultBufferSize);
+                        BufferingConstants<byte>.DefaultMemoryPool),
+                BufferingConstants<byte>.DefaultMemoryPool,
+                BufferingConstants<byte>.DefaultBufferSize);
         }
 
         public static IAsyncEnumerable<Memory<byte>> GZip(this IAsyncEnumerable<Memory<byte>> stream,
@@ -118,9 +123,9 @@ namespace Eocron.Algorithms.Streams
                         x => new GZipStream(x, mode, false),
                         (x, ct) => x.FlushAsync(ct),
                         x => x.Flush(),
-                        DefaultMemoryPool),
-                DefaultMemoryPool,
-                DefaultBufferSize);
+                        BufferingConstants<byte>.DefaultMemoryPool),
+                BufferingConstants<byte>.DefaultMemoryPool,
+                BufferingConstants<byte>.DefaultBufferSize);
         }
 
         public static IEnumerable<Memory<byte>> CryptoTransform(this IEnumerable<Memory<byte>> stream,
@@ -138,9 +143,9 @@ namespace Eocron.Algorithms.Streams
                         x => new CryptoStream(x, transform, mode, false),
                         async (x, ct) => x.FlushFinalBlock(),
                         x => x.FlushFinalBlock(),
-                        DefaultMemoryPool),
-                DefaultMemoryPool,
-                DefaultBufferSize);
+                        BufferingConstants<byte>.DefaultMemoryPool),
+                BufferingConstants<byte>.DefaultMemoryPool,
+                BufferingConstants<byte>.DefaultBufferSize);
         }
 
         public static IAsyncEnumerable<Memory<byte>> CryptoTransform(this IAsyncEnumerable<Memory<byte>> stream,
@@ -158,9 +163,9 @@ namespace Eocron.Algorithms.Streams
                         x => new CryptoStream(x, transform, mode, false),
                         async (x, ct) => x.FlushFinalBlock(),
                         x => x.FlushFinalBlock(),
-                        DefaultMemoryPool),
-                DefaultMemoryPool,
-                DefaultBufferSize);
+                        BufferingConstants<byte>.DefaultMemoryPool),
+                BufferingConstants<byte>.DefaultMemoryPool,
+                BufferingConstants<byte>.DefaultBufferSize);
         }
     }
 }

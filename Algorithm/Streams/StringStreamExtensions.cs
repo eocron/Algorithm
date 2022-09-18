@@ -9,7 +9,6 @@ namespace Eocron.Algorithms.Streams
 {
     public static class StringStreamExtensions
     {
-        private const int DefaultConversionBufferSize = 8*1024;
         public static async IAsyncEnumerable<T> AsAsyncEnumerable<T>(this IEnumerable<T> enumerable)
         {
             if(enumerable == null)
@@ -24,8 +23,8 @@ namespace Eocron.Algorithms.Streams
         {
             if (enumerable == null)
                 throw new ArgumentNullException(nameof(enumerable));
-            var pool = MemoryPool<char>.Shared;
-            using var buffer = pool.Rent(DefaultConversionBufferSize);
+            var pool = BufferingConstants<char>.DefaultMemoryPool;
+            using var buffer = pool.Rent(BufferingConstants<char>.DefaultBufferSize);
             foreach (var x in enumerable)
             {
                 var read = encoding.GetChars(x.Span, buffer.Memory.Span);
@@ -37,8 +36,8 @@ namespace Eocron.Algorithms.Streams
         {
             if (enumerable == null)
                 throw new ArgumentNullException(nameof(enumerable));
-            var pool = MemoryPool<char>.Shared;
-            using var buffer = pool.Rent(DefaultConversionBufferSize);
+            var pool = BufferingConstants<char>.DefaultMemoryPool;
+            using var buffer = pool.Rent(BufferingConstants<char>.DefaultBufferSize);
             await foreach (var x in enumerable.ConfigureAwait(false))
             {
                 var read = encoding.GetChars(x.Span, buffer.Memory.Span);
@@ -50,8 +49,8 @@ namespace Eocron.Algorithms.Streams
         {
             if (enumerable == null)
                 throw new ArgumentNullException(nameof(enumerable));
-            var pool = MemoryPool<byte>.Shared;
-            using var buffer = pool.Rent(DefaultConversionBufferSize); 
+            var pool = BufferingConstants<byte>.DefaultMemoryPool;
+            using var buffer = pool.Rent(BufferingConstants<byte>.DefaultBufferSize);
             foreach (var e in enumerable)
             {
                 var read = encoding.GetBytes(e.Span, buffer.Memory.Span);
@@ -63,8 +62,8 @@ namespace Eocron.Algorithms.Streams
         {
             if (enumerable == null)
                 throw new ArgumentNullException(nameof(enumerable));
-            var pool = MemoryPool<byte>.Shared;
-            using var buffer = pool.Rent(DefaultConversionBufferSize);
+            var pool = BufferingConstants<byte>.DefaultMemoryPool;
+            using var buffer = pool.Rent(BufferingConstants<byte>.DefaultBufferSize);
             await foreach (var e in enumerable.ConfigureAwait(false))
             {
                 var read = encoding.GetBytes(e.Span, buffer.Memory.Span);

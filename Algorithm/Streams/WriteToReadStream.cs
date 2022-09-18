@@ -186,9 +186,9 @@ namespace Eocron.Algorithms.Streams
 
         private void EnsureTransferBuffer(int desiredBufferSize)
         {
-            if (desiredBufferSize <= 8 * 1024)
+            if (desiredBufferSize <= BufferingConstants<byte>.DefaultBufferSize)
             {
-                desiredBufferSize = 8 * 1024;
+                desiredBufferSize = BufferingConstants<byte>.DefaultBufferSize;
             }
             if (_transferBuffer == null)
             {
