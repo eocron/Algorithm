@@ -31,6 +31,40 @@ namespace NTests
         }
 
         [Test]
+        public void Catch()
+        {
+            var testStream = GetTestStream();
+            Assert.Throws<InvalidDataException>(() =>
+            {
+                var actual = testStream
+                    .AsEnumerable()
+                    .GZip(CompressionMode.Decompress)
+                    .ToByteArray();
+            });
+            
+            Assert.AreEqual(1, testStream.CloseCallCount);
+            Assert.AreEqual(0, testStream.DisposeAsyncCallCount);
+            Assert.AreEqual(1, testStream.DisposeCallCount);
+        }
+
+        [Test]
+        public async Task CatchAsync()
+        {
+            var testStream = GetTestStream();
+            Assert.ThrowsAsync<InvalidDataException>(async () =>
+            {
+                var actual = await testStream
+                    .AsAsyncEnumerable()
+                    .GZip(CompressionMode.Decompress)
+                    .ToByteArrayAsync();
+            });
+
+            Assert.AreEqual(1, testStream.CloseCallCount);
+            Assert.AreEqual(1, testStream.DisposeAsyncCallCount);
+            Assert.AreEqual(1, testStream.DisposeCallCount);
+        }
+
+        [Test]
         public void Read()
         {
             var testStream = new TestReadStream(new MemoryStream(new byte[] { 1, 2, 3, 4, 5 }));
