@@ -15,15 +15,15 @@
 			This client library contains some basic and usefull alghorithms for my work.
 		</Description>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-		<Version>1.7.1</Version>
+		<Version>1.7.2</Version>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<PackageReadmeFile>..\README.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-		<PackageReference Include="System.Memory" Version="4.5.4" />
+		<PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+		<PackageReference Include="System.Memory" Version="4.*" />
 	</ItemGroup>
 
 	<ItemGroup>
