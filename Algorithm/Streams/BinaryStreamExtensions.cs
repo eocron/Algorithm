@@ -21,11 +21,13 @@ namespace Eocron.Algorithms.Streams
         /// <param name="pool"></param>
         /// <param name="leaveOpen"></param>
         /// <returns></returns>
-        public static IEnumerable<Memory<byte>> AsEnumerable(this Stream stream, MemoryPool<byte> pool = null, bool leaveOpen = false)
+        public static IEnumerable<Memory<byte>> AsEnumerable(this Stream stream, MemoryPool<byte> pool = null,
+            bool leaveOpen = false)
         {
-            if(stream == null)
+            if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            return new BinaryReadOnlyStreamWrapper(() => leaveOpen ? new NonDisposableStream(stream) : stream, pool ?? DefaultMemoryPool, DefaultBufferSize);
+            return new StreamEnumerable(() => leaveOpen ? new NonDisposableStream(stream) : stream,
+                pool ?? DefaultMemoryPool, DefaultBufferSize);
         }
 
         /// <summary>
@@ -35,11 +37,13 @@ namespace Eocron.Algorithms.Streams
         /// <param name="pool"></param>
         /// <param name="leaveOpen"></param>
         /// <returns></returns>
-        public static IAsyncEnumerable<Memory<byte>> AsAsyncEnumerable(this Stream stream, MemoryPool<byte> pool = null, bool leaveOpen = false)
+        public static IAsyncEnumerable<Memory<byte>> AsAsyncEnumerable(this Stream stream, MemoryPool<byte> pool = null,
+            bool leaveOpen = false)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            return new BinaryReadOnlyStreamWrapper(() => leaveOpen ? new NonDisposableStream(stream) : stream, pool ?? DefaultMemoryPool, DefaultBufferSize);
+            return new StreamEnumerable(() => leaveOpen ? new NonDisposableStream(stream) : stream,
+                pool ?? DefaultMemoryPool, DefaultBufferSize);
         }
 
         public static Stream AsStream(IEnumerable<Memory<byte>> enumerable)
@@ -80,6 +84,7 @@ namespace Eocron.Algorithms.Streams
             {
                 ms.Write(memory.Span);
             }
+
             return ms.ToArray();
         }
 
@@ -87,30 +92,35 @@ namespace Eocron.Algorithms.Streams
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            return new BinaryReadOnlyStreamWrapper(
+            return new StreamEnumerable(
                 () => mode == CompressionMode.Decompress
                     ? (Stream)new GZipStream(new EnumerableStream(stream), mode, false)
                     : (Stream)new WriteToReadStream<GZipStream>(
-                        x => new GZipStream(x, mode, false),
                         () => new EnumerableStream(stream),
+                        x => new GZipStream(x, mode, false),
                         (x, ct) => x.FlushAsync(ct),
-                        x => x.Flush()),
-                DefaultMemoryPool, DefaultBufferSize);
+                        x => x.Flush(),
+                        DefaultMemoryPool),
+                DefaultMemoryPool,
+                DefaultBufferSize);
         }
 
-        public static IAsyncEnumerable<Memory<byte>> GZip(this IAsyncEnumerable<Memory<byte>> stream, CompressionMode mode)
+        public static IAsyncEnumerable<Memory<byte>> GZip(this IAsyncEnumerable<Memory<byte>> stream,
+            CompressionMode mode)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            return new BinaryReadOnlyStreamWrapper(
+            return new StreamEnumerable(
                 () => mode == CompressionMode.Decompress
                     ? (Stream)new GZipStream(new EnumerableStream(stream), mode, false)
                     : (Stream)new WriteToReadStream<GZipStream>(
-                        x => new GZipStream(x, mode, false),
                         () => new EnumerableStream(stream),
+                        x => new GZipStream(x, mode, false),
                         (x, ct) => x.FlushAsync(ct),
-                        x => x.Flush()),
-                DefaultMemoryPool, DefaultBufferSize);
+                        x => x.Flush(),
+                        DefaultMemoryPool),
+                DefaultMemoryPool,
+                DefaultBufferSize);
         }
 
         public static IEnumerable<Memory<byte>> CryptoTransform(this IEnumerable<Memory<byte>> stream,
@@ -120,15 +130,17 @@ namespace Eocron.Algorithms.Streams
                 throw new ArgumentNullException(nameof(stream));
             if (transform == null)
                 throw new ArgumentNullException(nameof(transform));
-            return new BinaryReadOnlyStreamWrapper(
+            return new StreamEnumerable(
                 () => mode == CryptoStreamMode.Read
                     ? (Stream)new CryptoStream(new EnumerableStream(stream), transform, mode, false)
                     : (Stream)new WriteToReadStream<CryptoStream>(
-                        x => new CryptoStream(x, transform, mode, false),
                         () => new EnumerableStream(stream),
+                        x => new CryptoStream(x, transform, mode, false),
                         async (x, ct) => x.FlushFinalBlock(),
-                        x => x.FlushFinalBlock()),
-                DefaultMemoryPool, DefaultBufferSize);
+                        x => x.FlushFinalBlock(),
+                        DefaultMemoryPool),
+                DefaultMemoryPool,
+                DefaultBufferSize);
         }
 
         public static IAsyncEnumerable<Memory<byte>> CryptoTransform(this IAsyncEnumerable<Memory<byte>> stream,
@@ -138,15 +150,17 @@ namespace Eocron.Algorithms.Streams
                 throw new ArgumentNullException(nameof(stream));
             if (transform == null)
                 throw new ArgumentNullException(nameof(transform));
-            return new BinaryReadOnlyStreamWrapper(
+            return new StreamEnumerable(
                 () => mode == CryptoStreamMode.Read
                     ? (Stream)new CryptoStream(new EnumerableStream(stream), transform, mode, false)
                     : (Stream)new WriteToReadStream<CryptoStream>(
-                        x => new CryptoStream(x, transform, mode, false),
                         () => new EnumerableStream(stream),
+                        x => new CryptoStream(x, transform, mode, false),
                         async (x, ct) => x.FlushFinalBlock(),
-                        x => x.FlushFinalBlock()),
-                DefaultMemoryPool, DefaultBufferSize);
+                        x => x.FlushFinalBlock(),
+                        DefaultMemoryPool),
+                DefaultMemoryPool,
+                DefaultBufferSize);
         }
     }
 }

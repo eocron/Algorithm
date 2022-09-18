@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -11,24 +12,29 @@ namespace Eocron.Algorithms.Streams
     {
         private readonly Func<T, CancellationToken, Task> _onEosAsync;
         private readonly Action<T> _onEos;
-        private readonly Lazy<Stream> _dataSource;
-        private readonly MemoryStream _readable;
-        private Memory<byte>? _currentReadableBuffer;
-        private readonly Lazy<T> _writable;
-        private byte[] _transferBuffer;
+        private readonly MemoryPool<byte> _pool;
+        private readonly Lazy<Stream> _sourceStream;
+        private readonly MemoryStream _transferStream;
+        private readonly Lazy<T> _targetStream;
+
+        private IMemoryOwner<byte> _transferBuffer;
+        private Memory<byte>? _transferBufferLeftover;
         private bool _eos;
 
-        public WriteToReadStream(Func<Stream, T> writableStreamProvider,
-            Func<Stream> dataSourceProvider,
+        public WriteToReadStream(
+            Func<Stream> sourceStreamProvider,
+            Func<Stream, T> targetStreamProvider,
             Func<T, CancellationToken, Task> onEosAsync,
-            Action<T> onEos)
+            Action<T> onEos,
+            MemoryPool<byte> pool)
         {
+            _sourceStream = new Lazy<Stream>(sourceStreamProvider);
+            _transferStream = new MemoryStream();
+            _targetStream = new Lazy<T>(() => targetStreamProvider(_transferStream));
+            _transferBufferLeftover = null;
             _onEosAsync = onEosAsync;
             _onEos = onEos;
-            _dataSource = new Lazy<Stream>(dataSourceProvider);
-            _readable = new MemoryStream();
-            _writable = new Lazy<T>(() => writableStreamProvider(_readable));
-            _currentReadableBuffer = null;
+            _pool = pool;
         }
 
         public override int Read(byte[] buffer, int offset, int count)
@@ -39,14 +45,14 @@ namespace Eocron.Algorithms.Streams
 
             while (true)
             {
-                if (_currentReadableBuffer != null)
+                if (_transferBufferLeftover != null)
                 {
-                    var src = _currentReadableBuffer.Value;
+                    var src = _transferBufferLeftover.Value;
                     if (src.Length > dst.Length)
                     {
                         src.Slice(0, dst.Length).CopyTo(dst);
                         read += dst.Length;
-                        _currentReadableBuffer = src.Slice(dst.Length, src.Length - dst.Length);
+                        _transferBufferLeftover = src.Slice(dst.Length, src.Length - dst.Length);
                         break;
                     }
                     else if (src.Length < dst.Length)
@@ -54,20 +60,20 @@ namespace Eocron.Algorithms.Streams
                         src.CopyTo(dst);
                         dst = dst.Slice(src.Length, dst.Length - src.Length);
                         read += src.Length;
-                        _currentReadableBuffer = null;
+                        _transferBufferLeftover = null;
                         //need more transformations to fill destination
                     }
                     else
                     {
                         src.CopyTo(dst);
                         read += src.Length;
-                        _currentReadableBuffer = null;
+                        _transferBufferLeftover = null;
                         break;
                     }
                 }
                 else
                 {
-                    if (IsEos())
+                    if (_eos)
                     {
                         break;
                     }
@@ -90,14 +96,14 @@ namespace Eocron.Algorithms.Streams
 
             while (true)
             {
-                if (_currentReadableBuffer != null)
+                if (_transferBufferLeftover != null)
                 {
-                    var src = _currentReadableBuffer.Value;
+                    var src = _transferBufferLeftover.Value;
                     if (src.Length > dst.Length)
                     {
                         src.Slice(0, dst.Length).CopyTo(dst);
                         read += dst.Length;
-                        _currentReadableBuffer = src.Slice(dst.Length, src.Length - dst.Length);
+                        _transferBufferLeftover = src.Slice(dst.Length, src.Length - dst.Length);
                         break;
                     }
                     else if (src.Length < dst.Length)
@@ -105,20 +111,20 @@ namespace Eocron.Algorithms.Streams
                         src.CopyTo(dst);
                         dst = dst.Slice(src.Length, dst.Length - src.Length);
                         read += src.Length;
-                        _currentReadableBuffer = null;
+                        _transferBufferLeftover = null;
                         //need more transformations to fill destination
                     }
                     else
                     {
                         src.CopyTo(dst);
                         read += src.Length;
-                        _currentReadableBuffer = null;
+                        _transferBufferLeftover = null;
                         break;
                     }
                 }
                 else
                 {
-                    if (IsEos())
+                    if (_eos)
                     {
                         break;
                     }
@@ -134,47 +140,47 @@ namespace Eocron.Algorithms.Streams
 
         private void Transform()
         {
-            Debug.Assert(_currentReadableBuffer == null, "Readable buffer should be emptied out before transform");
+            Debug.Assert(_transferBufferLeftover == null, "Readable buffer should be emptied out before transform");
             Debug.Assert(!_eos, "Eos reached but transform was called");
 
-            var read = _dataSource.Value.Read(_transferBuffer);
+            var read = _sourceStream.Value.Read(_transferBuffer.Memory.Span);
             if (read <= 0)
                 _eos = true;
             else
-                _writable.Value.Write(_transferBuffer, 0, read);
+                _targetStream.Value.Write(_transferBuffer.Memory.Slice(0, read).Span);
 
-            if (_eos && _writable.IsValueCreated)
+            if (_eos && _targetStream.IsValueCreated)
             {
-                _onEos(_writable.Value);
+                _onEos(_targetStream.Value);
             }
 
-            if (_readable.Position > 0)
+            if (_transferStream.Position > 0)
             {
-                _currentReadableBuffer = _readable.GetBuffer().AsMemory(0, (int)_readable.Position);
-                _readable.Seek(0, SeekOrigin.Begin);
+                _transferBufferLeftover = _transferStream.GetBuffer().AsMemory(0, (int)_transferStream.Position);
+                _transferStream.Seek(0, SeekOrigin.Begin);
             }
         }
 
         private async Task TransformAsync(CancellationToken ct)
         {
-            Debug.Assert(_currentReadableBuffer == null, "Readable buffer should be emptied out before transform");
+            Debug.Assert(_transferBufferLeftover == null, "Readable buffer should be emptied out before transform");
             Debug.Assert(!_eos, "Eos reached but transform was called");
 
-            var read = await _dataSource.Value.ReadAsync(_transferBuffer, ct).ConfigureAwait(false);
+            var read = await _sourceStream.Value.ReadAsync(_transferBuffer.Memory, ct).ConfigureAwait(false);
             if (read <= 0)
                 _eos = true;
             else
-                await _writable.Value.WriteAsync(_transferBuffer, 0, read, ct).ConfigureAwait(false);
+                await _targetStream.Value.WriteAsync(_transferBuffer.Memory.Slice(0, read), ct).ConfigureAwait(false);
 
-            if (_eos && _writable.IsValueCreated)
+            if (_eos && _targetStream.IsValueCreated)
             {
-                await _onEosAsync(_writable.Value, ct).ConfigureAwait(false);
+                await _onEosAsync(_targetStream.Value, ct).ConfigureAwait(false);
             }
 
-            if (_readable.Position > 0)
+            if (_transferStream.Position > 0)
             {
-                _currentReadableBuffer = _readable.GetBuffer().AsMemory(0, (int)_readable.Position);
-                _readable.Seek(0, SeekOrigin.Begin);
+                _transferBufferLeftover = _transferStream.GetBuffer().AsMemory(0, (int)_transferStream.Position);
+                _transferStream.Seek(0, SeekOrigin.Begin);
             }
         }
 
@@ -182,13 +188,8 @@ namespace Eocron.Algorithms.Streams
         {
             if (_transferBuffer == null)
             {
-                _transferBuffer = new byte[desiredBufferSize];
+                _transferBuffer = _pool.Rent(desiredBufferSize);
             }
-        }
-
-        private bool IsEos()
-        {
-            return _eos;
         }
 
         public override long Seek(long offset, SeekOrigin origin)
@@ -213,11 +214,12 @@ namespace Eocron.Algorithms.Streams
 
         protected override void Dispose(bool disposing)
         {
-            if (_writable.IsValueCreated)
-                _writable.Value.Dispose();
-            if(_dataSource.IsValueCreated)
-                _dataSource.Value.Dispose();
-            _readable.Dispose();
+            if (_targetStream.IsValueCreated)
+                _targetStream.Value.Dispose();
+            if(_sourceStream.IsValueCreated)
+                _sourceStream.Value.Dispose();
+            _transferStream.Dispose();
+            _transferBuffer.Dispose();
             base.Dispose(disposing);
         }
 

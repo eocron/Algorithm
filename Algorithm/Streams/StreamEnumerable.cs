@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 
 namespace Eocron.Algorithms.Streams
 {
-    public sealed class BinaryReadOnlyStreamWrapper : IReadOnlyStream<Memory<byte>>
+    public sealed class StreamEnumerable : IReadOnlyStream<Memory<byte>>
     {
         private readonly Func<Stream> _innerFactory;
         private readonly MemoryPool<byte> _pool;
         private readonly int _desiredBufferSize;
 
-        public BinaryReadOnlyStreamWrapper(Func<Stream> innerFactory, MemoryPool<byte> pool, int desiredBufferSize)
+        public StreamEnumerable(Func<Stream> innerFactory, MemoryPool<byte> pool, int desiredBufferSize)
         {
             _innerFactory = innerFactory;
             _pool = pool;
