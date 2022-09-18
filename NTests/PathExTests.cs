@@ -23,7 +23,7 @@ namespace NTests
         [TestCase(@"/./", @"./", Category = "dot")]
         public void Check(string inputPath, string expectedPath)
         {
-            Assert.AreEqual(expectedPath, PathEx.Eval(inputPath));
+            Assert.AreEqual(expectedPath, PathEx.Eval(inputPath, '/'));
         }
     }
 }
