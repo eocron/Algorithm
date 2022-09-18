@@ -11,8 +11,6 @@ namespace Eocron.Algorithms.Streams
 {
     public static class BinaryStreamExtensions
     {
-
-
         /// <summary>
         /// Produce single call enumerable
         /// </summary>
@@ -51,7 +49,7 @@ namespace Eocron.Algorithms.Streams
                 BufferingConstants<byte>.DefaultBufferSize);
         }
 
-        public static Stream AsStream(IEnumerable<Memory<byte>> enumerable)
+        public static Stream AsStream(this IEnumerable<Memory<byte>> enumerable)
         {
             if (enumerable == null)
                 throw new ArgumentNullException(nameof(enumerable));
@@ -59,7 +57,7 @@ namespace Eocron.Algorithms.Streams
             return new EnumerableStream(enumerable);
         }
 
-        public static Stream AsStream(IAsyncEnumerable<Memory<byte>> enumerable)
+        public static Stream AsStream(this IAsyncEnumerable<Memory<byte>> enumerable)
         {
             if (enumerable == null)
                 throw new ArgumentNullException(nameof(enumerable));
