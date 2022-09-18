@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -69,7 +70,7 @@ namespace NTests
         {
             var testStream = new TestReadStream(new MemoryStream(new byte[] { 1, 2, 3, 4, 5 }));
             var result = testStream
-                .AsEnumerable(_ => new Memory<byte>(new byte[2]))
+                .AsEnumerable(new TestMemoryPool<byte>(2))
                 .Select(x => x.ToArray())
                 .ToList();
             Assert.AreEqual(3, result.Count);
@@ -87,7 +88,7 @@ namespace NTests
         {
             using var testStream = new TestReadStream(new MemoryStream(new byte[] { 1, 2, 3, 4, 5 }));
             var result = testStream
-                .AsEnumerable(_ => new Memory<byte>(new byte[2]), true)
+                .AsEnumerable(new TestMemoryPool<byte>(2), true)
                 .Select(x => x.ToArray())
                 .ToList();
             Assert.AreEqual(3, result.Count);
@@ -209,6 +210,40 @@ namespace NTests
             return new TestReadStream(new MemoryStream(TestData));
         }
 
+        private class TestMemoryPool<T> : MemoryPool<T>
+        {
+            private readonly int _bufferSize;
+
+            public TestMemoryPool(int bufferSize)
+            {
+                _bufferSize = bufferSize;
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                
+            }
+
+            public override IMemoryOwner<T> Rent(int minBufferSize = -1)
+            {
+                return new TestMemoryOwner(new Memory<T>(new T[_bufferSize]));
+            }
+
+            public override int MaxBufferSize => _bufferSize;
+
+            private class TestMemoryOwner : IMemoryOwner<T>
+            {
+                public TestMemoryOwner(Memory<T> inner)
+                {
+                    Memory = inner;
+                }
+                public void Dispose()
+                {
+                }
+
+                public Memory<T> Memory { get; }
+            }
+        }
         private class TestReadStream : Stream
         {
             public int DisposeCallCount;

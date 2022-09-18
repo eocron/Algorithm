@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +9,7 @@ namespace Eocron.Algorithms.Streams
 {
     public static class StringStreamExtensions
     {
+        private const int DefaultConversionBufferSize = 8*1024;
         public static async IAsyncEnumerable<T> AsAsyncEnumerable<T>(this IEnumerable<T> enumerable)
         {
             if(enumerable == null)
@@ -23,23 +24,25 @@ namespace Eocron.Algorithms.Streams
         {
             if (enumerable == null)
                 throw new ArgumentNullException(nameof(enumerable));
-            var buffer = BinaryStreamExtensions.DefaultBufferProvider<char>();
-            return enumerable.Select(x =>
+            var pool = MemoryPool<char>.Shared;
+            using var buffer = pool.Rent(DefaultConversionBufferSize);
+            foreach (var x in enumerable)
             {
-                var read = encoding.GetChars(x.Span, buffer.Span);
-                return buffer.Slice(0, read);
-            });
+                var read = encoding.GetChars(x.Span, buffer.Memory.Span);
+                yield return buffer.Memory.Slice(0, read);
+            }
         }
 
         public static async IAsyncEnumerable<Memory<char>> Convert(this IAsyncEnumerable<Memory<byte>> enumerable, Encoding encoding)
         {
             if (enumerable == null)
                 throw new ArgumentNullException(nameof(enumerable));
-            var buffer = BinaryStreamExtensions.DefaultBufferProvider<char>();
-            await foreach (var e in enumerable.ConfigureAwait(false))
+            var pool = MemoryPool<char>.Shared;
+            using var buffer = pool.Rent(DefaultConversionBufferSize);
+            await foreach (var x in enumerable.ConfigureAwait(false))
             {
-                var read = encoding.GetChars(e.Span, buffer.Span);
-                yield return buffer.Slice(0, read);
+                var read = encoding.GetChars(x.Span, buffer.Memory.Span);
+                yield return buffer.Memory.Slice(0, read);
             }
         }
 
@@ -47,23 +50,25 @@ namespace Eocron.Algorithms.Streams
         {
             if (enumerable == null)
                 throw new ArgumentNullException(nameof(enumerable));
-            var buffer = BinaryStreamExtensions.DefaultBufferProvider<byte>();
-            return enumerable.Select(x =>
+            var pool = MemoryPool<byte>.Shared;
+            using var buffer = pool.Rent(DefaultConversionBufferSize); 
+            foreach (var e in enumerable)
             {
-                var read = encoding.GetBytes(x.Span, buffer.Span);
-                return buffer.Slice(0, read);
-            });
+                var read = encoding.GetBytes(e.Span, buffer.Memory.Span);
+                yield return buffer.Memory.Slice(0, read);
+            }
         }
 
         public static async IAsyncEnumerable<Memory<byte>> Convert(this IAsyncEnumerable<Memory<char>> enumerable, Encoding encoding)
         {
             if (enumerable == null)
                 throw new ArgumentNullException(nameof(enumerable));
-            var buffer = BinaryStreamExtensions.DefaultBufferProvider<byte>();
+            var pool = MemoryPool<byte>.Shared;
+            using var buffer = pool.Rent(DefaultConversionBufferSize);
             await foreach (var e in enumerable.ConfigureAwait(false))
             {
-                var read = encoding.GetBytes(e.Span, buffer.Span);
-                yield return buffer.Slice(0, read);
+                var read = encoding.GetBytes(e.Span, buffer.Memory.Span);
+                yield return buffer.Memory.Slice(0, read);
             }
         }
 

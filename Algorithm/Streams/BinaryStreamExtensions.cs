@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -8,41 +9,37 @@ using System.Threading.Tasks;
 
 namespace Eocron.Algorithms.Streams
 {
-    public delegate Memory<T> BufferProvider<T>(int desiredSize = 8 * 1024);
     public static class BinaryStreamExtensions
     {
-        internal static Memory<T> DefaultBufferProvider<T>(int desiredSize = 8*1024)
-        {
-            return new Memory<T>(new T[desiredSize]);
-        }
-
+        private static MemoryPool<byte> DefaultMemoryPool => MemoryPool<byte>.Shared;
+        private const int DefaultBufferSize = 8 * 1024;
 
         /// <summary>
         /// Produce single call enumerable
         /// </summary>
         /// <param name="stream"></param>
-        /// <param name="bufferProvider"></param>
+        /// <param name="pool"></param>
         /// <param name="leaveOpen"></param>
         /// <returns></returns>
-        public static IEnumerable<Memory<byte>> AsEnumerable(this Stream stream, BufferProvider<byte> bufferProvider = null, bool leaveOpen = false)
+        public static IEnumerable<Memory<byte>> AsEnumerable(this Stream stream, MemoryPool<byte> pool = null, bool leaveOpen = false)
         {
             if(stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            return new BinaryReadOnlyStreamWrapper(() => leaveOpen ? new NonDisposableStream(stream) : stream, bufferProvider ?? DefaultBufferProvider<byte>);
+            return new BinaryReadOnlyStreamWrapper(() => leaveOpen ? new NonDisposableStream(stream) : stream, pool ?? DefaultMemoryPool, DefaultBufferSize);
         }
 
         /// <summary>
         /// Produce single call enumerable
         /// </summary>
         /// <param name="stream"></param>
-        /// <param name="bufferProvider"></param>
+        /// <param name="pool"></param>
         /// <param name="leaveOpen"></param>
         /// <returns></returns>
-        public static IAsyncEnumerable<Memory<byte>> AsAsyncEnumerable(this Stream stream, BufferProvider<byte> bufferProvider = null, bool leaveOpen = false)
+        public static IAsyncEnumerable<Memory<byte>> AsAsyncEnumerable(this Stream stream, MemoryPool<byte> pool = null, bool leaveOpen = false)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            return new BinaryReadOnlyStreamWrapper(() => leaveOpen ? new NonDisposableStream(stream) : stream, bufferProvider ?? DefaultBufferProvider<byte>);
+            return new BinaryReadOnlyStreamWrapper(() => leaveOpen ? new NonDisposableStream(stream) : stream, pool ?? DefaultMemoryPool, DefaultBufferSize);
         }
 
         public static byte[] ToByteArray(this IEnumerable<Memory<byte>> stream)
@@ -82,7 +79,7 @@ namespace Eocron.Algorithms.Streams
                         () => new EnumerableStream(stream),
                         (x, ct) => x.FlushAsync(ct),
                         x => x.Flush()),
-                DefaultBufferProvider<byte>);
+                DefaultMemoryPool, DefaultBufferSize);
         }
 
         public static IAsyncEnumerable<Memory<byte>> GZip(this IAsyncEnumerable<Memory<byte>> stream, CompressionMode mode)
@@ -97,7 +94,7 @@ namespace Eocron.Algorithms.Streams
                         () => new EnumerableStream(stream),
                         (x, ct) => x.FlushAsync(ct),
                         x => x.Flush()),
-                DefaultBufferProvider<byte>);
+                DefaultMemoryPool, DefaultBufferSize);
         }
 
         public static IEnumerable<Memory<byte>> CryptoTransform(this IEnumerable<Memory<byte>> stream,
@@ -115,7 +112,7 @@ namespace Eocron.Algorithms.Streams
                         () => new EnumerableStream(stream),
                         async (x, ct) => x.FlushFinalBlock(),
                         x => x.FlushFinalBlock()),
-                DefaultBufferProvider<byte>);
+                DefaultMemoryPool, DefaultBufferSize);
         }
 
         public static IAsyncEnumerable<Memory<byte>> CryptoTransform(this IAsyncEnumerable<Memory<byte>> stream,
@@ -133,7 +130,7 @@ namespace Eocron.Algorithms.Streams
                         () => new EnumerableStream(stream),
                         async (x, ct) => x.FlushFinalBlock(),
                         x => x.FlushFinalBlock()),
-                DefaultBufferProvider<byte>);
+                DefaultMemoryPool, DefaultBufferSize);
         }
     }
 }
