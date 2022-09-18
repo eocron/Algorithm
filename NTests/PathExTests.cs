@@ -10,7 +10,7 @@ namespace NTests
         [Test]
         [TestCase(@"a",@"a", Category = "simple")]
         [TestCase(@"a/a",@"a/a", Category = "simple")]
-        [TestCase(@"a\a", @"a/a", Category = "simple")]
+        [TestCase("a\\a", @"a/a", Category = "simple")]
         [TestCase(@"/a/b/", @"/a/b/", Category = "simple")]
 
         [TestCase(@"a/../b", @"b", Category = "parent")]

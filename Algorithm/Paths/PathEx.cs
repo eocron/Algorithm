@@ -8,7 +8,7 @@ namespace Eocron.Algorithms
 {
     public static class PathEx
     {
-        private static readonly char[] Separators = new char[] {Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar};
+        private static readonly char[] Separators = new char[] {Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar, '\\', '/'};
 
         /// <summary>
         /// Evaluates all special commands in path, reducing its variants, such as:
@@ -23,7 +23,7 @@ namespace Eocron.Algorithms
         /// <returns></returns>
         public static string Eval(string path, char? joinSeparator = null)
         {
-            joinSeparator ??= Path.AltDirectorySeparatorChar;
+            joinSeparator ??= '/';
             var parts = path.Split(Separators, StringSplitOptions.RemoveEmptyEntries);
             if (!parts.Any())
                 return string.Empty;
