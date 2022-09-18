@@ -186,6 +186,10 @@ namespace Eocron.Algorithms.Streams
 
         private void EnsureTransferBuffer(int desiredBufferSize)
         {
+            if (desiredBufferSize <= 8 * 1024)
+            {
+                desiredBufferSize = 8 * 1024;
+            }
             if (_transferBuffer == null)
             {
                 _transferBuffer = _pool.Rent(desiredBufferSize);
