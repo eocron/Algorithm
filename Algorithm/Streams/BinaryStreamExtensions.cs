@@ -42,6 +42,22 @@ namespace Eocron.Algorithms.Streams
             return new BinaryReadOnlyStreamWrapper(() => leaveOpen ? new NonDisposableStream(stream) : stream, pool ?? DefaultMemoryPool, DefaultBufferSize);
         }
 
+        public static Stream AsStream(IEnumerable<Memory<byte>> enumerable)
+        {
+            if (enumerable == null)
+                throw new ArgumentNullException(nameof(enumerable));
+
+            return new EnumerableStream(enumerable);
+        }
+
+        public static Stream AsStream(IAsyncEnumerable<Memory<byte>> enumerable)
+        {
+            if (enumerable == null)
+                throw new ArgumentNullException(nameof(enumerable));
+
+            return new EnumerableStream(enumerable);
+        }
+
         public static byte[] ToByteArray(this IEnumerable<Memory<byte>> stream)
         {
             if (stream == null)
