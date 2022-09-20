@@ -14,11 +14,11 @@ namespace Eocron.Algorithms.Streams
         private readonly MemoryPool<byte> _pool;
         private readonly int _desiredBufferSize;
 
-        public StreamEnumerable(Func<Stream> innerFactory, MemoryPool<byte> pool, int desiredBufferSize)
+        public StreamEnumerable(Func<Stream> innerFactory, MemoryPool<byte> pool = null, int? desiredBufferSize = null)
         {
             _innerFactory = innerFactory;
-            _pool = pool;
-            _desiredBufferSize = desiredBufferSize;
+            _pool = pool ?? BufferingConstants<byte>.DefaultMemoryPool;
+            _desiredBufferSize = desiredBufferSize ?? BufferingConstants<byte>.DefaultBufferSize;
         }
 
         public IAsyncEnumerator<Memory<byte>> GetAsyncEnumerator(CancellationToken ct = default)

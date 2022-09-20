@@ -26,8 +26,7 @@ namespace Eocron.Algorithms.Streams
             return new StreamEnumerable(() => leaveOpen
                     ? new NonDisposableStream(stream)
                     : stream,
-                pool ?? BufferingConstants<byte>.DefaultMemoryPool,
-                BufferingConstants<byte>.DefaultBufferSize);
+                pool);
         }
 
         /// <summary>
@@ -45,8 +44,7 @@ namespace Eocron.Algorithms.Streams
             return new StreamEnumerable(() => leaveOpen
                     ? new NonDisposableStream(stream)
                     : stream,
-                pool ?? BufferingConstants<byte>.DefaultMemoryPool,
-                BufferingConstants<byte>.DefaultBufferSize);
+                pool);
         }
 
         public static Stream AsStream(this IEnumerable<Memory<byte>> enumerable)
@@ -100,12 +98,7 @@ namespace Eocron.Algorithms.Streams
                     ? (Stream)new GZipStream(new EnumerableStream(stream), mode, false)
                     : (Stream)new WriteToReadStream<GZipStream>(
                         () => new EnumerableStream(stream),
-                        x => new GZipStream(x, mode, false),
-                        (x, ct) => x.FlushAsync(ct),
-                        x => x.Flush(),
-                        BufferingConstants<byte>.DefaultMemoryPool),
-                BufferingConstants<byte>.DefaultMemoryPool,
-                BufferingConstants<byte>.DefaultBufferSize);
+                        x => new GZipStream(x, mode, false)));
         }
 
         public static IAsyncEnumerable<Memory<byte>> GZip(this IAsyncEnumerable<Memory<byte>> stream,
@@ -118,12 +111,7 @@ namespace Eocron.Algorithms.Streams
                     ? (Stream)new GZipStream(new EnumerableStream(stream), mode, false)
                     : (Stream)new WriteToReadStream<GZipStream>(
                         () => new EnumerableStream(stream),
-                        x => new GZipStream(x, mode, false),
-                        (x, ct) => x.FlushAsync(ct),
-                        x => x.Flush(),
-                        BufferingConstants<byte>.DefaultMemoryPool),
-                BufferingConstants<byte>.DefaultMemoryPool,
-                BufferingConstants<byte>.DefaultBufferSize);
+                        x => new GZipStream(x, mode, false)));
         }
 
         public static IEnumerable<Memory<byte>> CryptoTransform(this IEnumerable<Memory<byte>> stream,
@@ -139,11 +127,9 @@ namespace Eocron.Algorithms.Streams
                     : (Stream)new WriteToReadStream<CryptoStream>(
                         () => new EnumerableStream(stream),
                         x => new CryptoStream(x, transform, mode, false),
-                        async (x, ct) => x.FlushFinalBlock(),
-                        x => x.FlushFinalBlock(),
-                        BufferingConstants<byte>.DefaultMemoryPool),
-                BufferingConstants<byte>.DefaultMemoryPool,
-                BufferingConstants<byte>.DefaultBufferSize);
+                        BufferingConstants<byte>.DefaultMemoryPool, 
+                        async (x, ct) => x.FlushFinalBlock(), 
+                        x => x.FlushFinalBlock()));
         }
 
         public static IAsyncEnumerable<Memory<byte>> CryptoTransform(this IAsyncEnumerable<Memory<byte>> stream,
@@ -159,11 +145,9 @@ namespace Eocron.Algorithms.Streams
                     : (Stream)new WriteToReadStream<CryptoStream>(
                         () => new EnumerableStream(stream),
                         x => new CryptoStream(x, transform, mode, false),
+                        BufferingConstants<byte>.DefaultMemoryPool, 
                         async (x, ct) => x.FlushFinalBlock(),
-                        x => x.FlushFinalBlock(),
-                        BufferingConstants<byte>.DefaultMemoryPool),
-                BufferingConstants<byte>.DefaultMemoryPool,
-                BufferingConstants<byte>.DefaultBufferSize);
+                        x => x.FlushFinalBlock()));
         }
     }
 }

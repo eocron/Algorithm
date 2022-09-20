@@ -21,20 +21,19 @@ namespace Eocron.Algorithms.Streams
         private Memory<byte>? _transferBufferLeftover;
         private bool _eos;
 
-        public WriteToReadStream(
-            Func<Stream> sourceStreamProvider,
+        public WriteToReadStream(Func<Stream> sourceStreamProvider,
             Func<Stream, T> targetStreamProvider,
-            Func<T, CancellationToken, Task> onEosAsync,
-            Action<T> onEos,
-            MemoryPool<byte> pool)
+            MemoryPool<byte> pool = null,
+            Func<T, CancellationToken, Task> onEosAsync = null,
+            Action<T> onEos = null)
         {
             _sourceStream = new Lazy<Stream>(sourceStreamProvider);
             _transferStream = new MemoryStream();
             _targetStream = new Lazy<T>(() => targetStreamProvider(_transferStream));
             _transferBufferLeftover = null;
-            _onEosAsync = onEosAsync;
-            _onEos = onEos;
-            _pool = pool;
+            _onEosAsync = onEosAsync ?? ((x, ct) => x.FlushAsync());
+            _onEos = onEos ?? (x => x.Flush());
+            _pool = pool ?? BufferingConstants<byte>.DefaultMemoryPool;
         }
 
         public override int Read(byte[] buffer, int offset, int count)
