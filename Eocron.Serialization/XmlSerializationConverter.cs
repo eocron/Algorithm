@@ -32,7 +32,7 @@ namespace Eocron.Serialization
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
 
-            _serializer.WriteTo(_serializer.SerializeToXmlDocument(type, obj), targetStream);
+            _serializer.WriteTo(targetStream, _serializer.SerializeToXmlDocument(type, obj));
         }
     }
 }

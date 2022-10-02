@@ -30,6 +30,8 @@ namespace Eocron.Serialization.Xml
 
         public object DeserializeFromXmlDocument(Type type, XmlDocument document)
         {
+            if (type == null)
+                throw new ArgumentNullException(nameof(type));
             if (document == null)
                 throw new ArgumentNullException(nameof(document));
             return GetSerializer(type).Deserialize(new XmlNodeReader(document));
@@ -37,11 +39,27 @@ namespace Eocron.Serialization.Xml
 
         public XmlDocument SerializeToXmlDocument(Type type, object content)
         {
-            return SerializeToXmlDocument(GetSerializer(type), content);
+            if (type == null)
+                throw new ArgumentNullException(nameof(type));
+            if (content == null)
+                throw new ArgumentNullException(nameof(content));
+            
+            var document = new XmlDocument();
+            document.AppendChild(document.CreateXmlDeclaration("1.0", null, null));
+            var nav = document.CreateNavigator();
+            using (var w = nav.AppendChild())
+            {
+                GetSerializer(type).Serialize(w, content);
+            }
+            AfterSerialization(document);
+            return document;
         }
 
         public XmlDocument ReadFrom(StreamReader sourceStream)
         {
+            if (sourceStream == null)
+                throw new ArgumentNullException(nameof(sourceStream));
+
             var document = new XmlDocument();
             using var reader = XmlReader.Create(sourceStream, _readerSettings);
             document.Load(reader);
@@ -49,26 +67,15 @@ namespace Eocron.Serialization.Xml
             return document;
         }
 
-        public void WriteTo(XmlDocument document, StreamWriter targetStream)
+        public void WriteTo(StreamWriter targetStream, XmlDocument document)
         {
+            if (document == null)
+                throw new ArgumentNullException(nameof(document));
+            if (targetStream == null)
+                throw new ArgumentNullException(nameof(targetStream));
+
             using var xmlTextWriter = XmlWriter.Create(targetStream, _writerSettings);
             document.WriteTo(xmlTextWriter);
-        }
-
-        private XmlDocument SerializeToXmlDocument(XmlSerializer serializer, object content)
-        {
-            if (serializer == null)
-                throw new ArgumentNullException(nameof(serializer));
-            var document = new XmlDocument();
-            using (var stream = new MemoryStream())
-            {
-                serializer.Serialize(stream, content);
-                stream.Position = 0;
-                document.Load(XmlReader.Create(stream, _readerSettings));
-            }
-
-            AfterSerialization(document);
-            return document;
         }
 
         private XmlSerializer GetSerializer(Type type)

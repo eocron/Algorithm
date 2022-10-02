@@ -12,6 +12,6 @@ namespace Eocron.Serialization.Xml
 
         XmlDocument ReadFrom(StreamReader sourceStream);
 
-        void WriteTo(XmlDocument document, StreamWriter targetStream);
+        void WriteTo(StreamWriter targetStream, XmlDocument document);
     }
 }
