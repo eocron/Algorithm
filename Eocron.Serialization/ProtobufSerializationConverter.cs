@@ -1,15 +1,18 @@
 ﻿using System;
 using System.IO;
+using ProtoBuf;
 using ProtoBuf.Meta;
 
 namespace Eocron.Serialization
 {
     public sealed class ProtobufSerializationConverter : ISerializationConverter
     {
+        private readonly bool _addLengthPrefix;
         private readonly RuntimeTypeModel _model;
 
-        public ProtobufSerializationConverter(RuntimeTypeModel model = null)
+        public ProtobufSerializationConverter(RuntimeTypeModel model = null, bool addLengthPrefix = true)
         {
+            _addLengthPrefix = addLengthPrefix;
             _model = model ?? RuntimeTypeModel.Default;
         }
 
@@ -20,6 +23,10 @@ namespace Eocron.Serialization
             if (sourceStream == null)
                 throw new ArgumentNullException(nameof(sourceStream));
 
+            if (_addLengthPrefix)
+            {
+                return _model.DeserializeWithLengthPrefix(sourceStream.BaseStream, null, type, PrefixStyle.Fixed32, -1);
+            }
             return _model.Deserialize(type, sourceStream.BaseStream);
         }
 
@@ -32,7 +39,14 @@ namespace Eocron.Serialization
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
 
-            _model.Serialize(targetStream.BaseStream, obj);
+            if (_addLengthPrefix)
+            {
+                _model.SerializeWithLengthPrefix(targetStream.BaseStream, obj, type, PrefixStyle.Fixed32, -1);
+            }
+            else
+            {
+                _model.Serialize(targetStream.BaseStream, obj);
+            }
         }
     }
 }
