@@ -1,1 +1,27 @@
-<?xml version="1.0"?><XmlTestModel xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Guid>1a4c5b27-3881-4330-a13b-f709c004bbc4</Guid><Enum>Three</Enum><Nullable xsi:nil="true" /><Integer>123</Integer><Double>1.4</Double><Struct><Value>234</Value></Struct><List><int>1</int><int>2</int><int>3</int></List><Array><int>2</int><int>3</int><int>4</int></Array><EmptyList /><EmptyArray /><String>foobar</String><DateTime>2022-01-01T01:01:01Z</DateTime><Boolean>true</Boolean><Long>456</Long></XmlTestModel>
+<?xml version="1.0"?>
+<XmlTestModel xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Guid>1a4c5b27-3881-4330-a13b-f709c004bbc4</Guid>
+  <Enum>Three</Enum>
+  <Nullable xsi:nil="true" />
+  <Integer>123</Integer>
+  <Double>1.4</Double>
+  <Struct>
+    <Value>234</Value>
+  </Struct>
+  <List>
+    <int>1</int>
+    <int>2</int>
+    <int>3</int>
+  </List>
+  <Array>
+    <int>2</int>
+    <int>3</int>
+    <int>4</int>
+  </Array>
+  <EmptyList />
+  <EmptyArray />
+  <String>foobar</String>
+  <DateTime>2022-01-01T01:01:01Z</DateTime>
+  <Boolean>true</Boolean>
+  <Long>456</Long>
+</XmlTestModel>

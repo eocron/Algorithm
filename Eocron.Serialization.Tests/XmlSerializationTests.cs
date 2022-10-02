@@ -16,7 +16,8 @@ public class XmlSerializationTests : SerializationTestSuit<XmlTestModelFooBar>
             new XmlDocumentSerializer(
                 new XmlWriterSettings
                 {
-                    Encoding = Encoding.UTF8
+                    Encoding = Encoding.UTF8,
+                    Indent = true
                 }));
     }
 
