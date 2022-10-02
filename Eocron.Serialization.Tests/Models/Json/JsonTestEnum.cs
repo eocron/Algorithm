@@ -1,8 +1,9 @@
-namespace Eocron.Serialization.Tests.Models.Json;
-
-public enum JsonTestEnum
+namespace Eocron.Serialization.Tests.Models.Json
 {
-    One,
-    Two,
-    Three,
+    public enum JsonTestEnum
+    {
+        One,
+        Two,
+        Three,
+    }
 }

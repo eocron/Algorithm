@@ -1,27 +1,23 @@
 using System;
 using System.Collections.Generic;
 using Eocron.Serialization.Tests.Helpers;
-using Eocron.Serialization.Tests.Models.Json;
-using Newtonsoft.Json;
+using Eocron.Serialization.Tests.Models.Protobuf;
 using NUnit.Framework;
+using YamlDotNet.Serialization;
 
 namespace Eocron.Serialization.Tests
 {
     [TestFixture]
-    public class JsonSerializationTests : SerializationTestSuit<JsonTestModel>
+    public class ProtobufSerializationTests : SerializationTestSuit<ProtobufTestModel>
     {
         public override ISerializationConverter GetConverter()
         {
-            return new JsonSerializationConverter(
-                new JsonSerializerSettings
-                {
-                    Formatting = Formatting.Indented
-                });
+            return new ProtobufSerializationConverter();
         }
 
-        public override JsonTestModel CreateTestModel(string path)
+        public override ProtobufTestModel CreateTestModel(string path)
         {
-            return new JsonTestModel
+            return new ProtobufTestModel
             {
                 Dictionary = new Dictionary<string, string>
                 {
@@ -34,10 +30,10 @@ namespace Eocron.Serialization.Tests
                 Integer = 123,
                 List = new List<int> { 1, 2, 3 },
                 Array = new long[] { 2, 3, 4 },
-                EmptyArray = new int[0],
-                EmptyList = new List<int>(),
+                EmptyArray = null,
+                EmptyList = null,
                 FooBarString = "foobar",
-                Struct = new JsonTestStruct()
+                Struct = new ProtobufTestStruct()
                 {
                     Value = 234
                 },
@@ -46,35 +42,29 @@ namespace Eocron.Serialization.Tests
                 Boolean = true,
                 Long = 456,
                 Guid = Guid.Parse("1a4c5b27-3881-4330-a13b-f709c004bbc4"),
-                Enum = JsonTestEnum.Three
+                Enum = ProtobufTestEnum.Three
             };
         }
 
         [Test]
-        public void CheckSerializeAndDeserializeByText()
+        public void CheckSerializeAndDeserializeByBytes()
         {
-            AssertSerializeAndDeserializeByText(null);
+            AssertSerializeAndDeserializeByBytes(null);
         }
 
         [Test]
-        [TestCase("TestData/Json/TestModelWithoutBOM.json")]
+        [TestCase("TestData/Protobuf/TestModelWithoutBOM.bin")]
         public void CheckDeserializedModelEqualTo(string path)
         {
-            AssertDeserializedFromTextModelEqualTo(path);
+            AssertDeserializedFromBytesModelEqualTo(path);
         }
 
-        [Test]
-        [TestCase("TestData/Json/TestModelWithoutBOM.json")]
-        public void CheckSerializedTextEqualTo(string path)
-        {
-            AssertSerializedTextEqualTo(path);
-        }
 
         [Test]
-        [TestCase("TestData/Json/TestModelWithoutBOM.json")]
+        [TestCase("TestData/Protobuf/TestModelWithoutBOM.bin")]
         public void CheckSerializedBytesEqualTo(string path)
         {
-            AssertSerializedBytesEqualTo(path, false);
+            AssertSerializedBytesEqualTo(path, true);
         }
     }
 }

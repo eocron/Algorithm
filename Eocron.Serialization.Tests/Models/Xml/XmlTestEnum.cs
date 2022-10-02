@@ -1,8 +1,9 @@
-namespace Eocron.Serialization.Tests.Models.Xml;
-
-public enum XmlTestEnum
+namespace Eocron.Serialization.Tests.Models.Xml
 {
-    One,
-    Two,
-    Three,
+    public enum XmlTestEnum
+    {
+        One,
+        Two,
+        Three,
+    }
 }

@@ -1,6 +1,7 @@
-namespace Eocron.Serialization.Tests.Models.Json;
-
-public struct JsonTestStruct
+namespace Eocron.Serialization.Tests.Models.Json
 {
-    public int Value;
+    public struct JsonTestStruct
+    {
+        public int Value;
+    }
 }

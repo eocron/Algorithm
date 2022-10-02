@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netstandard2.1</TargetFramework>
+		<TargetFramework>netstandard2.0</TargetFramework>
 		<Authors>eocron</Authors>
 		<Company />
 		<PackageId>Eocron.Serialization</PackageId>
@@ -19,6 +19,7 @@
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
 
 	<ItemGroup>

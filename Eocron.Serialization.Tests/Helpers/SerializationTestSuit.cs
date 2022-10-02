@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using FluentAssertions;
 
@@ -27,25 +28,43 @@ namespace Eocron.Serialization.Tests.Helpers
             }
         }
 
-        public void AssertDeserializedModelEqualTo(string path)
+        public void AssertSerializeAndDeserializeByBytes(string path)
         {
-            var expectedXml = TestDataHelper.ReadAllText(path);
+            var model = CreateTestModel(path);
+            var converter = GetConverter();
+            var serialized = converter.SerializeToBytes(model);
+            var deserialized = converter.Deserialize<T>(serialized);
+            model.Should().BeEquivalentTo(deserialized);
+        }
+
+        public void AssertDeserializedFromTextModelEqualTo(string path)
+        {
+            var expectedText = TestDataHelper.ReadAllText(path);
             var expected = CreateTestModel(path);
 
-            var actual = GetConverter().Deserialize<T>(expectedXml);
+            var actual = GetConverter().Deserialize<T>(expectedText);
+            actual.Should().BeEquivalentTo(expected);
+        }
+
+        public void AssertDeserializedFromBytesModelEqualTo(string path)
+        {
+            var expectedBytes = TestDataHelper.ReadAllBytes(path);
+            var expected = CreateTestModel(path);
+
+            var actual = GetConverter().Deserialize<T>(expectedBytes);
             actual.Should().BeEquivalentTo(expected);
         }
 
         public void AssertSerializedTextEqualTo(string path)
         {
-            var expectedXml = TestDataHelper.ReadAllText(path);
+            var expectedText = TestDataHelper.ReadAllText(path);
             var expected = CreateTestModel(path);
 
             var actualXml = GetConverter().SerializeToString(expected);
-            AssertEqualSerializedText(expectedXml, actualXml);
+            AssertEqualSerializedText(expectedText, actualXml);
         }
 
-        public void AssertSerializedBytesEqualTo(string path, bool printAsBase64)
+        public void AssertSerializedBytesEqualTo(string path, bool hidePrint)
         {
             var expectedBytes = TestDataHelper.ReadAllBytes(path);
             var expected = CreateTestModel(path);
@@ -58,14 +77,7 @@ namespace Eocron.Serialization.Tests.Helpers
             }
             catch
             {
-                if (printAsBase64)
-                {
-                    Console.WriteLine("EXPECTED:");
-                    Console.WriteLine(Convert.ToBase64String(expectedBytes));
-                    Console.WriteLine("ACTUAL:");
-                    Console.WriteLine(Convert.ToBase64String(actualBytes));
-                }
-                else
+                if (!hidePrint)
                 {
                     Console.WriteLine("EXPECTED:");
                     Console.WriteLine(Encoding.UTF8.GetString(expectedBytes));

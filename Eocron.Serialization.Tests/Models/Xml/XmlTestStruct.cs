@@ -1,6 +1,7 @@
-namespace Eocron.Serialization.Tests.Models.Xml;
-
-public class XmlTestStruct
+namespace Eocron.Serialization.Tests.Models.Xml
 {
-    public int Value;
+    public class XmlTestStruct
+    {
+        public int Value;
+    }
 }

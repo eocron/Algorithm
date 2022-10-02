@@ -21,7 +21,7 @@ namespace Eocron.Serialization
             if (converter == null)
                 throw new ArgumentNullException(nameof(converter));
 
-            encoding ??= GlobalSerializationOptions.Encoding;
+            encoding = encoding ?? GlobalSerializationOptions.Encoding;
             using var stringWriter = new MemoryStream();
             using var streamWriter = new StreamWriter(stringWriter, encoding);
             converter.SerializeToStreamWriter(type, obj, streamWriter);
@@ -35,7 +35,7 @@ namespace Eocron.Serialization
             if (converter == null)
                 throw new ArgumentNullException(nameof(converter));
 
-            encoding ??= GlobalSerializationOptions.Encoding;
+            encoding = encoding ?? GlobalSerializationOptions.Encoding;
             using var stringWriter = new MemoryStream();
             using var streamWriter = new StreamWriter(stringWriter, encoding);
             converter.SerializeToStreamWriter(type, obj, streamWriter);
@@ -44,6 +44,22 @@ namespace Eocron.Serialization
         }
 
         public static T Deserialize<T>(this ISerializationConverter converter, string input)
+        {
+            if (converter == null)
+                throw new ArgumentNullException(nameof(converter));
+
+            return (T)converter.Deserialize(typeof(T), input);
+        }
+
+        public static T Deserialize<T>(this ISerializationConverter converter, byte[] input)
+        {
+            if (converter == null)
+                throw new ArgumentNullException(nameof(converter));
+
+            return (T)converter.Deserialize(typeof(T), input);
+        }
+
+        public static T Deserialize<T>(this ISerializationConverter converter, Stream input)
         {
             if (converter == null)
                 throw new ArgumentNullException(nameof(converter));
@@ -68,7 +84,7 @@ namespace Eocron.Serialization
             if (converter == null)
                 throw new ArgumentNullException(nameof(converter));
 
-            encoding ??= GlobalSerializationOptions.Encoding;
+            encoding = encoding ?? GlobalSerializationOptions.Encoding;
             using var stringReader = StringToStream(input, encoding);
             return Deserialize(converter, type, stringReader, encoding);
         }
@@ -81,8 +97,8 @@ namespace Eocron.Serialization
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            encoding ??= GlobalSerializationOptions.Encoding;
-            var streamReader = new StreamReader(stream, encoding, true, -1, true);
+            encoding = encoding ?? GlobalSerializationOptions.Encoding;
+            var streamReader = new StreamReader(stream, encoding, true, DefaultBufferSize, true);
             return converter.DeserializeFromStreamReader(type, streamReader);
         }
 
@@ -95,5 +111,7 @@ namespace Eocron.Serialization
             stream.Position = 0;
             return stream;
         }
+
+        private const int DefaultBufferSize = 1024;
     }
 }
