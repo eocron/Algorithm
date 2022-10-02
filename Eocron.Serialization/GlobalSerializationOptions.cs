@@ -4,6 +4,6 @@ namespace Eocron.Serialization
 {
     public static class GlobalSerializationOptions
     {
-        public static Encoding Encoding = Encoding.UTF8;
+        public static Encoding Encoding = new UTF8Encoding(false);
     }
 }

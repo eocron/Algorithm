@@ -21,6 +21,7 @@ namespace Eocron.Serialization
                 throw new ArgumentNullException(nameof(sourceStream));
 
             using var reader = new JsonTextReader(sourceStream);
+            reader.CloseInput = false;
             return _serializer.Deserialize(reader, type);
         }
 
@@ -34,6 +35,7 @@ namespace Eocron.Serialization
                 throw new ArgumentNullException(nameof(type));
             
             using var writer = new JsonTextWriter(targetStream);
+            writer.CloseOutput = false;
             _serializer.Serialize(writer, obj, type);
         }
     }

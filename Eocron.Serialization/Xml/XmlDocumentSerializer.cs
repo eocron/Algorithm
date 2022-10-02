@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -83,8 +84,34 @@ namespace Eocron.Serialization.Xml
             return _serializer ?? CreateDefaultSerializer?.Invoke(type) ?? throw new ArgumentNullException(nameof(CreateDefaultSerializer));
         }
 
+        [Obsolete("For regress only (net6.0)")]
+        private static void StripEncodingAttribute(XmlDocument document)
+        {
+            var declaration = document.FirstChild as XmlDeclaration;
+            if (declaration == null)
+                return;
+
+            declaration.Encoding = null;
+        }
+
+        [Obsolete("For regress only (net6.0, net5.0, netcore3.1)")]
+        private static void ReorderNamespaceAttributes(XmlElement node)
+        {
+            var xsi = node.Attributes["xmlns:xsi"];
+            var xsd = node.Attributes["xmlns:xsd"];
+            if (xsi != null && xsd != null)
+            {
+                node.RemoveAttribute(xsi.Name);
+                node.RemoveAttribute(xsd.Name);
+                node.SetAttributeNode(xsd);
+                node.SetAttributeNode(xsi);
+            }
+        }
+
         protected virtual void AfterSerialization(XmlDocument document)
         {
+            ReorderNamespaceAttributes(document.DocumentElement);
+            StripEncodingAttribute(document);
         }
     }
 }
