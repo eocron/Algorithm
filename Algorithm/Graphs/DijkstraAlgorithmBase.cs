@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Eocron.Algorithms.Queues;
 
 namespace Eocron.Algorithms.Graphs
 {

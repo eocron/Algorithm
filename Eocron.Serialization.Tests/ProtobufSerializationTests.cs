@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Eocron.Serialization.Tests.Helpers;
 using Eocron.Serialization.Tests.Models.Protobuf;
 using NUnit.Framework;
-using YamlDotNet.Serialization;
 
 namespace Eocron.Serialization.Tests
 {

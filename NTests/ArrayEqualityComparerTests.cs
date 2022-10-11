@@ -1,7 +1,6 @@
 ﻿using Eocron.Algorithms;
 using NUnit.Framework;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace NTests
