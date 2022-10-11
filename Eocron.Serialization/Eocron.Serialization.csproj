@@ -32,4 +32,19 @@
 		<None Include="..\README.md" Pack="true" PackagePath="\" />
 		<None Include="..\LICENSE.txt" Pack="true" PackagePath="\" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Xml\Transforms\XsltResources.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>XsltResources.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Update="Xml\Transforms\XsltResources.resx">
+	    <Generator>ResXFileCodeGenerator</Generator>
+	    <LastGenOutput>XsltResources.Designer.cs</LastGenOutput>
+	  </EmbeddedResource>
+	</ItemGroup>
 </Project>

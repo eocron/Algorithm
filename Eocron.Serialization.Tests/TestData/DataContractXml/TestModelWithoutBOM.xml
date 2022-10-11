@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <XmlTestModel xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.datacontract.org/2004/07/Eocron.Serialization.Tests.Models.DataContractXml">
   <Array xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
     <d2p1:long>2</d2p1:long>

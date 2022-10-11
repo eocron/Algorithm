@@ -10,17 +10,19 @@ using NUnit.Framework;
 namespace Eocron.Serialization.Tests
 {
     [TestFixture]
-    public class DataContractSerializationTests : SerializationTestSuit<XmlTestModelFooBar>
+    public class ReadableXmlSerializationTests : SerializationTestSuit<XmlTestModelFooBar>
     {
         public override ISerializationConverter GetConverter()
         {
             return new XmlSerializationConverter(
-                new XmlObjectDocumentSerializer(
-                    new XmlWriterSettings
-                    {
-                        Encoding = Encoding.UTF8,
-                        Indent = true
-                    }));
+                new ReadableXmlDocumentSerializerWrapper(
+                    new XmlObjectDocumentSerializer(
+                        new XmlWriterSettings
+                        {
+                            Encoding = Encoding.UTF8,
+                            Indent = true,
+                            OmitXmlDeclaration = true
+                        })));
         }
 
         public override XmlTestModelFooBar CreateTestModel(string path)
@@ -54,28 +56,28 @@ namespace Eocron.Serialization.Tests
             };
         }
 
-        [Test]
-        public void CheckSerializeAndDeserializeByText()
-        {
-            AssertSerializeAndDeserializeByText(null);
-        }
+        //[Test]
+        //public void CheckSerializeAndDeserializeByText()
+        //{
+        //    AssertSerializeAndDeserializeByText(null);
+        //}
+
+        //[Test]
+        //[TestCase("TestData/ReadableXml/TestModelWithoutBOM.xml")]
+        //public void CheckDeserializedModelEqualTo(string path)
+        //{
+        //    AssertDeserializedFromTextModelEqualTo(path);
+        //}
 
         [Test]
-        [TestCase("TestData/DataContractXml/TestModelWithoutBOM.xml")]
-        public void CheckDeserializedModelEqualTo(string path)
-        {
-            AssertDeserializedFromTextModelEqualTo(path);
-        }
-
-        [Test]
-        [TestCase("TestData/DataContractXml/TestModelWithoutBOM.xml")]
+        [TestCase("TestData/ReadableXml/TestModelWithoutBOM.xml")]
         public void CheckSerializedTextEqualTo(string path)
         {
             AssertSerializedTextEqualTo(path);
         }
 
         [Test]
-        [TestCase("TestData/DataContractXml/TestModelWithoutBOM.xml")]
+        [TestCase("TestData/ReadableXml/TestModelWithoutBOM.xml")]
         public void CheckSerializedBytesEqualTo(string path)
         {
             AssertSerializedBytesEqualTo(path, false);
