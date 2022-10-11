@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -18,15 +17,29 @@ namespace Eocron.Serialization.Xml
         private readonly XmlWriterSettings _writerSettings;
         private readonly XmlReaderSettings _readerSettings;
         private readonly XmlSerializer _serializer;
+        private readonly XmlSerializerNamespaces _namespaces;
+        private readonly bool _enableBackwardCompatibility;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="writerSettings"></param>
+        /// <param name="readerSettings"></param>
+        /// <param name="serializer"></param>
+        /// <param name="namespaces"></param>
+        /// <param name="enableBackwardCompatibility">Output XML same as in net471. Default: true</param>
         public XmlDocumentSerializer(
             XmlWriterSettings writerSettings = null, 
             XmlReaderSettings readerSettings = null,
-            XmlSerializer serializer = null)
+            XmlSerializer serializer = null,
+            XmlSerializerNamespaces namespaces = null,
+            bool enableBackwardCompatibility = true)
         {
             _writerSettings = writerSettings ?? DefaultWriterSettings;
             _readerSettings = readerSettings ?? DefaultReaderSettings;
             _serializer = serializer;
+            _namespaces = namespaces;
+            _enableBackwardCompatibility = enableBackwardCompatibility;
         }
 
         public object DeserializeFromXmlDocument(Type type, XmlDocument document)
@@ -50,7 +63,7 @@ namespace Eocron.Serialization.Xml
             var nav = document.CreateNavigator();
             using (var w = nav.AppendChild())
             {
-                GetSerializer(type).Serialize(w, content);
+                GetSerializer(type).Serialize(w, content, _namespaces);
             }
             AfterSerialization(document);
             return document;
@@ -101,17 +114,17 @@ namespace Eocron.Serialization.Xml
             var xsd = node.Attributes["xmlns:xsd"];
             if (xsi != null && xsd != null)
             {
-                node.RemoveAttribute(xsi.Name);
-                node.RemoveAttribute(xsd.Name);
-                node.SetAttributeNode(xsd);
-                node.SetAttributeNode(xsi);
+                node.Attributes.InsertAfter(xsi, xsd);
             }
         }
 
-        protected virtual void AfterSerialization(XmlDocument document)
+        private void AfterSerialization(XmlDocument document)
         {
-            ReorderNamespaceAttributes(document.DocumentElement);
-            StripEncodingAttribute(document);
+            if (_enableBackwardCompatibility)
+            {
+                ReorderNamespaceAttributes(document.DocumentElement);
+                StripEncodingAttribute(document);
+            }
         }
     }
 }
