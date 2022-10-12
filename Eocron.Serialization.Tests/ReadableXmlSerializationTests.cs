@@ -56,18 +56,20 @@ namespace Eocron.Serialization.Tests
             };
         }
 
-        //[Test]
-        //public void CheckSerializeAndDeserializeByText()
-        //{
-        //    AssertSerializeAndDeserializeByText(null);
-        //}
+        [Ignore("namespaces fail")]
+        [Test]
+        public void CheckSerializeAndDeserializeByText()
+        {
+            AssertSerializeAndDeserializeByText(null);
+        }
 
-        //[Test]
-        //[TestCase("TestData/ReadableXml/TestModelWithoutBOM.xml")]
-        //public void CheckDeserializedModelEqualTo(string path)
-        //{
-        //    AssertDeserializedFromTextModelEqualTo(path);
-        //}
+        [Ignore("namespaces fail")]
+        [Test]
+        [TestCase("TestData/ReadableXml/TestModelWithoutBOM.xml")]
+        public void CheckDeserializedModelEqualTo(string path)
+        {
+            AssertDeserializedFromTextModelEqualTo(path);
+        }
 
         [Test]
         [TestCase("TestData/ReadableXml/TestModelWithoutBOM.xml")]

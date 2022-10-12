@@ -25,7 +25,7 @@ namespace Eocron.Serialization.Xml
 
         public object DeserializeFromXmlDocument(Type type, XmlDocument document)
         {
-            throw new NotSupportedException();
+            return _inner.DeserializeFromXmlDocument(type, document);
         }
 
         public XmlDocument SerializeToXmlDocument(Type type, object obj)
@@ -35,7 +35,7 @@ namespace Eocron.Serialization.Xml
 
         public XmlDocument ReadFrom(StreamReader sourceStream)
         {
-            throw new NotSupportedException();
+            return _inner.ReadFrom(sourceStream);
         }
 
         public void WriteTo(StreamWriter targetStream, XmlDocument document)

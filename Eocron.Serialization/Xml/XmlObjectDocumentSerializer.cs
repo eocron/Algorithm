@@ -21,15 +21,18 @@ namespace Eocron.Serialization.Xml
         private readonly XmlWriterSettings _writerSettings;
         private readonly XmlReaderSettings _readerSettings;
         private readonly XmlObjectSerializer _serializer;
+        private readonly bool _validateOnDeserialize;
 
         public XmlObjectDocumentSerializer(
             XmlWriterSettings writerSettings = null,
             XmlReaderSettings readerSettings = null,
-            XmlObjectSerializer serializer = null)
+            XmlObjectSerializer serializer = null,
+            bool validateOnDeserialize = false)
         {
             _writerSettings = writerSettings ?? DefaultWriterSettings ?? throw new ArgumentNullException(nameof(DefaultWriterSettings));
             _readerSettings = readerSettings ?? DefaultReaderSettings ?? throw new ArgumentNullException(nameof(DefaultReaderSettings));
             _serializer = serializer;
+            _validateOnDeserialize = validateOnDeserialize;
         }
 
         public object DeserializeFromXmlDocument(Type type, XmlDocument document)
@@ -38,7 +41,7 @@ namespace Eocron.Serialization.Xml
                 throw new ArgumentNullException(nameof(type));
             if (document == null)
                 throw new ArgumentNullException(nameof(document));
-            return GetSerializer(type).ReadObject(new XmlNodeReader(document));
+            return GetSerializer(type).ReadObject(new XmlNodeReader(document), _validateOnDeserialize);
         }
 
         public XmlDocument SerializeToXmlDocument(Type type, object content)

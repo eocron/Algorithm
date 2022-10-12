@@ -11,19 +11,19 @@ namespace Eocron.Serialization.Tests.Helpers
         
         public void AssertSerializeAndDeserializeByText(string path)
         {
-            var model = CreateTestModel(path);
+            var expected = CreateTestModel(path);
             var converter = GetConverter();
-            var serialized = converter.SerializeToString(model);
-            var deserialized = converter.Deserialize<T>(serialized);
+            var serialized = converter.SerializeToString(expected);
+            var actual = converter.Deserialize<T>(serialized);
 
             try
             {
-                model.Should().BeEquivalentTo(deserialized);
+                actual.Should().BeEquivalentTo(expected);
             }
             catch
             {
-                Console.WriteLine("ACTUAL:");
-                Console.WriteLine(serialized);
+                TryPrint(converter, "EXPECTED:", expected);
+                TryPrint(converter, "ACTUAL:", actual);
                 throw;
             }
         }
@@ -34,16 +34,42 @@ namespace Eocron.Serialization.Tests.Helpers
             var converter = GetConverter();
             var serialized = converter.SerializeToBytes(model);
             var deserialized = converter.Deserialize<T>(serialized);
-            model.Should().BeEquivalentTo(deserialized);
+            deserialized.Should().BeEquivalentTo(model);
         }
 
         public void AssertDeserializedFromTextModelEqualTo(string path)
         {
             var expectedText = TestDataHelper.ReadAllText(path);
             var expected = CreateTestModel(path);
+            var converter = GetConverter();
+            var actual = converter.Deserialize<T>(expectedText);
+            try
+            {
+                actual.Should().BeEquivalentTo(expected);
+            }
+            catch
+            {
+                Console.WriteLine("EXPECTED:");
+                Console.WriteLine(expectedText);
 
-            var actual = GetConverter().Deserialize<T>(expectedText);
-            actual.Should().BeEquivalentTo(expected);
+                TryPrint(converter, "ACTUAL:", actual);
+                throw;
+            }
+        }
+
+        private void TryPrint(ISerializationConverter converter, string header, T obj)
+        {
+            try
+            {
+                var text = converter.SerializeToString(obj);
+                Console.WriteLine(header);
+                Console.WriteLine(text);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(header);
+                Console.WriteLine(ex.Message);
+            }
         }
 
         public void AssertDeserializedFromBytesModelEqualTo(string path)
