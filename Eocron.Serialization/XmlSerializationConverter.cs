@@ -1,16 +1,29 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
-using Eocron.Serialization.Xml;
+using YAXLib;
+using YAXLib.Enums;
+using YAXLib.Options;
 
 namespace Eocron.Serialization
 {
     public sealed class XmlSerializationConverter : ISerializationConverter
     {
-        private readonly IXmlDocumentSerializer _serializer;
-
-        public XmlSerializationConverter(IXmlDocumentSerializer serializer)
+        public static SerializerOptions DefaultSerializerOptions = new SerializerOptions()
         {
-            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+            SerializationOptions = YAXSerializationOptions.ThrowUponSerializingCyclingReferences |
+                                   YAXSerializationOptions.DontSerializeNullObjects |
+                                   YAXSerializationOptions.SuppressMetadataAttributes,
+            Culture = CultureInfo.InvariantCulture,
+            ExceptionBehavior = YAXExceptionTypes.Error,
+            ExceptionHandlingPolicies = YAXExceptionHandlingPolicies.ThrowWarningsAndErrors
+        };
+
+        private readonly SerializerOptions _options;
+
+        public XmlSerializationConverter(SerializerOptions options = null)
+        {
+            _options = options ?? DefaultSerializerOptions;
         }
 
         public object DeserializeFromStreamReader(Type type, StreamReader sourceStream)
@@ -20,7 +33,12 @@ namespace Eocron.Serialization
             if (sourceStream == null)
                 throw new ArgumentNullException(nameof(sourceStream));
 
-            return _serializer.DeserializeFromXmlDocument(type, _serializer.ReadFrom(sourceStream));
+            return GetSerializer(type).Deserialize(sourceStream);
+        }
+
+        private YAXSerializer GetSerializer(Type type)
+        {
+            return _options == null ? new YAXSerializer(type) : new YAXSerializer(type, _options);
         }
 
         public void SerializeToStreamWriter(Type type, object obj, StreamWriter targetStream)
@@ -32,7 +50,7 @@ namespace Eocron.Serialization
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
 
-            _serializer.WriteTo(targetStream, _serializer.SerializeToXmlDocument(type, obj));
+            GetSerializer(type).Serialize(obj, targetStream);
         }
     }
 }

@@ -26,25 +26,11 @@
 		<PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
 		<PackageReference Include="protobuf-net" Version="3.1.22" />
 		<PackageReference Include="YamlDotNet" Version="12.0.1" />
+		<PackageReference Include="YAXLib" Version="3.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<None Include="..\README.md" Pack="true" PackagePath="\" />
 		<None Include="..\LICENSE.txt" Pack="true" PackagePath="\" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Compile Update="Xml\Transforms\XsltResources.Designer.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>XsltResources.resx</DependentUpon>
-	  </Compile>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <EmbeddedResource Update="Xml\Transforms\XsltResources.resx">
-	    <Generator>ResXFileCodeGenerator</Generator>
-	    <LastGenOutput>XsltResources.Designer.cs</LastGenOutput>
-	  </EmbeddedResource>
 	</ItemGroup>
 </Project>

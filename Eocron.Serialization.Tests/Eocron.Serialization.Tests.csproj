@@ -23,16 +23,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="TestData\DataContractXml\TestModelWithoutBOM.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="TestData\Json\TestModelWithoutBOM.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="TestData\Protobuf\TestModelWithoutBOM.bin">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="TestData\ReadableXml\TestModelWithoutBOM.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="TestData\Xml\TestModelWithoutBOM.xml">

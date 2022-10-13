@@ -1,27 +1,34 @@
-<?xml version="1.0"?>
-<XmlTestModel xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<XmlTestModelFooBar>
+  <Dictionary>
+    <KeyValuePairOfStringString>
+      <Key>key1</Key>
+      <Value>value1</Value>
+    </KeyValuePairOfStringString>
+    <KeyValuePairOfStringString>
+      <Key>key2</Key>
+      <Value>value2</Value>
+    </KeyValuePairOfStringString>
+  </Dictionary>
+  <TimeSpan>00:00:03</TimeSpan>
   <Guid>1a4c5b27-3881-4330-a13b-f709c004bbc4</Guid>
   <Enum>Three</Enum>
-  <Nullable xsi:nil="true" />
   <Integer>123</Integer>
   <Double>1.4</Double>
-  <Struct>
-    <Value>234</Value>
-  </Struct>
+  <Struct Value="234" />
   <List>
-    <int>1</int>
-    <int>2</int>
-    <int>3</int>
+    <Int32>1</Int32>
+    <Int32>2</Int32>
+    <Int32>3</Int32>
   </List>
   <Array>
-    <int>2</int>
-    <int>3</int>
-    <int>4</int>
+    <Int64>2</Int64>
+    <Int64>3</Int64>
+    <Int64>4</Int64>
   </Array>
   <EmptyList />
   <EmptyArray />
-  <String>foobar</String>
-  <DateTime>2022-01-01T01:01:01Z</DateTime>
+  <FooBarString>foobar</FooBarString>
+  <DateTime>01/01/2022 01:01:01</DateTime>
   <Boolean>true</Boolean>
   <Long>456</Long>
-</XmlTestModel>
+</XmlTestModelFooBar>

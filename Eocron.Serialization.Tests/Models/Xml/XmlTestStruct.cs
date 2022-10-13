@@ -1,7 +1,10 @@
+using YAXLib.Attributes;
+
 namespace Eocron.Serialization.Tests.Models.Xml
 {
-    public class XmlTestStruct
+    public struct XmlTestStruct
     {
-        public int Value;
+        [YAXAttributeForClass]
+        public int Value { get; set; }
     }
 }

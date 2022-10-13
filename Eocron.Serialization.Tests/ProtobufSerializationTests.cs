@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Eocron.Serialization.Tests.Helpers;
 using Eocron.Serialization.Tests.Models.Protobuf;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Eocron.Serialization.Tests
@@ -49,6 +51,28 @@ namespace Eocron.Serialization.Tests
         public void CheckSerializeAndDeserializeByBytes()
         {
             AssertSerializeAndDeserializeByBytes(null);
+        }
+
+        [Test]
+        public void CheckSerializeAndDeserializeByBytesInStream()
+        {
+            var model = CreateTestModel(null);
+            var converter = GetConverter();
+            var ms = new MemoryStream();
+            var w = new StreamWriter(ms);
+            converter.SerializeToStreamWriter(model.GetType(), model, w);
+            converter.SerializeToStreamWriter(model.GetType(), model, w);
+            converter.SerializeToStreamWriter(model.GetType(), model, w);
+            w.Flush();
+            ms.Position = 0;
+
+            var r = new StreamReader(ms);
+            var deserialized = (ProtobufTestModel)converter.DeserializeFromStreamReader(model.GetType(), r);
+            deserialized.Should().BeEquivalentTo(model);
+            deserialized = (ProtobufTestModel)converter.DeserializeFromStreamReader(model.GetType(), r);
+            deserialized.Should().BeEquivalentTo(model);
+            deserialized = (ProtobufTestModel)converter.DeserializeFromStreamReader(model.GetType(), r);
+            deserialized.Should().BeEquivalentTo(model);
         }
 
         [Test]
