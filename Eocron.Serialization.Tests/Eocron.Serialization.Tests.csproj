@@ -29,6 +29,9 @@
     <None Update="TestData\Protobuf\TestModelWithoutBOM.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="TestData\XmlLegacy\TestModelWithoutBOM.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="TestData\Xml\TestModelWithoutBOM.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
