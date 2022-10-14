@@ -59,19 +59,16 @@ namespace Eocron.Serialization.Tests
             var model = CreateTestModel(null);
             var converter = GetConverter();
             var ms = new MemoryStream();
-            var w = new StreamWriter(ms);
-            converter.SerializeToStreamWriter(model.GetType(), model, w);
-            converter.SerializeToStreamWriter(model.GetType(), model, w);
-            converter.SerializeToStreamWriter(model.GetType(), model, w);
-            w.Flush();
+            converter.SerializeTo(model, ms);
+            converter.SerializeTo(model, ms);
+            converter.SerializeTo(model, ms);
             ms.Position = 0;
-
-            var r = new StreamReader(ms);
-            var deserialized = (ProtobufTestModel)converter.DeserializeFromStreamReader(model.GetType(), r);
+            
+            var deserialized = converter.DeserializeFrom<ProtobufTestModel>(ms);
             deserialized.Should().BeEquivalentTo(model);
-            deserialized = (ProtobufTestModel)converter.DeserializeFromStreamReader(model.GetType(), r);
+            deserialized = converter.DeserializeFrom<ProtobufTestModel>(ms);
             deserialized.Should().BeEquivalentTo(model);
-            deserialized = (ProtobufTestModel)converter.DeserializeFromStreamReader(model.GetType(), r);
+            deserialized = converter.DeserializeFrom<ProtobufTestModel>(ms);
             deserialized.Should().BeEquivalentTo(model);
         }
 
