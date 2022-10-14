@@ -18,18 +18,44 @@ namespace Eocron.Serialization.XmlLegacy
     {
         private readonly Func<Type, XmlObjectSerializer> _xmlObjectSerializerProvider;
         private readonly Func<Type, XmlSerializer> _serializerProvider;
+
+        /// <summary>
+        /// Apply only to XmlSerializer
+        /// </summary>
         public XmlSerializerNamespaces Namespaces { get; set; }
+
+        /// <summary>
+        /// Apply only to XmlObjectSerializer/DataContractSerializer
+        /// </summary>
         public ReaderOptions ReaderOptions { get; set; } = ReaderOptions.None;
+
+        /// <summary>
+        /// Should adapter verify xml on deserialization. Apply only to XmlObjectSerializer/DataContractSerializer
+        /// </summary>
         public bool VerifyObjectName { get; set; } = true;
         public XmlReaderSettings ReaderSettings { get; set; } = new XmlReaderSettings();
         public XmlWriterSettings WriterSettings { get; set; } = new XmlWriterSettings() { Encoding = Encoding.UTF8 };
+
+        /// <summary>
+        /// Things such as order of xsd/xsi elements changed. This option fixes it.
+        /// </summary>
         public bool EnableCompatibilityWithPreNetCore { get; set; } = true;
 
+        /// <summary>
+        /// Adapter for XmlSerializer
+        /// </summary>
+        /// <param name="serializerProvider"></param>
+        /// <exception cref="ArgumentNullException"></exception>
         public XmlSerializerAdapter(Func<Type, XmlSerializer> serializerProvider)
         {
             _serializerProvider = serializerProvider ?? throw new ArgumentNullException(nameof(serializerProvider));
         }
 
+        /// <summary>
+        /// Adapter for XmlObjectSerializer/DataContractSerializer
+        /// </summary>
+        /// <param name="xmlObjectSerializerProvider"></param>
+        /// <exception cref="ArgumentNullException"></exception>
         public XmlSerializerAdapter(Func<Type, XmlObjectSerializer> xmlObjectSerializerProvider)
         {
             _xmlObjectSerializerProvider = xmlObjectSerializerProvider ?? throw new ArgumentNullException(nameof(xmlObjectSerializerProvider));
