@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Xml.Serialization;
 using Eocron.Serialization.XmlLegacy;
 
 namespace Eocron.Serialization
@@ -8,9 +9,11 @@ namespace Eocron.Serialization
     {
         private readonly IXmlSerializerAdapter<TDocument> _serializer;
 
-        public XmlDocumentSerializationConverter(IXmlSerializerAdapter<TDocument> serializer)
+        public static IXmlSerializerAdapter<TDocument> DefaultXmlSerializerAdapter =
+            new XmlSerializerAdapter<TDocument>(x => new XmlSerializer(x));
+        public XmlDocumentSerializationConverter(IXmlSerializerAdapter<TDocument> serializer = null)
         {
-            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+            _serializer = serializer ?? DefaultXmlSerializerAdapter ?? throw new ArgumentNullException(nameof(serializer));
         }
 
         public object DeserializeFromStreamReader(Type type, StreamReader sourceStream)

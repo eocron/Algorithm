@@ -46,7 +46,7 @@ namespace Eocron.Serialization.XmlLegacy
         /// </summary>
         /// <param name="serializerProvider"></param>
         /// <exception cref="ArgumentNullException"></exception>
-        public XmlSerializerAdapter(Func<Type, XmlSerializer> serializerProvider)
+        public XmlSerializerAdapter(Func<Type, XmlSerializer> serializerProvider) : this()
         {
             _serializerProvider = serializerProvider ?? throw new ArgumentNullException(nameof(serializerProvider));
         }
@@ -56,9 +56,15 @@ namespace Eocron.Serialization.XmlLegacy
         /// </summary>
         /// <param name="xmlObjectSerializerProvider"></param>
         /// <exception cref="ArgumentNullException"></exception>
-        public XmlSerializerAdapter(Func<Type, XmlObjectSerializer> xmlObjectSerializerProvider)
+        public XmlSerializerAdapter(Func<Type, XmlObjectSerializer> xmlObjectSerializerProvider) : this()
         {
             _xmlObjectSerializerProvider = xmlObjectSerializerProvider ?? throw new ArgumentNullException(nameof(xmlObjectSerializerProvider));
+        }
+
+        private XmlSerializerAdapter()
+        {
+            if (typeof(TDocument) != typeof(XmlDocument) && typeof(TDocument) != typeof(XDocument))
+                throw new NotSupportedException(typeof(TDocument).Name);
         }
 
         public TDocument SerializeToDocument(Type type, object content)
