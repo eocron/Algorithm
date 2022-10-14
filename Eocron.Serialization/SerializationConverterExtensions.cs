@@ -11,6 +11,11 @@ namespace Eocron.Serialization
             return SerializeToString(converter, typeof(T), obj);
         }
 
+        public static string SerializeToBase64String<T>(this ISerializationConverter converter, T obj)
+        {
+            return SerializeToBase64String(converter, typeof(T), obj);
+        }
+
         public static byte[] SerializeToBytes<T>(this ISerializationConverter converter, T obj)
         {
             return SerializeToBytes(converter, typeof(T), obj);
@@ -22,11 +27,15 @@ namespace Eocron.Serialization
                 throw new ArgumentNullException(nameof(converter));
 
             encoding = encoding ?? GlobalSerializationOptions.Encoding;
-            using var stringWriter = new MemoryStream();
-            using var streamWriter = new StreamWriter(stringWriter, encoding);
-            converter.SerializeToStreamWriter(type, obj, streamWriter);
-            streamWriter.Flush();
-            return encoding.GetString(stringWriter.ToArray());
+            return encoding.GetString(SerializeToBytes(converter, type, obj, encoding));
+        }
+
+        public static string SerializeToBase64String(this ISerializationConverter converter, Type type, object obj, Encoding encoding = null)
+        {
+            if (converter == null)
+                throw new ArgumentNullException(nameof(converter));
+
+            return Convert.ToBase64String(SerializeToBytes(converter, type, obj, encoding));
         }
 
         public static byte[] SerializeToBytes(this ISerializationConverter converter, Type type, object obj,
@@ -51,6 +60,11 @@ namespace Eocron.Serialization
             return (T)converter.Deserialize(typeof(T), input);
         }
 
+        public static T DeserializeFromBase64<T>(this ISerializationConverter converter, string base64Input)
+        {
+            return Deserialize<T>(converter, Convert.FromBase64String(base64Input));
+        }
+
         public static T Deserialize<T>(this ISerializationConverter converter, byte[] input)
         {
             if (converter == null)
@@ -65,6 +79,13 @@ namespace Eocron.Serialization
                 throw new ArgumentNullException(nameof(converter));
 
             return (T)converter.Deserialize(typeof(T), input);
+        }
+
+        public static object DeserializeFromBase64(this ISerializationConverter converter, Type type,
+            string base64Input,
+            Encoding encoding = null)
+        {
+            return Deserialize(converter, type, Convert.FromBase64String(base64Input), encoding);
         }
 
         public static object Deserialize(this ISerializationConverter converter, Type type, byte[] bytes,

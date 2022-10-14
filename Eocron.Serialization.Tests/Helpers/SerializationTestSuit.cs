@@ -90,7 +90,7 @@ namespace Eocron.Serialization.Tests.Helpers
             AssertEqualSerializedText(expectedText, actualXml);
         }
 
-        public void AssertSerializedBytesEqualTo(string path, bool hidePrint)
+        public void AssertSerializedBytesEqualTo(string path, bool base64Print)
         {
             var expectedBytes = TestDataHelper.ReadAllBytes(path);
             var expected = CreateTestModel(path);
@@ -103,12 +103,19 @@ namespace Eocron.Serialization.Tests.Helpers
             }
             catch
             {
-                if (!hidePrint)
+                if (!base64Print)
                 {
                     Console.WriteLine("EXPECTED:");
                     Console.WriteLine(Encoding.UTF8.GetString(expectedBytes));
                     Console.WriteLine("ACTUAL:");
                     Console.WriteLine(Encoding.UTF8.GetString(actualBytes));
+                }
+                else
+                {
+                    Console.WriteLine("EXPECTED:");
+                    Console.WriteLine(Convert.ToBase64String(expectedBytes));
+                    Console.WriteLine("ACTUAL:");
+                    Console.WriteLine(Convert.ToBase64String(actualBytes));
                 }
                 throw;
             }
