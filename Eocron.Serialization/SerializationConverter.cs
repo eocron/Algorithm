@@ -17,5 +17,6 @@ namespace Eocron.Serialization
                     new DataContractSerializer(x)));
 
         public static Encoding DefaultEncoding = new UTF8Encoding(false);
+        public static int DefaultBufferSize = 1024;
     }
 }

@@ -8,14 +8,14 @@ namespace Eocron.Serialization
     {
         #region Bytes
 
-        public static byte[] SerializeToBytes<T>(this ISerializationConverter converter, T obj)
+        public static byte[] SerializeToBytes<T>(this ISerializationConverter converter, T obj, Encoding encoding = null)
         {
-            return SerializeToBytes(converter, typeof(T), obj);
+            return SerializeToBytes(converter, typeof(T), obj, encoding);
         }
 
-        public static T Deserialize<T>(this ISerializationConverter converter, byte[] input)
+        public static T Deserialize<T>(this ISerializationConverter converter, byte[] input, Encoding encoding = null)
         {
-            return (T)Deserialize(converter, typeof(T), input);
+            return (T)Deserialize(converter, typeof(T), input, encoding);
         }
 
         public static byte[] SerializeToBytes(this ISerializationConverter converter, Type type, object obj,
@@ -39,35 +39,6 @@ namespace Eocron.Serialization
 
             using var byteReader = new MemoryStream(bytes);
             return DeserializeFrom(converter, type, byteReader, encoding);
-        }
-
-        #endregion
-
-        #region Base64
-
-        public static string SerializeToBase64String<T>(this ISerializationConverter converter, T obj)
-        {
-            return SerializeToBase64String(converter, typeof(T), obj);
-        }
-
-        public static string SerializeToBase64String(this ISerializationConverter converter, Type type, object obj,
-            Encoding encoding = null)
-        {
-            return Convert.ToBase64String(SerializeToBytes(converter, type, obj, encoding));
-        }
-
-        public static T DeserializeFromBase64<T>(this ISerializationConverter converter, string base64Input)
-        {
-            return Deserialize<T>(converter, Convert.FromBase64String(base64Input));
-        }
-
-        public static object DeserializeFromBase64(
-            this ISerializationConverter converter,
-            Type type,
-            string base64Input,
-            Encoding encoding = null)
-        {
-            return Deserialize(converter, type, Convert.FromBase64String(base64Input), encoding);
         }
 
         #endregion
@@ -114,7 +85,7 @@ namespace Eocron.Serialization
             if (converter == null)
                 throw new ArgumentNullException(nameof(converter));
 
-            converter.SerializeToStreamWriter(typeof(T), obj, writer);
+            converter.SerializeTo(typeof(T), obj, writer);
         }
 
         public static T DeserializeFrom<T>(this ISerializationConverter converter, StreamReader reader)
@@ -122,7 +93,7 @@ namespace Eocron.Serialization
             if (converter == null)
                 throw new ArgumentNullException(nameof(converter));
 
-            return (T)converter.DeserializeFromStreamReader(typeof(T), reader);
+            return (T)converter.DeserializeFrom(typeof(T), reader);
         }
 
         #endregion
@@ -150,8 +121,8 @@ namespace Eocron.Serialization
                 throw new ArgumentNullException(nameof(stream));
 
             encoding = encoding ?? SerializationConverter.DefaultEncoding;
-            var streamReader = new StreamReader(stream, encoding, true, DefaultBufferSize, true);
-            return converter.DeserializeFromStreamReader(type, streamReader);
+            var streamReader = new StreamReader(stream, encoding, true, SerializationConverter.DefaultBufferSize, true);
+            return converter.DeserializeFrom(type, streamReader);
         }
 
         public static void SerializeTo(this ISerializationConverter converter, Type type, object obj, Stream stream,
@@ -163,8 +134,8 @@ namespace Eocron.Serialization
                 throw new ArgumentNullException(nameof(stream));
 
             encoding = encoding ?? SerializationConverter.DefaultEncoding;
-            using var streamWriter = new StreamWriter(stream, encoding, DefaultBufferSize, true);
-            converter.SerializeToStreamWriter(type, obj, streamWriter);
+            using var streamWriter = new StreamWriter(stream, encoding, SerializationConverter.DefaultBufferSize, true);
+            converter.SerializeTo(type, obj, streamWriter);
             streamWriter.Flush();
         }
 
@@ -181,6 +152,5 @@ namespace Eocron.Serialization
             return stream;
         }
 
-        private const int DefaultBufferSize = 1024;
     }
 }

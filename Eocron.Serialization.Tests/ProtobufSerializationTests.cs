@@ -63,7 +63,7 @@ namespace Eocron.Serialization.Tests
             converter.SerializeTo(model, ms);
             converter.SerializeTo(model, ms);
             ms.Position = 0;
-            
+
             var deserialized = converter.DeserializeFrom<ProtobufTestModel>(ms);
             deserialized.Should().BeEquivalentTo(model);
             deserialized = converter.DeserializeFrom<ProtobufTestModel>(ms);

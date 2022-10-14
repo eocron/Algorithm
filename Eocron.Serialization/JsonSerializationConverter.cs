@@ -21,7 +21,7 @@ namespace Eocron.Serialization
                                                        throw new ArgumentNullException(nameof(settings)));
         }
 
-        public object DeserializeFromStreamReader(Type type, StreamReader sourceStream)
+        public object DeserializeFrom(Type type, StreamReader sourceStream)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
@@ -33,7 +33,7 @@ namespace Eocron.Serialization
             return _serializer.Deserialize(reader, type);
         }
 
-        public void SerializeToStreamWriter(Type type, object obj, StreamWriter targetStream)
+        public void SerializeTo(Type type, object obj, StreamWriter targetStream)
         {
             if (obj == null)
                 throw new ArgumentNullException(nameof(obj));

@@ -16,7 +16,7 @@ namespace Eocron.Serialization
             _serializer = serializer ?? DefaultXmlSerializerAdapter ?? throw new ArgumentNullException(nameof(serializer));
         }
 
-        public object DeserializeFromStreamReader(Type type, StreamReader sourceStream)
+        public object DeserializeFrom(Type type, StreamReader sourceStream)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
@@ -26,7 +26,7 @@ namespace Eocron.Serialization
             return _serializer.DeserializeFromDocument(type, _serializer.ReadDocumentFrom(sourceStream));
         }
 
-        public void SerializeToStreamWriter(Type type, object obj, StreamWriter targetStream)
+        public void SerializeTo(Type type, object obj, StreamWriter targetStream)
         {
             if (obj == null)
                 throw new ArgumentNullException(nameof(obj));

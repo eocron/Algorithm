@@ -5,8 +5,8 @@ namespace Eocron.Serialization
 {
     public interface ISerializationConverter 
     {
-        object DeserializeFromStreamReader(Type type, StreamReader sourceStream);
+        object DeserializeFrom(Type type, StreamReader sourceStream);
 
-        void SerializeToStreamWriter(Type type, object obj, StreamWriter targetStream);
+        void SerializeTo(Type type, object obj, StreamWriter targetStream);
     }
 }
