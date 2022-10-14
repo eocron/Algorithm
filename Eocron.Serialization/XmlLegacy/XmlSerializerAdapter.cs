@@ -193,7 +193,7 @@ namespace Eocron.Serialization.XmlLegacy
                 ReorderNamespaceAttributes(doc);
             }
         }
-        [Obsolete("For regress only >= netcore version")]
+        [Obsolete("For regress only < netcore version")]
         private void ReorderNamespaceAttributes(XmlDocument doc)
         {
             var node = doc.DocumentElement;
@@ -205,7 +205,7 @@ namespace Eocron.Serialization.XmlLegacy
             }
         }
 
-        [Obsolete("For regress only >= netcore version")]
+        [Obsolete("For regress only < netcore version")]
         private void ReorderNamespaceAttributes(XDocument doc)
         {
             var node = doc.Root;
