@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Xml;
+using System.Xml.Linq;
 using System.Xml.Serialization;
 using Eocron.Serialization.Tests.Helpers;
 using Eocron.Serialization.Tests.Models.XmlLegacy;
@@ -10,12 +11,12 @@ using NUnit.Framework;
 namespace Eocron.Serialization.Tests
 {
     [TestFixture]
-    public class XmlLegacySerializationTests : SerializationTestSuit<XmlTestModelFooBar>
+    public class XDocumentSerializationTests : SerializationTestSuit<XmlTestModelFooBar>
     {
         public override ISerializationConverter GetConverter()
         {
-            return new XmlDocumentSerializationConverter<XmlDocument>(
-                new XmlSerializerAdapter<XmlDocument>(x => new XmlSerializer(x)));
+            return new XmlDocumentSerializationConverter<XDocument>(
+                new XmlSerializerAdapter<XDocument>(x => new XmlSerializer(x)));
         }
 
         public override XmlTestModelFooBar CreateTestModel(string path)
@@ -56,21 +57,21 @@ namespace Eocron.Serialization.Tests
         }
 
         [Test]
-        [TestCase("TestData/XmlLegacy/TestModelWithoutBOM.xml")]
+        [TestCase("TestData/XDocument/TestModelWithoutBOM.xml")]
         public void CheckDeserializedModelEqualTo(string path)
         {
             AssertDeserializedFromTextModelEqualTo(path);
         }
 
         [Test]
-        [TestCase("TestData/XmlLegacy/TestModelWithoutBOM.xml")]
+        [TestCase("TestData/XDocument/TestModelWithoutBOM.xml")]
         public void CheckSerializedTextEqualTo(string path)
         {
             AssertSerializedTextEqualTo(path);
         }
 
         [Test]
-        [TestCase("TestData/XmlLegacy/TestModelWithoutBOM.xml")]
+        [TestCase("TestData/XDocument/TestModelWithoutBOM.xml")]
         public void CheckSerializedBytesEqualTo(string path)
         {
             AssertSerializedBytesEqualTo(path, false);

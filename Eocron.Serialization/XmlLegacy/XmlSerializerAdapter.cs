@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
@@ -13,7 +14,7 @@ namespace Eocron.Serialization.XmlLegacy
     /// and different legacy xml serializers (XmlSerializer, DataContractSerializer, XmlObjectSerializer)
     /// </summary>
     /// <typeparam name="TDocument"></typeparam>
-    public sealed class XmlSerializerAdapter<TDocument> : IXmlSerializerAdapter<TDocument>
+    public class XmlSerializerAdapter<TDocument> : IXmlSerializerAdapter<TDocument>
     {
         private readonly Func<Type, XmlObjectSerializer> _xmlObjectSerializerProvider;
         private readonly Func<Type, XmlSerializer> _serializerProvider;
@@ -74,10 +75,7 @@ namespace Eocron.Serialization.XmlLegacy
                     var nav = document.CreateNavigator();
                     using(var w = nav.AppendChild()) 
                         GetXmlSerializer(type).Serialize(w, content, Namespaces);
-                    if (EnableCompatibilityWithPreNetCore)
-                    {
-                        ReorderNamespaceAttributes(document);
-                    }
+                    AfterDocumentCreation(document);
                     return document;
                 }
 
@@ -86,10 +84,7 @@ namespace Eocron.Serialization.XmlLegacy
                     var document = new XDocument();
                     using (var w = document.CreateWriter())
                         GetXmlSerializer(type).Serialize(w, content, Namespaces);
-                    if (EnableCompatibilityWithPreNetCore)
-                    {
-                        ReorderNamespaceAttributes(document);
-                    }
+                    AfterDocumentCreation(document);
                     return document;
                 }
                 throw new NotSupportedException(typeof(TDocument).Name);
@@ -101,10 +96,7 @@ namespace Eocron.Serialization.XmlLegacy
                 var nav = document.CreateNavigator();
                 using (var w = nav.AppendChild())
                     GetXmlObjectSerializer(type).WriteObject(w, content);
-                if (EnableCompatibilityWithPreNetCore)
-                {
-                    ReorderNamespaceAttributes(document);
-                }
+                AfterDocumentCreation(document);
                 return document;
             }
 
@@ -113,10 +105,7 @@ namespace Eocron.Serialization.XmlLegacy
                 var document = new XDocument();
                 using (var w = document.CreateWriter())
                     GetXmlObjectSerializer(type).WriteObject(w, content);
-                if (EnableCompatibilityWithPreNetCore)
-                {
-                    ReorderNamespaceAttributes(document);
-                }
+                AfterDocumentCreation(document);
                 return document;
             }
             throw new NotSupportedException(typeof(TDocument).Name);
@@ -157,12 +146,7 @@ namespace Eocron.Serialization.XmlLegacy
                 using var reader = XmlReader.Create(sourceStream, ReaderSettings);
                 var document = new XmlDocument();
                 document.Load(reader);
-
-                if (EnableCompatibilityWithPreNetCore)
-                {
-                    ReorderNamespaceAttributes(document);
-                }
-
+                AfterDocumentCreation(document);
                 return document;
             }
 
@@ -170,10 +154,7 @@ namespace Eocron.Serialization.XmlLegacy
             {
                 using var reader = XmlReader.Create(sourceStream, ReaderSettings);
                 var document =  XDocument.Load(reader);
-                if (EnableCompatibilityWithPreNetCore)
-                {
-                    ReorderNamespaceAttributes(document);
-                }
+                AfterDocumentCreation(document);
                 return document;
             }
             throw new NotSupportedException(typeof(TDocument).Name);
@@ -197,8 +178,23 @@ namespace Eocron.Serialization.XmlLegacy
             throw new NotSupportedException(typeof(TDocument).Name);
         }
 
+        protected virtual void AfterDocumentCreation(XmlDocument doc)
+        {
+            if (EnableCompatibilityWithPreNetCore)
+            {
+                ReorderNamespaceAttributes(doc);
+            }
+        }
+
+        protected virtual void AfterDocumentCreation(XDocument doc)
+        {
+            if (EnableCompatibilityWithPreNetCore)
+            {
+                ReorderNamespaceAttributes(doc);
+            }
+        }
         [Obsolete("For regress only >= netcore version")]
-        private static void ReorderNamespaceAttributes(XmlDocument doc)
+        private void ReorderNamespaceAttributes(XmlDocument doc)
         {
             var node = doc.DocumentElement;
             var xsi = node.Attributes["xmlns:xsi"];
@@ -210,14 +206,19 @@ namespace Eocron.Serialization.XmlLegacy
         }
 
         [Obsolete("For regress only >= netcore version")]
-        private static void ReorderNamespaceAttributes(XDocument doc)
+        private void ReorderNamespaceAttributes(XDocument doc)
         {
-            //var xsi = node.Attributes["xmlns:xsi"];
-            //var xsd = node.Attributes["xmlns:xsd"];
-            //if (xsi != null && xsd != null)
-            //{
-            //    node.Attributes.InsertAfter(xsi, xsd);
-            //}
+            var node = doc.Root;
+            var all = node.Attributes().ToList();
+
+            var xsi = all.FindIndex(x => x.Name.LocalName == "xsi");
+            var xsd = all.FindIndex(x => x.Name.LocalName == "xsd");
+            if (xsi >= 0 && xsd >= 0 && xsd < xsi)
+            {
+                (all[xsi], all[xsd]) = (all[xsd], all[xsi]);
+                node.ReplaceAttributes(all);
+            }
         }
+
     }
 }

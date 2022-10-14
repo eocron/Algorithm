@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net471;net6.0;net5.0</TargetFrameworks>
+    <TargetFrameworks>net472;net6.0;net5.0</TargetFrameworks>
 	  <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -29,7 +29,10 @@
     <None Update="TestData\Protobuf\TestModelWithoutBOM.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="TestData\XmlLegacy\TestModelWithoutBOM.xml">
+    <None Update="TestData\XmlDocument\TestModelWithoutBOM.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\XDocument\TestModelWithoutBOM.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="TestData\Xml\TestModelWithoutBOM.xml">
