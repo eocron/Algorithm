@@ -34,7 +34,7 @@ namespace Eocron.Serialization.XmlLegacy
         /// </summary>
         public bool VerifyObjectName { get; set; } = true;
         public XmlReaderSettings ReaderSettings { get; set; } = new XmlReaderSettings();
-        public XmlWriterSettings WriterSettings { get; set; } = new XmlWriterSettings() { Encoding = Encoding.UTF8 };
+        public XmlWriterSettings WriterSettings { get; set; } = new XmlWriterSettings() { Encoding = GlobalSerializationOptions.Encoding };
 
         /// <summary>
         /// Things such as order of xsd/xsi elements changed. This option fixes it.
