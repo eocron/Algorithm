@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Eocron.Serialization.Tests.Helpers;
 using Eocron.Serialization.Tests.Models.Json;
 using NUnit.Framework;
-using YamlDotNet.Serialization;
 
 namespace Eocron.Serialization.Tests
 {
@@ -12,9 +11,7 @@ namespace Eocron.Serialization.Tests
     {
         public override ISerializationConverter GetConverter()
         {
-            return new YamlSerializationConverter(
-                new SerializerBuilder().Build(), 
-                new DeserializerBuilder().Build());
+            return SerializationConverter.Yaml;
         }
 
         public override JsonTestModel CreateTestModel(string path)

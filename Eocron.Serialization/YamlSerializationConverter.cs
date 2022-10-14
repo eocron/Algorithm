@@ -9,10 +9,13 @@ namespace Eocron.Serialization
         private readonly ISerializer _serializer;
         private readonly IDeserializer _deserializer;
 
-        public YamlSerializationConverter(ISerializer serializer, IDeserializer deserializer)
+        public static ISerializer DefaultSerializer = new SerializerBuilder().Build();
+        public static IDeserializer DefaultDeserializer = new DeserializerBuilder().Build();
+
+        public YamlSerializationConverter(ISerializer serializer = null, IDeserializer deserializer = null)
         {
-            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-            _deserializer = deserializer ?? throw new ArgumentNullException(nameof(deserializer));
+            _serializer = serializer ?? DefaultSerializer ?? throw new ArgumentNullException(nameof(serializer));
+            _deserializer = deserializer ?? DefaultDeserializer ?? throw new ArgumentNullException(nameof(deserializer));
         }
 
         public object DeserializeFromStreamReader(Type type, StreamReader sourceStream)

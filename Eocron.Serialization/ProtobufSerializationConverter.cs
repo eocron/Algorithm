@@ -8,12 +8,22 @@ namespace Eocron.Serialization
     public sealed class ProtobufSerializationConverter : ISerializationConverter
     {
         private readonly bool _addLengthPrefix;
+        private readonly PrefixStyle _prefixStyle;
+        private readonly int _fieldNumber;
         private readonly RuntimeTypeModel _model;
 
-        public ProtobufSerializationConverter(RuntimeTypeModel model = null, bool addLengthPrefix = true)
+        public static RuntimeTypeModel DefaultRuntimeTypeModel = RuntimeTypeModel.Default;
+
+        public ProtobufSerializationConverter(
+            RuntimeTypeModel model = null, 
+            bool addLengthPrefix = true,
+            PrefixStyle prefixStyle = PrefixStyle.Fixed32, 
+            int fieldNumber = -1)
         {
             _addLengthPrefix = addLengthPrefix;
-            _model = model ?? RuntimeTypeModel.Default;
+            _prefixStyle = prefixStyle;
+            _fieldNumber = fieldNumber;
+            _model = model ?? DefaultRuntimeTypeModel ?? throw new ArgumentNullException(nameof(model));
         }
 
         public object DeserializeFromStreamReader(Type type, StreamReader sourceStream)
@@ -22,10 +32,12 @@ namespace Eocron.Serialization
                 throw new ArgumentNullException(nameof(type));
             if (sourceStream == null)
                 throw new ArgumentNullException(nameof(sourceStream));
+            if (sourceStream.BaseStream == null)
+                throw new ArgumentNullException(nameof(sourceStream.BaseStream));
 
             if (_addLengthPrefix)
             {
-                return _model.DeserializeWithLengthPrefix(sourceStream.BaseStream, null, type, PrefixStyle.Fixed32, -1);
+                return _model.DeserializeWithLengthPrefix(sourceStream.BaseStream, null, type, _prefixStyle, _fieldNumber);
             }
             return _model.Deserialize(type, sourceStream.BaseStream);
         }
@@ -38,10 +50,12 @@ namespace Eocron.Serialization
                 throw new ArgumentNullException(nameof(targetStream));
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
+            if (targetStream.BaseStream == null)
+                throw new ArgumentNullException(nameof(targetStream.BaseStream));
 
             if (_addLengthPrefix)
             {
-                _model.SerializeWithLengthPrefix(targetStream.BaseStream, obj, type, PrefixStyle.Fixed32, -1);
+                _model.SerializeWithLengthPrefix(targetStream.BaseStream, obj, type, _prefixStyle, -1);
             }
             else
             {

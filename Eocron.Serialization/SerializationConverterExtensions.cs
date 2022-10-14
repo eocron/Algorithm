@@ -26,7 +26,7 @@ namespace Eocron.Serialization
             if (converter == null)
                 throw new ArgumentNullException(nameof(converter));
 
-            encoding = encoding ?? GlobalSerializationOptions.Encoding;
+            encoding = encoding ?? SerializationConverter.DefaultEncoding;
             return encoding.GetString(SerializeToBytes(converter, type, obj, encoding));
         }
 
@@ -44,7 +44,7 @@ namespace Eocron.Serialization
             if (converter == null)
                 throw new ArgumentNullException(nameof(converter));
 
-            encoding = encoding ?? GlobalSerializationOptions.Encoding;
+            encoding = encoding ?? SerializationConverter.DefaultEncoding;
             using var stringWriter = new MemoryStream();
             using var streamWriter = new StreamWriter(stringWriter, encoding);
             converter.SerializeToStreamWriter(type, obj, streamWriter);
@@ -105,7 +105,7 @@ namespace Eocron.Serialization
             if (converter == null)
                 throw new ArgumentNullException(nameof(converter));
 
-            encoding = encoding ?? GlobalSerializationOptions.Encoding;
+            encoding = encoding ?? SerializationConverter.DefaultEncoding;
             using var stringReader = StringToStream(input, encoding);
             return Deserialize(converter, type, stringReader, encoding);
         }
@@ -118,7 +118,7 @@ namespace Eocron.Serialization
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            encoding = encoding ?? GlobalSerializationOptions.Encoding;
+            encoding = encoding ?? SerializationConverter.DefaultEncoding;
             var streamReader = new StreamReader(stream, encoding, true, DefaultBufferSize, true);
             return converter.DeserializeFromStreamReader(type, streamReader);
         }

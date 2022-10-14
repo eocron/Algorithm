@@ -14,9 +14,7 @@ namespace Eocron.Serialization.Tests
     {
         public override ISerializationConverter GetConverter()
         {
-            return new XmlDocumentSerializationConverter<XmlDocument>(
-                new XmlSerializerAdapter<XmlDocument>(x => 
-                    new DataContractSerializer(x)));
+            return SerializationConverter.XmlDataContract;
         }
 
         public override XmlTestModelFooBar CreateTestModel(string path)

@@ -11,7 +11,7 @@ namespace Eocron.Serialization.Tests
     {
         public override ISerializationConverter GetConverter()
         {
-            return new XmlSerializationConverter();
+            return SerializationConverter.Xml;
         }
 
         public override XmlTestModelFooBar CreateTestModel(string path)

@@ -8,9 +8,17 @@ namespace Eocron.Serialization
     {
         private readonly JsonSerializer _serializer;
 
+        public static JsonSerializerSettings DefaultJsonSerializerSettings =
+            new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented
+            };
+
         public JsonSerializationConverter(JsonSerializerSettings settings = null)
         {
-            _serializer = JsonSerializer.CreateDefault(settings);
+            _serializer = JsonSerializer.CreateDefault(settings ??
+                                                       DefaultJsonSerializerSettings ??
+                                                       throw new ArgumentNullException(nameof(settings)));
         }
 
         public object DeserializeFromStreamReader(Type type, StreamReader sourceStream)

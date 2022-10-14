@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Eocron.Serialization.Tests.Helpers;
 using Eocron.Serialization.Tests.Models.Json;
-using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Eocron.Serialization.Tests
@@ -12,11 +11,7 @@ namespace Eocron.Serialization.Tests
     {
         public override ISerializationConverter GetConverter()
         {
-            return new JsonSerializationConverter(
-                new JsonSerializerSettings
-                {
-                    Formatting = Formatting.Indented
-                });
+            return SerializationConverter.Json;
         }
 
         public override JsonTestModel CreateTestModel(string path)

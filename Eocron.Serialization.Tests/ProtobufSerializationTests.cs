@@ -13,7 +13,7 @@ namespace Eocron.Serialization.Tests
     {
         public override ISerializationConverter GetConverter()
         {
-            return new ProtobufSerializationConverter();
+            return SerializationConverter.Protobuf;
         }
 
         public override ProtobufTestModel CreateTestModel(string path)
