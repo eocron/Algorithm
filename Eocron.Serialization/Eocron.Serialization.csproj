@@ -17,7 +17,7 @@
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<Version>1.0.0</Version>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-		<PackageReadmeFile>Eocron.Serialization\README.md</PackageReadmeFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
 
@@ -26,7 +26,9 @@
 		<PackageReference Include="protobuf-net" Version="3.1.22" />
 		<PackageReference Include="YamlDotNet" Version="12.0.1" />
 	</ItemGroup>
-
+	<ItemGroup>
+		<None Include="README.md" pack="true" PackagePath="." />
+	</ItemGroup>
 	<ItemGroup>
 		<None Include="..\LICENSE.txt" Pack="true" PackagePath="\" />
 	</ItemGroup>
