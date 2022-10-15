@@ -18,7 +18,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: publish on version change
+      - name: publish Algorithms on version change
         id: publish_nuget
         uses: alirezanet/publish-nuget@v3.0.4
         with:
@@ -26,3 +26,10 @@ jobs:
           PROJECT_FILE_PATH: Algorithm/Eocron.Algorithms.csproj
           NUGET_KEY: ${{secrets.NUGET_API_KEY}}
       
+      - name: publish Serialization on version change
+        id: publish_nuget
+        uses: alirezanet/publish-nuget@v3.0.4
+        with:
+          # Filepath of the project to be packaged, relative to root of repository
+          PROJECT_FILE_PATH: Algorithm/Eocron.Serialization.csproj
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
