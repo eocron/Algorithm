@@ -32,9 +32,9 @@ Because of many problems related to XML in C# such as:
   - Multiple versions of documents like `XmlDocument`, `XDocument`
   - Multiple versions of serializers like `XmlSerializer`, `XmlObjectSerializer`, `DataContractSerializer` which work with both types of documents
   - Various markups like `XmlRoot`/`DataContract`/`ISerializable`
-  - Constant problems of serializing basic types like `Dictionary`/`TimeSpan` which in one version throw error, in other it will just silently empty your fields.
+  - Constant problems of serializing basic types like `Dictionary`/`TimeSpan` which in one version throw error, in other it will just silently empty your fields (Say HI! to `TimeSpan` being empty in .net472).
   - Chaotic changes from Microsoft to blow up your tests (rearrangment of namespaces, adding encoding attribute, etc) and sometimes criple back-compatability (Say HI! to BOM in .net6)
 
 I decided to unify all this architectural garbage into single adapter, so it is easier to configure entire serialization process,
-such as initial settings on namespaces/readers/writers/serializers and XSLT transformations on document.
-This should give 100% percent coverage on schema formats, but can sometimes lower performance tweak flexibility. But who cares? XML is slow/old and you know it. Use Json where it is possible.
+such as initial settings on namespaces/readers/writers/serializers and XSLT transformations on document, so you choose your own pill to swallow.
+This should give 100% percent coverage on schema formats and compatability with bugs-as-feature, but can sometimes lower performance tweak flexibility. But who cares? XML is slow/old and you know it. Use Json where it is possible.
