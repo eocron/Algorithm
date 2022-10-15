@@ -5,13 +5,13 @@ using Eocron.Serialization.XmlLegacy;
 
 namespace Eocron.Serialization
 {
-    public sealed class XmlDocumentSerializationConverter<TDocument> : ISerializationConverter
+    public sealed class XmlSerializationConverter<TDocument> : ISerializationConverter
     {
         private readonly IXmlSerializerAdapter<TDocument> _serializer;
 
         public static IXmlSerializerAdapter<TDocument> DefaultXmlSerializerAdapter =
             new XmlSerializerAdapter<TDocument>(x => new XmlSerializer(x));
-        public XmlDocumentSerializationConverter(IXmlSerializerAdapter<TDocument> serializer = null)
+        public XmlSerializationConverter(IXmlSerializerAdapter<TDocument> serializer = null)
         {
             _serializer = serializer ?? DefaultXmlSerializerAdapter ?? throw new ArgumentNullException(nameof(serializer));
         }

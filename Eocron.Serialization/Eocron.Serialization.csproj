@@ -26,7 +26,6 @@
 		<PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
 		<PackageReference Include="protobuf-net" Version="3.1.22" />
 		<PackageReference Include="YamlDotNet" Version="12.0.1" />
-		<PackageReference Include="YAXLib" Version="3.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>

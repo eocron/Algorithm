@@ -22,7 +22,7 @@ namespace Eocron.Serialization.Tests.Performance
 
         public override ISerializationConverter GetConverter()
         {
-            return new XmlDocumentSerializationConverter<XmlDocument>();
+            return new XmlSerializationConverter<XmlDocument>();
         }
 
         public override XmlTestModelFooBar GetTestModel()

@@ -7,8 +7,22 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
     [XmlRoot("XmlTestModel")]
     public class XmlTestModelFooBar
     {
-        // public Dictionary<string, string> Dictionary { get; set; }
-        // public TimeSpan TimeSpan { get; set; }
+        public SerializableDictionary<string, string> Dictionary { get; set; }
+        [XmlIgnore]
+        public TimeSpan TimeSpan { get; set; }
+
+        public long TimeSpanSerializable
+        {
+            get
+            {
+                return TimeSpan.Ticks;
+            }
+            set
+            {
+                TimeSpan = TimeSpan.FromTicks(value);
+            }
+        }
+
         public Guid Guid { get; set; }
 
         public XmlTestEnum Enum { get; set; }

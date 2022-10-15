@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Eocron.Serialization.Tests.Helpers;
-using Eocron.Serialization.Tests.Models.XmlLegacy;
+using Eocron.Serialization.Tests.Models.DataContract;
 using NUnit.Framework;
 
 namespace Eocron.Serialization.Tests
@@ -18,12 +18,12 @@ namespace Eocron.Serialization.Tests
         {
             return new XmlTestModelFooBar
             {
-                //Dictionary = new Dictionary<string, string>()
-                //{
-                //    { "key1", "value1" },
-                //    { "key2", "value2" }
-                //},
-                //TimeSpan = TimeSpan.FromSeconds(3),
+                Dictionary = new Dictionary<string, string>()
+                {
+                    { "key1", "value1" },
+                    { "key2", "value2" }
+                },
+                TimeSpan = TimeSpan.FromSeconds(3),
                 Nullable = null,
                 Double = 1.4d,
                 Integer = 123,

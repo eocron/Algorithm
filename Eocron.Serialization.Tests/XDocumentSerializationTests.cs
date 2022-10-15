@@ -12,19 +12,19 @@ namespace Eocron.Serialization.Tests
     {
         public override ISerializationConverter GetConverter()
         {
-            return new XmlDocumentSerializationConverter<XDocument>();
+            return new XmlSerializationConverter<XDocument>();
         }
 
         public override XmlTestModelFooBar CreateTestModel(string path)
         {
             return new XmlTestModelFooBar
             {
-                //Dictionary = new Dictionary<string, string>()
-                //{
-                //    { "key1", "value1" },
-                //    { "key2", "value2" }
-                //},
-                //TimeSpan = TimeSpan.FromSeconds(3),
+                Dictionary = new SerializableDictionary<string, string>()
+                {
+                    { "key1", "value1" },
+                    { "key2", "value2" }
+                },
+                TimeSpan = TimeSpan.FromSeconds(3),
                 Nullable = null,
                 Double = 1.4d,
                 Integer = 123,

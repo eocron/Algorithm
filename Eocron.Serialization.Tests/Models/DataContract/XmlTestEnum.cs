@@ -1,4 +1,4 @@
-namespace Eocron.Serialization.Tests.Models.Xml
+namespace Eocron.Serialization.Tests.Models.DataContract
 {
     public enum XmlTestEnum
     {
