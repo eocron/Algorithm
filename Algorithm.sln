@@ -10,7 +10,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{1DA5EA29-2
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
 		LICENSE.txt = LICENSE.txt
-		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTests", "NTests\NTests.csproj", "{D7B5517E-1C02-41E0-A9A9-57D8E7347264}"
@@ -23,7 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Worflows", "Worflows", "{61
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eocron.Serialization", "Eocron.Serialization\Eocron.Serialization.csproj", "{01F9F247-3250-4FAB-914A-15BCE9950290}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eocron.Serialization.Tests", "Eocron.Serialization.Tests\Eocron.Serialization.Tests.csproj", "{FBFAF81A-BA7D-4A17-A059-C7439D597739}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eocron.Serialization.Tests", "Eocron.Serialization.Tests\Eocron.Serialization.Tests.csproj", "{FBFAF81A-BA7D-4A17-A059-C7439D597739}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
