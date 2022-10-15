@@ -17,7 +17,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Worflows", "Worflows", "{61765402-573B-4468-A644-7D3BD90BF453}"
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\build_and_test.yml = .github\workflows\build_and_test.yml
-		.github\workflows\publish.yml = .github\workflows\publish.yml
+		.github\workflows\publish_algorithm.yml = .github\workflows\publish_algorithm.yml
+		.github\workflows\publish_serialization.yml = .github\workflows\publish_serialization.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eocron.Serialization", "Eocron.Serialization\Eocron.Serialization.csproj", "{01F9F247-3250-4FAB-914A-15BCE9950290}"
