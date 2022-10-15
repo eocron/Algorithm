@@ -17,7 +17,6 @@
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<Version>1.0.0</Version>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
@@ -30,5 +29,11 @@
 
 	<ItemGroup>
 		<None Include="..\LICENSE.txt" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="README.md">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 </Project>
