@@ -24,9 +24,9 @@ namespace Eocron.Serialization
             if (converter == null)
                 throw new ArgumentNullException(nameof(converter));
 
-            using var stringWriter = new MemoryStream();
-            SerializeTo(converter, type, obj, stringWriter);
-            return stringWriter.ToArray();
+            using var stream = new MemoryStream();
+            SerializeTo(converter, type, obj, stream);
+            return stream.ToArray();
         }
 
         public static object Deserialize(this ISerializationConverter converter, Type type, byte[] bytes,
@@ -37,8 +37,8 @@ namespace Eocron.Serialization
             if (bytes == null)
                 throw new ArgumentNullException(nameof(bytes));
 
-            using var byteReader = new MemoryStream(bytes);
-            return DeserializeFrom(converter, type, byteReader, encoding);
+            using var stream = new MemoryStream(bytes);
+            return DeserializeFrom(converter, type, stream, encoding);
         }
 
         #endregion
@@ -121,7 +121,7 @@ namespace Eocron.Serialization
                 throw new ArgumentNullException(nameof(stream));
 
             encoding = encoding ?? SerializationConverter.DefaultEncoding;
-            var streamReader = new StreamReader(stream, encoding, true, SerializationConverter.DefaultBufferSize, true);
+            using var streamReader = new StreamReader(stream, encoding, true, SerializationConverter.DefaultBufferSize, true);
             return converter.DeserializeFrom(type, streamReader);
         }
 
