@@ -7,8 +7,7 @@ namespace Eocron.Serialization.Tests.Helpers
     {
         public static string GetPath(string relativePath)
         {
-            var path = new Uri(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().CodeBase) ?? string.Empty).LocalPath;
-            return Path.Combine(path, relativePath);
+            return Path.GetFullPath(relativePath);
         }
 
         public static string ReadAllText(string relativePath)
