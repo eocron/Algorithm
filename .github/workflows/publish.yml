@@ -9,7 +9,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  publish:
+  publish_algorithms:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -18,7 +18,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: publish Algorithms on version change
+      - name: publish on version change
         id: publish_nuget
         uses: alirezanet/publish-nuget@v3.0.4
         with:
@@ -26,7 +26,16 @@ jobs:
           PROJECT_FILE_PATH: Algorithm/Eocron.Algorithms.csproj
           NUGET_KEY: ${{secrets.NUGET_API_KEY}}
       
-      - name: publish Serialization on version change
+  publish_serialization:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: publish on version change
         id: publish_nuget
         uses: alirezanet/publish-nuget@v3.0.4
         with:
