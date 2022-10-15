@@ -14,9 +14,21 @@ Main path of defining converter is to make it as singleton and use everywhere, s
 Example:
 
     public static readonly ISerializationConverter XmlDataContract =
-     new XmlSerializationConverter<XmlDocument>(
-         new XmlSerializerAdapter<XmlDocument>(x =>
-             new DataContractSerializer(x)));
+        new XmlSerializationConverter<XmlDocument>(
+            new XmlSerializerAdapter<XmlDocument>(x =>
+                new DataContractSerializer(x)));
+
+Or:
+
+    public static readonly ISerializationConverter XDocument = new XmlSerializationConverter<XDocument>(
+        new XmlSerializerAdapter<XDocument>(x => new XmlSerializer(x))
+        {
+            WriterSettings = new XmlWriterSettings()
+            {
+                Indent = true,
+                IndentChars = "\t"
+            }
+        });
 
 Usage as simple as:
 
