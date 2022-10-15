@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Xml.Linq;
 using Eocron.Serialization.Tests.Helpers;
 using Eocron.Serialization.Tests.Models.XmlLegacy;
 using NUnit.Framework;
@@ -12,7 +11,7 @@ namespace Eocron.Serialization.Tests
     {
         public override ISerializationConverter GetConverter()
         {
-            return new XmlSerializationConverter<XDocument>();
+            return SerializationConverter.XDocument;
         }
 
         public override XmlTestModelFooBar CreateTestModel(string path)

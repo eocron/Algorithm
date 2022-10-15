@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
-using Eocron.Serialization.Tests.Models.XmlLegacy;
+using Eocron.Serialization.Tests.Models.DataContract;
 
 namespace Eocron.Serialization.Tests.Performance
 {
-    public class XDocumentSerializationPerformanceTests : SerializationPerformanceTestsBase<XDocumentSerializationPerformanceTests, XmlTestModelFooBar>
+    public class DataContractSerializationPerformanceTests : SerializationPerformanceTestsBase<DataContractSerializationPerformanceTests, XmlTestModelFooBar>
     {
         [Benchmark()]
         public void Deserialize()
@@ -21,14 +21,14 @@ namespace Eocron.Serialization.Tests.Performance
 
         public override ISerializationConverter GetConverter()
         {
-            return SerializationConverter.XDocument;
+            return SerializationConverter.XmlDataContract;
         }
 
         public override XmlTestModelFooBar GetTestModel()
         {
             return new XmlTestModelFooBar
             {
-                Dictionary = new SerializableDictionary<string, string>()
+                Dictionary = new Dictionary<string, string>()
                 {
                     { "key1", "value1" },
                     { "key2", "value2" }

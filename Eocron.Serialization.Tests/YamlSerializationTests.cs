@@ -1,22 +1,22 @@
 using System;
 using System.Collections.Generic;
 using Eocron.Serialization.Tests.Helpers;
-using Eocron.Serialization.Tests.Models.Json;
+using Eocron.Serialization.Tests.Models.Yaml;
 using NUnit.Framework;
 
 namespace Eocron.Serialization.Tests
 {
     [TestFixture]
-    public class YamlSerializationTests : SerializationTestSuit<JsonTestModel>
+    public class YamlSerializationTests : SerializationTestSuit<YamlTestModel>
     {
         public override ISerializationConverter GetConverter()
         {
             return SerializationConverter.Yaml;
         }
 
-        public override JsonTestModel CreateTestModel(string path)
+        public override YamlTestModel CreateTestModel(string path)
         {
-            return new JsonTestModel
+            return new YamlTestModel
             {
                 Dictionary = new Dictionary<string, string>
                 {
@@ -32,7 +32,7 @@ namespace Eocron.Serialization.Tests
                 EmptyArray = new int[0],
                 EmptyList = new List<int>(),
                 FooBarString = "foobar",
-                Struct = new JsonTestStruct()
+                Struct = new YamlTestStruct()
                 {
                     Value = 234
                 },
@@ -41,7 +41,7 @@ namespace Eocron.Serialization.Tests
                 Boolean = true,
                 Long = 456,
                 Guid = Guid.Parse("1a4c5b27-3881-4330-a13b-f709c004bbc4"),
-                Enum = JsonTestEnum.Three
+                Enum = YamlTestEnum.Three
             };
         }
 

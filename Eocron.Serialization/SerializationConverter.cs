@@ -1,6 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
+using System.Xml.Linq;
 using System.Xml.Serialization;
 using Eocron.Serialization.XmlLegacy;
 
@@ -11,8 +12,11 @@ namespace Eocron.Serialization
         public static readonly ISerializationConverter Json = new JsonSerializationConverter();
         public static readonly ISerializationConverter Protobuf = new ProtobufSerializationConverter();
         public static readonly ISerializationConverter Yaml = new YamlSerializationConverter();
-        public static readonly ISerializationConverter Xml = new XmlSerializationConverter<XmlDocument>(
+        public static readonly ISerializationConverter XmlDocument = new XmlSerializationConverter<XmlDocument>(
             new XmlSerializerAdapter<XmlDocument>(x =>
+                new XmlSerializer(x)));
+        public static readonly ISerializationConverter XDocument = new XmlSerializationConverter<XDocument>(
+            new XmlSerializerAdapter<XDocument>(x =>
                 new XmlSerializer(x)));
         public static readonly ISerializationConverter XmlDataContract =
             new XmlSerializationConverter<XmlDocument>(

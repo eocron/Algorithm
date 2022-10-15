@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
-using Eocron.Serialization.Tests.Models.XmlLegacy;
+using Eocron.Serialization.Tests.Models.Yaml;
 
 namespace Eocron.Serialization.Tests.Performance
 {
-    public class XDocumentSerializationPerformanceTests : SerializationPerformanceTestsBase<XDocumentSerializationPerformanceTests, XmlTestModelFooBar>
+    public class YamlSerializationPerformanceTests : SerializationPerformanceTestsBase<YamlSerializationPerformanceTests, YamlTestModel>
     {
         [Benchmark()]
         public void Deserialize()
@@ -21,14 +21,14 @@ namespace Eocron.Serialization.Tests.Performance
 
         public override ISerializationConverter GetConverter()
         {
-            return SerializationConverter.XDocument;
+            return SerializationConverter.Yaml;
         }
 
-        public override XmlTestModelFooBar GetTestModel()
+        public override YamlTestModel GetTestModel()
         {
-            return new XmlTestModelFooBar
+            return new YamlTestModel
             {
-                Dictionary = new SerializableDictionary<string, string>()
+                Dictionary = new Dictionary<string, string>
                 {
                     { "key1", "value1" },
                     { "key2", "value2" }
@@ -42,7 +42,7 @@ namespace Eocron.Serialization.Tests.Performance
                 EmptyArray = new int[0],
                 EmptyList = new List<int>(),
                 FooBarString = "foobar",
-                Struct = new XmlTestStruct
+                Struct = new YamlTestStruct()
                 {
                     Value = 234
                 },
@@ -51,7 +51,7 @@ namespace Eocron.Serialization.Tests.Performance
                 Boolean = true,
                 Long = 456,
                 Guid = Guid.Parse("1a4c5b27-3881-4330-a13b-f709c004bbc4"),
-                Enum = XmlTestEnum.Three
+                Enum = YamlTestEnum.Three
             };
         }
     }
