@@ -1,20 +1,31 @@
 using System;
 using System.Collections.Generic;
-using Eocron.Serialization.Tests.Helpers;
+using System.Xml;
+using BenchmarkDotNet.Attributes;
 using Eocron.Serialization.Tests.Models.XmlLegacy;
-using NUnit.Framework;
 
-namespace Eocron.Serialization.Tests
+namespace Eocron.Serialization.Tests.Performance
 {
-    [TestFixture]
-    public class DataContractXmlDocumentSerializationTests : SerializationTestSuit<XmlTestModelFooBar>
+    public class XmlDocumentSerializationPerformanceTests : SerializationPerformanceTestsBase<XmlDocumentSerializationPerformanceTests, XmlTestModelFooBar>
     {
-        public override ISerializationConverter GetConverter()
+        [Benchmark()]
+        public void Deserialize()
         {
-            return SerializationConverter.XmlDataContract;
+            DeserializeText();
         }
 
-        public override XmlTestModelFooBar CreateTestModel(string path)
+        [Benchmark()]
+        public void Serialize()
+        {
+            SerializeText();
+        }
+
+        public override ISerializationConverter GetConverter()
+        {
+            return new XmlDocumentSerializationConverter<XmlDocument>();
+        }
+
+        public override XmlTestModelFooBar GetTestModel()
         {
             return new XmlTestModelFooBar
             {
@@ -43,33 +54,6 @@ namespace Eocron.Serialization.Tests
                 Guid = Guid.Parse("1a4c5b27-3881-4330-a13b-f709c004bbc4"),
                 Enum = XmlTestEnum.Three
             };
-        }
-
-        [Test]
-        public void CheckSerializeAndDeserializeByText()
-        {
-            AssertSerializeAndDeserializeByText(null);
-        }
-
-        [Test]
-        [TestCase("TestData/DataContractXml/TestModelWithoutBOM.xml")]
-        public void CheckDeserializedModelEqualTo(string path)
-        {
-            AssertDeserializedFromTextModelEqualTo(path);
-        }
-
-        [Test]
-        [TestCase("TestData/DataContractXml/TestModelWithoutBOM.xml")]
-        public void CheckSerializedTextEqualTo(string path)
-        {
-            AssertSerializedTextEqualTo(path);
-        }
-
-        [Test]
-        [TestCase("TestData/DataContractXml/TestModelWithoutBOM.xml")]
-        public void CheckSerializedBytesEqualTo(string path)
-        {
-            AssertSerializedBytesEqualTo(path, false);
         }
     }
 }
