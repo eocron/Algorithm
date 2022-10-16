@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using Eocron.Serialization.Helpers;
 
 namespace Eocron.Serialization
 {
@@ -45,35 +46,32 @@ namespace Eocron.Serialization
 
         #region String
 
-        public static string SerializeToString<T>(this ISerializationConverter converter, T obj, Encoding encoding = null)
+        public static string SerializeToString<T>(this ISerializationConverter converter, T obj)
         {
-            return SerializeToString(converter, typeof(T), obj, encoding);
+            return SerializeToString(converter, typeof(T), obj);
         }
 
-        public static string SerializeToString(this ISerializationConverter converter, Type type, object obj,
-            Encoding encoding = null)
+        public static string SerializeToString(this ISerializationConverter converter, Type type, object obj)
         {
             if (converter == null)
                 throw new ArgumentNullException(nameof(converter));
-
-            encoding = encoding ?? SerializationConverter.DefaultEncoding;
-            return encoding.GetString(SerializeToBytes(converter, type, obj, encoding));
+            
+            var sb = new StringBuilder();
+            converter.SerializeTo(type, obj, new StringStreamWriter(sb));
+            return sb.ToString();
         }
 
-        public static T Deserialize<T>(this ISerializationConverter converter, string input, Encoding encoding = null)
+        public static T Deserialize<T>(this ISerializationConverter converter, string input)
         {
-            return (T)Deserialize(converter, typeof(T), input, encoding);
+            return (T)Deserialize(converter, typeof(T), input);
         }
 
-        public static object Deserialize(this ISerializationConverter converter, Type type, string input,
-            Encoding encoding = null)
+        public static object Deserialize(this ISerializationConverter converter, Type type, string input)
         {
             if (converter == null)
                 throw new ArgumentNullException(nameof(converter));
-
-            encoding = encoding ?? SerializationConverter.DefaultEncoding;
-            using var stringReader = StringToStream(input, encoding);
-            return DeserializeFrom(converter, type, stringReader, encoding);
+            
+            return converter.DeserializeFrom(type, new StringStreamReader(input));
         }
 
         #endregion
@@ -140,17 +138,5 @@ namespace Eocron.Serialization
         }
 
         #endregion
-
-
-        private static Stream StringToStream(string input, Encoding encoding)
-        {
-            var stream = new MemoryStream();
-            var writer = new StreamWriter(stream, encoding);
-            writer.Write(input);
-            writer.Flush();
-            stream.Position = 0;
-            return stream;
-        }
-
     }
 }
