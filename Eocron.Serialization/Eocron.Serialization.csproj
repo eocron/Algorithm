@@ -15,7 +15,7 @@
 			This client library contains some basic and usefull serialization alghorithms for my work.
 		</Description>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-		<Version>1.0.1</Version>
+		<Version>1.1.0</Version>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<LangVersion>latest</LangVersion>

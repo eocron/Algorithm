@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<XmlTestModelFooBar>
+  <Array>
+    <long>2</long>
+    <long>3</long>
+    <long>4</long>
+  </Array>
+  <Boolean>true</Boolean>
+  <DateTime>2022-01-01T01:01:01Z</DateTime>
+  <Dictionary>
+    <item>
+      <key>
+        <string>key1</string>
+      </key>
+      <value>
+        <string>value1</string>
+      </value>
+    </item>
+    <item>
+      <key>
+        <string>key2</string>
+      </key>
+      <value>
+        <string>value2</string>
+      </value>
+    </item>
+  </Dictionary>
+  <Double>1.4</Double>
+  <EmptyArray />
+  <EmptyList />
+  <Enum>Three</Enum>
+  <FooBarString>foobar</FooBarString>
+  <Guid>1a4c5b27-3881-4330-a13b-f709c004bbc4</Guid>
+  <Integer>123</Integer>
+  <List>
+    <int>1</int>
+    <int>2</int>
+    <int>3</int>
+  </List>
+  <Long>456</Long>
+  <NullReference nil="true" />
+  <Nullable nil="true" />
+  <Struct>
+    <Value>234</Value>
+  </Struct>
+  <TimeSpan>PT3S</TimeSpan>
+  <TimeSpanSerializable>30000000</TimeSpanSerializable>
+</XmlTestModelFooBar>
