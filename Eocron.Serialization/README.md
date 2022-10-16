@@ -13,24 +13,29 @@ Main path of defining converter is to make it as singleton and use everywhere, s
 
 Example:
 
-    public static readonly ISerializationConverter XmlDataContract =
-        new XmlSerializationConverter<XmlDocument>(
-            new XmlSerializerAdapter<XmlDocument>(x =>
-                new DataContractSerializer(x)));
+    public static readonly ISerializationConverter XDocument =
+        new XmlSerializationConverter<XDocument>(
+            new XmlAdapter<XDocument>(
+                new XmlSerializerAdapter(x => new XmlSerializer(x)),
+                new XDocumentAdapter()));
 
 Or:
 
-    public static readonly ISerializationConverter XDocument = new XmlSerializationConverter<XDocument>(
-        new XmlSerializerAdapter<XDocument>(x => new XmlSerializer(x))
+    public static readonly ISerializationConverter XmlDataContract =
+        new XmlSerializationConverter<XmlDocument>(
+            new XmlAdapter<XmlDocument>(
+                new XmlObjectSerializerAdapter(x => new DataContractSerializer(x)),
+                new XmlDocumentAdapter()));
+
+Or:
+    
+    public static readonly ISerializationConverter Json = new JsonSerializationConverter(
+        new JsonSerializerSettings()
         {
-            WriterSettings = new XmlWriterSettings()
-            {
-                Indent = true,
-                IndentChars = "\t"
-            }
+            Formatting = Formatting.Indented
         });
 
-Usage as simple as:
+Usage:
 
     var xml = XmlDataContract.SerializeToString(myObj);
     XmlDataContract.SerializeTo(myObj, stream);
@@ -47,6 +52,6 @@ Because of many problems related to XML in C# such as:
   - Constant problems of serializing basic types like `Dictionary`/`TimeSpan` which in one version throw error, in other it will just silently empty your fields (Say HI! to `TimeSpan` being empty in .net472).
   - Chaotic changes from Microsoft to blow up your tests (rearrangment of namespaces, adding encoding attribute, etc) and sometimes criple back-compatability (Say HI! to BOM in .net6)
 
-I decided to unify all this architectural garbage into single adapter, so it is easier to configure entire serialization process,
+I decided to unify all this architectural garbage into couple of adapters, so it is easier to configure entire serialization process,
 such as initial settings on namespaces/readers/writers/serializers and XSLT transformations on document, so you choose your own pill to swallow.
 This should give 100% percent coverage on schema formats and compatability with bugs-as-feature, but can sometimes lower performance tweak flexibility. But who cares? XML is slow/old and you know it. Use Json where it is possible.

@@ -4,12 +4,12 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Xsl;
 
-namespace Eocron.Serialization.XmlLegacy
+namespace Eocron.Serialization.XmlLegacy.Xslt
 {
-    public sealed class XslCompiledTransformAdapter<TDocument> : IXmlSerializerAdapter<TDocument>
+    public sealed class XslCompiledTransformAdapter<TDocument> : IXmlAdapter<TDocument>
         where TDocument : new()
     {
-        private readonly IXmlSerializerAdapter<TDocument> _inner;
+        private readonly IXmlAdapter<TDocument> _inner;
 
         public XslCompiledTransform OnSerialize { get; set; }
         public XsltArgumentList OnSerializeArgumentList { get; set; }
@@ -19,7 +19,7 @@ namespace Eocron.Serialization.XmlLegacy
         public XsltArgumentList OnDeserializeArgumentList { get; set; }
         public ReaderOptions OnDeserializeReaderOptions { get; set; }
 
-        public XslCompiledTransformAdapter(IXmlSerializerAdapter<TDocument> inner)
+        public XslCompiledTransformAdapter(IXmlAdapter<TDocument> inner)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
         }

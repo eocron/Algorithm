@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Eocron.Serialization.XmlLegacy
 {
-    public interface IXmlSerializerAdapter<TDocument>
+    public interface IXmlAdapter<TDocument>
     {
         TDocument SerializeToDocument(Type type, object content);
 

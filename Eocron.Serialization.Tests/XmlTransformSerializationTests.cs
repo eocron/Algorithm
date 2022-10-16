@@ -6,6 +6,9 @@ using System.Xml.Xsl;
 using Eocron.Serialization.Tests.Helpers;
 using Eocron.Serialization.Tests.Models.XmlLegacy;
 using Eocron.Serialization.XmlLegacy;
+using Eocron.Serialization.XmlLegacy.Document;
+using Eocron.Serialization.XmlLegacy.Serializer;
+using Eocron.Serialization.XmlLegacy.Xslt;
 using NUnit.Framework;
 
 namespace Eocron.Serialization.Tests
@@ -19,8 +22,9 @@ namespace Eocron.Serialization.Tests
             transform.Load("TestData/XmlTransform/TestTransform.xslt");
             return new XmlSerializationConverter<XmlDocument>(
                 new XslCompiledTransformAdapter<XmlDocument>(
-                    new XmlSerializerAdapter<XmlDocument>(x =>
-                        new DataContractSerializer(x))
+                    new XmlAdapter<XmlDocument>(
+                        new XmlObjectSerializerAdapter(x => new DataContractSerializer(x)),
+                        new XmlDocumentAdapter())
                     {
                         WriterSettings = new XmlWriterSettings()
                         {

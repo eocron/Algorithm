@@ -1,19 +1,16 @@
 ﻿using System;
 using System.IO;
-using System.Xml.Serialization;
 using Eocron.Serialization.XmlLegacy;
 
 namespace Eocron.Serialization
 {
     public sealed class XmlSerializationConverter<TDocument> : ISerializationConverter
     {
-        private readonly IXmlSerializerAdapter<TDocument> _serializer;
+        private readonly IXmlAdapter<TDocument> _serializer;
 
-        public static IXmlSerializerAdapter<TDocument> DefaultXmlSerializerAdapter =
-            new XmlSerializerAdapter<TDocument>(x => new XmlSerializer(x));
-        public XmlSerializationConverter(IXmlSerializerAdapter<TDocument> serializer = null)
+        public XmlSerializationConverter(IXmlAdapter<TDocument> serializer)
         {
-            _serializer = serializer ?? DefaultXmlSerializerAdapter ?? throw new ArgumentNullException(nameof(serializer));
+            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
         }
 
         public object DeserializeFrom(Type type, StreamReader sourceStream)
