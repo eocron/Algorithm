@@ -12,12 +12,14 @@ namespace Eocron.Serialization.Tests.Performance
         protected readonly ISerializationConverter _converter;
         protected readonly TModel _model;
 
-        protected SerializationPerformanceTestsBase()
+        protected SerializationPerformanceTestsBase(bool prepareText = true, bool prepareBinary = true)
         {
             _converter = GetConverter();
             _model = GetTestModel();
-            _serializedText = _converter.SerializeToString(_model);
-            _serializedBytes = _converter.SerializeToBytes(_model);
+            if(prepareText)
+                _serializedText = _converter.SerializeToString(_model);
+            if(prepareBinary)
+                _serializedBytes = _converter.SerializeToBytes(_model);
         }
 
         public abstract ISerializationConverter GetConverter();

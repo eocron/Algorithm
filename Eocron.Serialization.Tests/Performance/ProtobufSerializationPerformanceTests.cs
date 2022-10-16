@@ -7,6 +7,10 @@ namespace Eocron.Serialization.Tests.Performance
 {
     public class ProtobufSerializationPerformanceTests : SerializationPerformanceTestsBase<ProtobufSerializationPerformanceTests, ProtobufTestModel>
     {
+        public ProtobufSerializationPerformanceTests() : base(prepareText: false)
+        {
+
+        }
         [Benchmark()]
         public void Deserialize()
         {
