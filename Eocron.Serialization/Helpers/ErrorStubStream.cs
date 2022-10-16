@@ -7,9 +7,9 @@ namespace Eocron.Serialization.Helpers
     {
         private readonly Exception _exception;
 
-        public ErrorStubStream(Exception exception)
+        public ErrorStubStream(Exception exception = null)
         {
-            _exception = exception;
+            _exception = exception ?? new NotSupportedException("Stream write/read is not supported in this serialization mode.");
         }
 
         public override void Flush()

@@ -8,7 +8,7 @@ namespace Eocron.Serialization.Helpers
         private readonly string _input;
         private int _position;
 
-        public StringStreamReader(string input) : base(new ErrorStubStream(new NotSupportedException()))
+        public StringStreamReader(string input) : base(new ErrorStubStream())
         {
             _input = input;
         }

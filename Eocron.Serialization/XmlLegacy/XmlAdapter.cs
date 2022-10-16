@@ -21,8 +21,8 @@ namespace Eocron.Serialization.XmlLegacy
 
         public XmlAdapter(IXmlSerializerAdapter serializer, IXmlDocumentAdapter<TDocument> documentAdapter)
         {
-            _serializer = serializer;
-            _documentAdapter = documentAdapter;
+            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
+            _documentAdapter = documentAdapter ?? throw new ArgumentNullException(nameof(documentAdapter));
         }
 
         public TDocument SerializeToDocument(Type type, object content)

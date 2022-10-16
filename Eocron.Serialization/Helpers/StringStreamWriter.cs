@@ -8,7 +8,7 @@ namespace Eocron.Serialization.Helpers
     {
         private readonly StringBuilder _sb;
 
-        public StringStreamWriter(StringBuilder sb) : base(new ErrorStubStream(new NotSupportedException()))
+        public StringStreamWriter(StringBuilder sb) : base(new ErrorStubStream())
         {
             _sb = sb;
         }
