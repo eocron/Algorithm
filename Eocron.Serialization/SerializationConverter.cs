@@ -6,18 +6,12 @@ using System.Xml.Serialization;
 using Eocron.Serialization.XmlLegacy;
 using Eocron.Serialization.XmlLegacy.Document;
 using Eocron.Serialization.XmlLegacy.Serializer;
-using Newtonsoft.Json;
-using Formatting = Newtonsoft.Json.Formatting;
 
 namespace Eocron.Serialization
 {
     public static class SerializationConverter
     {
-        public static readonly ISerializationConverter Json = new JsonSerializationConverter(
-            new JsonSerializerSettings()
-            {
-                Formatting = Formatting.Indented
-            });
+        public static readonly ISerializationConverter Json = new JsonSerializationConverter();
         public static readonly ISerializationConverter Protobuf = new ProtobufSerializationConverter();
         public static readonly ISerializationConverter Yaml = new YamlSerializationConverter();
 
