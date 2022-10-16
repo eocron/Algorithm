@@ -5,7 +5,7 @@ using Eocron.Serialization.Tests.Models.Yaml;
 
 namespace Eocron.Serialization.Tests.Performance
 {
-    public class YamlSerializationPerformanceTests : SerializationPerformanceTestsBase<YamlSerializationPerformanceTests, YamlTestModel>
+    public class YamlSerializationPerformanceTests : SerializationPerformanceTestsBase<YamlSerializationPerformanceTests, YamlTestModel>, ISerializationPerformanceTests
     {
         [Benchmark()]
         public void Deserialize()

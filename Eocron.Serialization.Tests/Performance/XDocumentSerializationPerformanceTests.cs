@@ -5,7 +5,7 @@ using Eocron.Serialization.Tests.Models.XmlLegacy;
 
 namespace Eocron.Serialization.Tests.Performance
 {
-    public class XDocumentSerializationPerformanceTests : SerializationPerformanceTestsBase<XDocumentSerializationPerformanceTests, XmlTestModelFooBar>
+    public class XDocumentSerializationPerformanceTests : SerializationPerformanceTestsBase<XDocumentSerializationPerformanceTests, XmlTestModelFooBar>, ISerializationPerformanceTests
     {
         [Benchmark()]
         public void Deserialize()

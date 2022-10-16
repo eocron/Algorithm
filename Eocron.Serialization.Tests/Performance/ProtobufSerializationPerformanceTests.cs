@@ -5,7 +5,7 @@ using Eocron.Serialization.Tests.Models.Protobuf;
 
 namespace Eocron.Serialization.Tests.Performance
 {
-    public class ProtobufSerializationPerformanceTests : SerializationPerformanceTestsBase<ProtobufSerializationPerformanceTests, ProtobufTestModel>
+    public class ProtobufSerializationPerformanceTests : SerializationPerformanceTestsBase<ProtobufSerializationPerformanceTests, ProtobufTestModel>, ISerializationPerformanceTests
     {
         public ProtobufSerializationPerformanceTests() : base(prepareText: false)
         {

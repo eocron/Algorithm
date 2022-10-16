@@ -4,6 +4,12 @@ using NUnit.Framework;
 
 namespace Eocron.Serialization.Tests.Performance
 {
+    public interface ISerializationPerformanceTests
+    {
+        void Serialize();
+
+        void Deserialize();
+    }
     public abstract class SerializationPerformanceTestsBase<TTests, TModel>
     {
         protected readonly string _serializedText;

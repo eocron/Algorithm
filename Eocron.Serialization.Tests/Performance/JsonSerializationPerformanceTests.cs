@@ -5,7 +5,7 @@ using Eocron.Serialization.Tests.Models.Json;
 
 namespace Eocron.Serialization.Tests.Performance
 {
-    public class JsonSerializationPerformanceTests : SerializationPerformanceTestsBase<JsonSerializationPerformanceTests, JsonTestModel>
+    public class JsonSerializationPerformanceTests : SerializationPerformanceTestsBase<JsonSerializationPerformanceTests, JsonTestModel>, ISerializationPerformanceTests
     {
         [Benchmark()]
         public void Deserialize()

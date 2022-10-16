@@ -5,7 +5,7 @@ using Eocron.Serialization.Tests.Models.DataContract;
 
 namespace Eocron.Serialization.Tests.Performance
 {
-    public class DataContractSerializationPerformanceTests : SerializationPerformanceTestsBase<DataContractSerializationPerformanceTests, XmlTestModelFooBar>
+    public class DataContractSerializationPerformanceTests : SerializationPerformanceTestsBase<DataContractSerializationPerformanceTests, XmlTestModelFooBar>, ISerializationPerformanceTests
     {
         [Benchmark()]
         public void Deserialize()
