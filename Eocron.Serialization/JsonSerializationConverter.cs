@@ -6,20 +6,10 @@ namespace Eocron.Serialization
 {
     public sealed class JsonSerializationConverter : ISerializationConverter
     {
-        private readonly JsonSerializer _serializer;
-
-        public static JsonSerializerSettings DefaultJsonSerializerSettings =
-            new JsonSerializerSettings
-            {
-                Formatting = Formatting.Indented
-            };
-
-        public JsonSerializationConverter(JsonSerializerSettings settings = null)
+        public JsonSerializer Serializer { get; set; } = JsonSerializer.CreateDefault(new JsonSerializerSettings()
         {
-            _serializer = JsonSerializer.CreateDefault(settings ??
-                                                       DefaultJsonSerializerSettings ??
-                                                       throw new ArgumentNullException(nameof(settings)));
-        }
+            Formatting = Formatting.Indented
+        });
 
         public object DeserializeFrom(Type type, StreamReader sourceStream)
         {
@@ -30,7 +20,7 @@ namespace Eocron.Serialization
 
             using var reader = new JsonTextReader(sourceStream);
             reader.CloseInput = false;
-            return _serializer.Deserialize(reader, type);
+            return Serializer.Deserialize(reader, type);
         }
 
         public void SerializeTo(Type type, object obj, StreamWriter targetStream)
@@ -44,7 +34,8 @@ namespace Eocron.Serialization
             
             using var writer = new JsonTextWriter(targetStream);
             writer.CloseOutput = false;
-            _serializer.Serialize(writer, obj, type);
+            Serializer.Serialize(writer, obj, type);
+            writer.Flush();
         }
     }
 }

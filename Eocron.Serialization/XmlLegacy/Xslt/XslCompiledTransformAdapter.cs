@@ -6,10 +6,11 @@ using System.Xml.Xsl;
 
 namespace Eocron.Serialization.XmlLegacy.Xslt
 {
-    public sealed class XslCompiledTransformAdapter<TDocument> : IXmlAdapter<TDocument>
+    public class XslCompiledTransformAdapter<TDocument> : IXmlAdapter<TDocument>
         where TDocument : new()
     {
         private readonly IXmlAdapter<TDocument> _inner;
+        private readonly bool _xmlDocumentMode;
 
         public XslCompiledTransform OnSerialize { get; set; }
         public XsltArgumentList OnSerializeArgumentList { get; set; }
@@ -21,7 +22,16 @@ namespace Eocron.Serialization.XmlLegacy.Xslt
 
         public XslCompiledTransformAdapter(IXmlAdapter<TDocument> inner)
         {
+            ValidateDocumentType();
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+            _xmlDocumentMode = typeof(TDocument) == typeof(XmlDocument);
+        }
+
+        private void ValidateDocumentType()
+        {
+            var correct = typeof(TDocument) == typeof(XmlDocument) || typeof(TDocument) == typeof(XDocument);
+            if (!correct)
+                throw new NotSupportedException(typeof(TDocument).Name);
         }
 
         public TDocument SerializeToDocument(Type type, object content)
@@ -39,8 +49,8 @@ namespace Eocron.Serialization.XmlLegacy.Xslt
             return Transform(_inner.ReadDocumentFrom(sourceStream), OnDeserialize, OnDeserializeArgumentList, OnDeserializeReaderOptions);
         }
 
-        private static TDocument Transform(
-            TDocument sourceDocument, 
+        private TDocument Transform(
+            TDocument sourceDocument,
             XslCompiledTransform transform,
             XsltArgumentList arguments,
             ReaderOptions readerOptions)
@@ -48,29 +58,41 @@ namespace Eocron.Serialization.XmlLegacy.Xslt
             if (transform == null)
                 return sourceDocument;
 
-            if (typeof(TDocument) == typeof(XmlDocument))
+            if (_xmlDocumentMode)
             {
-                var source = (XmlDocument)(object)sourceDocument;
-                var target = new XmlDocument();
-                using var writer = target.CreateNavigator().AppendChild();
-                using var reader = source.CreateNavigator().ReadSubtree();
-                transform.Transform(reader, arguments, writer);
-                return (TDocument)(object)target;
+                return (TDocument)(object)OnTransform((XmlDocument)(object)sourceDocument, transform, arguments,
+                    readerOptions);
             }
-            else if (typeof(TDocument) == typeof(XDocument))
-            {
-                var source = (XDocument)(object)sourceDocument;
-                var target = new XDocument();
 
-                using var writer = target.CreateWriter();
-                using var reader = source.CreateReader(readerOptions);
-                transform.Transform(reader, arguments, writer);
-                return (TDocument)(object)target;
-            }
-            else
-            {
-                throw new NotSupportedException(typeof(TDocument).Name);
-            }
+            return (TDocument)(object)OnTransform((XDocument)(object)sourceDocument, transform, arguments,
+                readerOptions);
+        }
+
+        protected virtual XmlDocument OnTransform(
+            XmlDocument source, 
+            XslCompiledTransform transform,
+            XsltArgumentList arguments,
+            ReaderOptions readerOptions)
+        {
+            var target = new XmlDocument();
+            using var writer = target.CreateNavigator().AppendChild();
+            using var reader = source.CreateNavigator().ReadSubtree();
+            transform.Transform(reader, arguments, writer);
+            return target;
+        }
+
+        protected virtual XDocument OnTransform(
+            XDocument source,
+            XslCompiledTransform transform,
+            XsltArgumentList arguments,
+            ReaderOptions readerOptions)
+        {
+            var target = new XDocument();
+
+            using var writer = target.CreateWriter();
+            using var reader = source.CreateReader(readerOptions);
+            transform.Transform(reader, arguments, writer);
+            return target;
         }
 
         public void WriteDocumentTo(StreamWriter targetStream, TDocument document)

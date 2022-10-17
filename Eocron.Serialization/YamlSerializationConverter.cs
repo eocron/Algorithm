@@ -6,17 +6,8 @@ namespace Eocron.Serialization
 {
     public sealed class YamlSerializationConverter : ISerializationConverter
     {
-        private readonly ISerializer _serializer;
-        private readonly IDeserializer _deserializer;
-
-        public static ISerializer DefaultSerializer = new SerializerBuilder().Build();
-        public static IDeserializer DefaultDeserializer = new DeserializerBuilder().Build();
-
-        public YamlSerializationConverter(ISerializer serializer = null, IDeserializer deserializer = null)
-        {
-            _serializer = serializer ?? DefaultSerializer ?? throw new ArgumentNullException(nameof(serializer));
-            _deserializer = deserializer ?? DefaultDeserializer ?? throw new ArgumentNullException(nameof(deserializer));
-        }
+        public ISerializer Serializer { get; set; } = new SerializerBuilder().Build();
+        public IDeserializer Deserializer { get; set; } = new DeserializerBuilder().Build();
 
         public object DeserializeFrom(Type type, StreamReader sourceStream)
         {
@@ -25,7 +16,7 @@ namespace Eocron.Serialization
             if (sourceStream == null)
                 throw new ArgumentNullException(nameof(sourceStream));
 
-            return _deserializer.Deserialize(sourceStream, type);
+            return Deserializer.Deserialize(sourceStream, type);
         }
 
         public void SerializeTo(Type type, object obj, StreamWriter targetStream)
@@ -37,7 +28,7 @@ namespace Eocron.Serialization
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
 
-            _serializer.Serialize(targetStream, obj, type);
+            Serializer.Serialize(targetStream, obj, type);
         }
     }
 }
