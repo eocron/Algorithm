@@ -17,7 +17,7 @@ namespace Eocron.Serialization.XmlLegacy
         private readonly IXmlDocumentAdapter<TDocument> _documentAdapter;
 
         public XmlReaderSettings ReaderSettings { get; set; } = new XmlReaderSettings(){ IgnoreComments = true, IgnoreWhitespace = true };
-        public XmlWriterSettings WriterSettings { get; set; } = new XmlWriterSettings() { Encoding = SerializationConverter.DefaultEncoding, Indent = true };
+        public XmlWriterSettings WriterSettings { get; set; } = new XmlWriterSettings() { Encoding = SerializationConverter.DefaultEncoding, Indent = SerializationConverter.DefaultIndent };
 
         public XmlAdapter(IXmlSerializerAdapter serializer, IXmlDocumentAdapter<TDocument> documentAdapter)
         {

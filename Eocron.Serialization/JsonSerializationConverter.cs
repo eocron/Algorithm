@@ -8,7 +8,7 @@ namespace Eocron.Serialization
     {
         public JsonSerializer Serializer { get; set; } = JsonSerializer.CreateDefault(new JsonSerializerSettings()
         {
-            Formatting = Formatting.Indented
+            Formatting = SerializationConverter.DefaultIndent ? Formatting.Indented : Formatting.None,
         });
 
         public object DeserializeFrom(Type type, StreamReader sourceStream)

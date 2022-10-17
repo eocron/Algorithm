@@ -31,6 +31,7 @@ namespace Eocron.Serialization
                     new XmlObjectSerializerAdapter(x => new DataContractSerializer(x)),
                     new XmlDocumentAdapter()));
 
+        public static bool DefaultIndent = true;
         public static Encoding DefaultEncoding = new UTF8Encoding(false);
         public static int DefaultBufferSize = 1024;
     }
