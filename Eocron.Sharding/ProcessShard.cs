@@ -68,15 +68,34 @@ namespace Eocron.Sharding
             await _publishSemaphore.WaitAsync(ct);
             try
             {
-                var process = _currentProcess;
-                if (process == null || process.HasExited)
-                    throw CreateProcessNotRunningException(process);
-
+                var process = await GetRunningProcessAsync(ct).ConfigureAwait(false);
                 await _inputSerializer.SerializeTo(process.StandardInput, messages, ct).ConfigureAwait(false);
             }
             finally
             {
                 _publishSemaphore.Release();
+            }
+        }
+
+        private async Task<Process> GetRunningProcessAsync(CancellationToken ct)
+        {
+            while (true)
+            {
+                var process = _currentProcess;
+                if (process != null && !process.HasExited)
+                    return process;
+                try
+                {
+                    await Task.Delay(_statusCheckInterval, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    if (process != null)
+                    {
+                        throw CreateUnableToPublishException(process);
+                    }
+                    throw;
+                }
             }
         }
 
@@ -142,6 +161,11 @@ namespace Eocron.Sharding
         private static Exception CreateProcessExitCodeException(Process process)
         {
             return new ProcessShardException($"Process {process.Id} shard suddenly stopped with exit code {process.ExitCode}.", process.Id, process.ExitCode);
+        }
+
+        private Exception CreateUnableToPublishException(Process process)
+        {
+            return new ProcessShardException($"Unable to publish messages because publish was cancelled waiting for process to start. Last time process {process.Id} stopped with exit code {process.ExitCode}.", process.Id, process.ExitCode);
         }
 
         private static Exception CreateProcessNotRunningException(Process process)
