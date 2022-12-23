@@ -11,6 +11,7 @@ namespace Eocron.Sharding
 {
     public sealed class ProcessShard<TInput, TOutput, TError> : IShard<TInput, TOutput, TError>
     {
+        private static long ShardIdCounter = 0;
         private readonly ProcessShardOptions _options;
         private readonly TimeSpan _statusCheckInterval;
         private readonly IStreamReaderDeserializer<TOutput> _outputDeserializer;
@@ -18,14 +19,14 @@ namespace Eocron.Sharding
         private readonly IStreamWriterSerializer<TInput> _inputSerializer;
         private readonly ILogger _logger;
         private readonly IProcessStateProvider _stateProvider;
-
         private readonly Channel<TOutput> _outputs;
         private readonly Channel<TError> _errors;
-
         private readonly SemaphoreSlim _publishSemaphore;
+        private readonly string _shardId;
+        private Process _currentProcess;
+
         public ChannelReader<TOutput> Outputs => _outputs.Reader;
         public ChannelReader<TError> Errors => _errors.Reader;
-        private Process _currentProcess;
 
         public ProcessShard(
             ProcessShardOptions options,
@@ -45,6 +46,7 @@ namespace Eocron.Sharding
             _errors = Channel.CreateBounded<TError>(_options.ErrorOptions ?? ProcessShardOptions.DefaultErrorOptions);
             _statusCheckInterval = _options.ProcessStatusCheckInterval ?? ProcessShardOptions.DefaultProcessStatusCheckInterval;
             _publishSemaphore = new SemaphoreSlim(1);
+            _shardId = $"process_shard_{typeof(TInput).Name}_{typeof(TOutput).Name}_{typeof(TError).Name}_{Interlocked.Increment(ref ShardIdCounter)}".ToLowerInvariant();
         }
 
         public bool IsReadyForPublish()
@@ -125,7 +127,8 @@ namespace Eocron.Sharding
         {
             return _logger.BeginScope(new Dictionary<string, string>()
             {
-                { "processId", process.Id.ToString() }
+                { "processId", process.Id.ToString() },
+                { "shardId", _shardId }
             });
         }
 
@@ -198,19 +201,24 @@ namespace Eocron.Sharding
                 _logger.LogCritical(ex, "Cancellation failed on process {processId} shard", process.Id);
             }
         }
-        private static Exception CreateProcessExitCodeException(Process process)
+        private Exception CreateProcessExitCodeException(Process process)
         {
-            return new ProcessShardException($"Process {process.Id} shard suddenly stopped with exit code {process.ExitCode}.", process.Id, process.ExitCode);
+            return new ProcessShardException($"Process {process.Id} shard suddenly stopped with exit code {process.ExitCode}.", _shardId, process.Id, process.ExitCode);
         }
 
-        private static Exception CreateUnableToPublishException(Process process)
+        private Exception CreateUnableToPublishException(Process process)
         {
-            return new ProcessShardException($"Unable to publish messages because publish was cancelled waiting for process to start. Last time process {process.Id} stopped with exit code {process.ExitCode}.", process.Id, process.ExitCode);
+            return new ProcessShardException($"Unable to publish messages because publish was cancelled waiting for process to start. Last time process {process.Id} stopped with exit code {process.ExitCode}.", _shardId, process.Id, process.ExitCode);
         }
 
-        private static Exception CreatePublishedWithErrorException(Process process)
+        private Exception CreatePublishedWithErrorException(Process process)
         {
-            return new ProcessShardException($"Publish was successful but process crashed. Last time process {process.Id} stopped with exit code {process.ExitCode}.", process.Id, process.ExitCode);
+            return new ProcessShardException($"Publish was successful but process crashed. Last time process {process.Id} stopped with exit code {process.ExitCode}.", _shardId, process.Id, process.ExitCode);
+        }
+
+        private Exception CreateShardDisposedException()
+        {
+            return new ObjectDisposedException(_shardId, "Shard is disposed.");
         }
 
         private async Task ProcessStreamReader<T>(StreamReader input, IStreamReaderDeserializer<T> deserializer, Channel<T> output, Process process, CancellationToken ct)
@@ -220,12 +228,17 @@ namespace Eocron.Sharding
             {
                 try
                 {
-                    await foreach (var item in deserializer.GetDeserializedEnumerableAsync(input, ct).ConfigureAwait(false))
+                    await foreach (var item in deserializer.GetDeserializedEnumerableAsync(input, ct)
+                                       .ConfigureAwait(false))
                     {
                         await output.Writer.WriteAsync(item, ct).ConfigureAwait(false);
                     }
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (ObjectDisposedException ode) when (ode.ObjectName == _shardId)
                 {
                     break;
                 }
@@ -238,6 +251,8 @@ namespace Eocron.Sharding
 
         public void Dispose()
         {
+            _outputs.Writer.Complete(CreateShardDisposedException());
+            _errors.Writer.Complete(CreateShardDisposedException());
             _publishSemaphore.Dispose();
         }
     }

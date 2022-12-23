@@ -7,7 +7,7 @@ namespace Eocron.Sharding
     {
         public ProcessShardException(){}
 
-        public ProcessShardException(string message, int? processId, int? exitCode) : base(message)
+        public ProcessShardException(string message, string shardId, int? processId, int? exitCode) : base(message)
         {
             if (processId != null)
             {
@@ -18,6 +18,8 @@ namespace Eocron.Sharding
             {
                 Data["exitCode"] = exitCode.Value;
             }
+
+            Data["shardId"] = shardId;
         }
     }
 }
