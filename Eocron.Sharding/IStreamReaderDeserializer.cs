@@ -2,9 +2,10 @@
 using System.IO;
 using System.Threading;
 
-namespace Eocron.Sharding;
-
-public interface IStreamReaderDeserializer<out T>
+namespace Eocron.Sharding
 {
-    IAsyncEnumerable<T> GetDeserializedEnumerableAsync(StreamReader reader, CancellationToken ct);
+    public interface IStreamReaderDeserializer<out T>
+    {
+        IAsyncEnumerable<T> GetDeserializedEnumerableAsync(StreamReader reader, CancellationToken ct);
+    }
 }

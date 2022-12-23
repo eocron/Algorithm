@@ -2,25 +2,26 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace Eocron.Sharding;
-
-public static class ProcessStartInfoExtensions
+namespace Eocron.Sharding
 {
-    public static ProcessStartInfo ConfigureAsService(this ProcessStartInfo info, Encoding outputEncoding = null)
+    public static class ProcessStartInfoExtensions
     {
-        if (info == null)
-            throw new ArgumentNullException(nameof(info));
+        public static ProcessStartInfo ConfigureAsService(this ProcessStartInfo info, Encoding outputEncoding = null)
+        {
+            if (info == null)
+                throw new ArgumentNullException(nameof(info));
 
-        outputEncoding = outputEncoding ?? Encoding.UTF8;
-        info.CreateNoWindow = true;
-        info.ErrorDialog = false;
-        info.WindowStyle = ProcessWindowStyle.Hidden;
-        info.RedirectStandardError = true;
-        info.RedirectStandardInput = true;
-        info.RedirectStandardOutput = true;
-        info.UseShellExecute = false;
-        info.StandardErrorEncoding = outputEncoding;
-        info.StandardOutputEncoding = outputEncoding;
-        return info;
+            outputEncoding = outputEncoding ?? Encoding.UTF8;
+            info.CreateNoWindow = true;
+            info.ErrorDialog = false;
+            info.WindowStyle = ProcessWindowStyle.Hidden;
+            info.RedirectStandardError = true;
+            info.RedirectStandardInput = true;
+            info.RedirectStandardOutput = true;
+            info.UseShellExecute = false;
+            info.StandardErrorEncoding = outputEncoding;
+            info.StandardOutputEncoding = outputEncoding;
+            return info;
+        }
     }
 }

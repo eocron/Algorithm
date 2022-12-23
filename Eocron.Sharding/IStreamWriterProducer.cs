@@ -2,9 +2,10 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Eocron.Sharding;
-
-public interface IStreamWriterSerializer<in T>
+namespace Eocron.Sharding
 {
-    Task SerializeTo(StreamWriter writer, T item, CancellationToken ct);
+    public interface IStreamWriterSerializer<in T>
+    {
+        Task SerializeTo(StreamWriter writer, T item, CancellationToken ct);
+    }
 }

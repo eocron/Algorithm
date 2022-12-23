@@ -2,12 +2,13 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Eocron.Sharding;
-
-public sealed class NewLineSerializer : IStreamWriterSerializer<string>
+namespace Eocron.Sharding
 {
-    public async Task SerializeTo(StreamWriter writer, string item, CancellationToken ct)
+    public sealed class NewLineSerializer : IStreamWriterSerializer<string>
     {
-        await writer.WriteLineAsync(item).ConfigureAwait(false);
+        public async Task SerializeTo(StreamWriter writer, string item, CancellationToken ct)
+        {
+            await writer.WriteLineAsync(item).ConfigureAwait(false);
+        }
     }
 }
