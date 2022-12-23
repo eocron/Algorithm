@@ -8,6 +8,7 @@ namespace Eocron.Sharding
 {
     public interface IShard<in TInput, TOutput, TError> : IDisposable
     {
+        string Id { get; }
         /// <summary>
         /// Checks if shard is ready for publish
         /// </summary>

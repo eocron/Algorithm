@@ -14,7 +14,9 @@ namespace Eocron.Sharding
         private readonly TimeSpan _onErrorRestartInterval;
         private readonly IShard<TInput, TOutput, TError> _inner;
         private readonly TimeSpan _onCompleteRestartInterval;
-
+        public string Id => _inner.Id;
+        public ChannelReader<TOutput> Outputs => _inner.Outputs;
+        public ChannelReader<TError> Errors => _inner.Errors;
         public RestartInfinitelyShard(IShard<TInput, TOutput, TError> inner, ILogger logger, TimeSpan onErrorRestartInterval, TimeSpan onCompleteRestartInterval)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
@@ -27,10 +29,6 @@ namespace Eocron.Sharding
         {
             return _inner.IsReadyForPublish();
         }
-
-        public ChannelReader<TOutput> Outputs => _inner.Outputs;
-
-        public ChannelReader<TError> Errors => _inner.Errors;
 
         public Task PublishAsync(IEnumerable<TInput> messages, CancellationToken ct)
         {

@@ -25,6 +25,7 @@ namespace Eocron.Sharding
         private readonly string _shardId;
         private Process _currentProcess;
 
+        public string Id => _shardId;
         public ChannelReader<TOutput> Outputs => _outputs.Reader;
         public ChannelReader<TError> Errors => _errors.Reader;
 
