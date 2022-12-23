@@ -1,24 +1,22 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace Eocron.Sharding
 {
-    public interface IShard<in TInput, out TOutput, out TError>
+    public interface IShard<in TInput, TOutput, TError> : IDisposable
     {
         /// <summary>
-        /// Return output stream of the shard
+        /// Checks if shard is ready for publish
         /// </summary>
-        /// <param name="ct"></param>
         /// <returns></returns>
-        IAsyncEnumerable<TOutput> GetOutputEnumerable(CancellationToken ct);
+        bool IsReadyForPublish();
 
-        /// <summary>
-        /// Return error stream of the shard
-        /// </summary>
-        /// <param name="ct"></param>
-        /// <returns></returns>
-        IAsyncEnumerable<TError> GetErrorsEnumerable(CancellationToken ct);
+        IReceivableSourceBlock<TOutput> Outputs { get; }
+
+        IReceivableSourceBlock<TError> Errors { get; }
 
         /// <summary>
         /// Published message to the shard

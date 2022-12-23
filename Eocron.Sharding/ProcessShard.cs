@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -22,6 +21,9 @@ namespace Eocron.Sharding
 
         private readonly BufferBlock<TOutput> _outputs;
         private readonly BufferBlock<TError> _errors;
+        private readonly SemaphoreSlim _publishSemaphore;
+        public IReceivableSourceBlock<TOutput> Outputs => _outputs;
+        public IReceivableSourceBlock<TError> Errors => _errors;
         private Process _currentProcess;
 
         public ProcessShard(ProcessStartInfo startInfo,
@@ -30,68 +32,50 @@ namespace Eocron.Sharding
             IStreamWriterSerializer<TInput> inputSerializer,
             ILogger logger,
             TimeSpan? gracefulStopTimeout = null,
-            TimeSpan? statusCheckInterval = null)
+            TimeSpan? statusCheckInterval = null,
+            DataflowBlockOptions outputOptions = null,
+            DataflowBlockOptions errorOptions = null)
         {
             _startInfo = startInfo ?? throw new ArgumentNullException(nameof(startInfo));
             _outputDeserializer = outputDeserializer ?? throw new ArgumentNullException(nameof(outputDeserializer));
             _errorDeserializer = errorDeserializer ?? throw new ArgumentNullException(nameof(errorDeserializer));
             _inputSerializer = inputSerializer ?? throw new ArgumentNullException(nameof(inputSerializer)); 
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            var options = new DataflowBlockOptions
+            _outputs = new BufferBlock<TOutput>(outputOptions ?? new DataflowBlockOptions
             {
                 EnsureOrdered = true,
+                BoundedCapacity = -1,
+            });
+            _errors = new BufferBlock<TError>(errorOptions ?? new DataflowBlockOptions
+            {
+                EnsureOrdered = false,
                 BoundedCapacity = 10000,
-            };
-            _outputs = new BufferBlock<TOutput>(options);
-            _errors = new BufferBlock<TError>(options);
-
+            });
+            
             _gracefulStopTimeout = gracefulStopTimeout;
             _statusCheckInterval = statusCheckInterval ?? TimeSpan.FromMilliseconds(100);
-
+            _publishSemaphore = new SemaphoreSlim(1);
         }
 
-        private void OnCancellation(Process process)
+        public bool IsReadyForPublish()
         {
-            try
-            {
-                if (process.HasExited)
-                    return;
-
-                if (_gracefulStopTimeout != null)
-                {
-                    if (process.WaitForExit((int)Math.Ceiling(_gracefulStopTimeout.Value.TotalMilliseconds)))
-                    {
-                        return;
-                    }
-                }
-
-                process.Kill();
-            }
-            catch(Exception ex)
-            {
-                _logger.LogCritical(ex, "Cancellation failed on process {processId} shard", process.Id);
-            }
-        }
-
-        public IAsyncEnumerable<TOutput> GetOutputEnumerable(CancellationToken ct)
-        {
-            return GetAsyncEnumerable(_outputs, ct);
-        }
-
-        public IAsyncEnumerable<TError> GetErrorsEnumerable(CancellationToken ct)
-        {
-            return GetAsyncEnumerable(_errors, ct);
+            return _currentProcess != null && _publishSemaphore.CurrentCount > 0;
         }
 
         public async Task PublishAsync(IEnumerable<TInput> messages, CancellationToken ct)
         {
-            var process = _currentProcess;
-            if (process == null)
-                throw CreateProcessNotRunningException();
-            foreach (var message in messages)
+            await _publishSemaphore.WaitAsync(ct);
+            try
             {
-                ct.ThrowIfCancellationRequested();
-                await _inputSerializer.SerializeTo(process.StandardInput, message, ct).ConfigureAwait(false);
+                var process = _currentProcess;
+                if (process == null)
+                    throw CreateProcessNotRunningException();
+
+                await _inputSerializer.SerializeTo(process.StandardInput, messages, ct).ConfigureAwait(false);
+            }
+            finally
+            {
+                _publishSemaphore.Release();
             }
         }
 
@@ -138,7 +122,28 @@ namespace Eocron.Sharding
                 throw CreateProcessExitCodeException(process);
             }
         }
+        private void OnCancellation(Process process)
+        {
+            try
+            {
+                if (process.HasExited)
+                    return;
 
+                if (_gracefulStopTimeout != null)
+                {
+                    if (process.WaitForExit((int)Math.Ceiling(_gracefulStopTimeout.Value.TotalMilliseconds)))
+                    {
+                        return;
+                    }
+                }
+
+                process.Kill();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, "Cancellation failed on process {processId} shard", process.Id);
+            }
+        }
         private static Exception CreateProcessExitCodeException(Process process)
         {
             var tmp = new Exception($"Process {process.Id} shard suddenly stopped with exit code {process.ExitCode}.");
@@ -176,13 +181,9 @@ namespace Eocron.Sharding
             }
         }
 
-        private static async IAsyncEnumerable<T> GetAsyncEnumerable<T>(BufferBlock<T> output, [EnumeratorCancellation] CancellationToken ct)
+        public void Dispose()
         {
-            while (true)
-            {
-                ct.ThrowIfCancellationRequested();
-                yield return await output.ReceiveAsync(ct).ConfigureAwait(false);
-            }
+            _publishSemaphore.Dispose();
         }
     }
 }

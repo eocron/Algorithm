@@ -12,7 +12,10 @@ namespace Eocron.Sharding
             while (!reader.EndOfStream)
             {
                 ct.ThrowIfCancellationRequested();
-                yield return await reader.ReadLineAsync().ConfigureAwait(false);
+                var result = await reader.ReadLineAsync().ConfigureAwait(false);
+                if (result == null)
+                    continue;
+                yield return result;
             }
         }
     }

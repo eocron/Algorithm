@@ -3,32 +3,32 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Microsoft.Extensions.Logging;
 
 namespace Eocron.Sharding
 {
-    public sealed class AutoRestartingShard<TInput, TOutput, TError> : IShard<TInput, TOutput, TError>
+    public sealed class RestartUntilFinishedShard<TInput, TOutput, TError> : IShard<TInput, TOutput, TError>
     {
         private readonly ILogger _logger;
         private readonly TimeSpan _restartInterval;
         private readonly IShard<TInput, TOutput, TError> _inner;
 
-        public AutoRestartingShard(IShard<TInput, TOutput, TError> inner, ILogger logger, TimeSpan restartInterval)
+        public RestartUntilFinishedShard(IShard<TInput, TOutput, TError> inner, ILogger logger, TimeSpan restartInterval)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _restartInterval = restartInterval;
         }
-    
-        public IAsyncEnumerable<TOutput> GetOutputEnumerable(CancellationToken ct)
+
+        public bool IsReadyForPublish()
         {
-            return _inner.GetOutputEnumerable(ct);
+            return _inner.IsReadyForPublish();
         }
 
-        public IAsyncEnumerable<TError> GetErrorsEnumerable(CancellationToken ct)
-        {
-            return _inner.GetErrorsEnumerable(ct);
-        }
+        public IReceivableSourceBlock<TOutput> Outputs => _inner.Outputs;
+
+        public IReceivableSourceBlock<TError> Errors => _inner.Errors;
 
         public Task PublishAsync(IEnumerable<TInput> messages, CancellationToken ct)
         {
@@ -65,6 +65,11 @@ namespace Eocron.Sharding
                     break;
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            _inner.Dispose();
         }
     }
 }

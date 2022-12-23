@@ -14,8 +14,27 @@ namespace Eocron.Sharding.Tests
             var cts = new CancellationTokenSource(TestTimeout);
             await _shard.PublishAsync(inputs, cts.Token);
             await Task.WhenAll(
-                AssertIsEqual(_shard.GetOutputEnumerable(cts.Token), TimeSpan.FromSeconds(1), outputs),
-                AssertIsEmpty(_shard.GetErrorsEnumerable(cts.Token), TimeSpan.FromSeconds(1)));
+                AssertIsEqual(_shard.Outputs.AsAsyncEnumerable(cts.Token), TimeSpan.FromSeconds(1), outputs),
+                AssertIsEmpty(_shard.Errors.AsAsyncEnumerable(cts.Token), TimeSpan.FromSeconds(1)));
+        }
+        [Test]
+        [Explicit]
+        public async Task StressTest2()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(30));
+        }
+        [Test]
+        [Explicit]
+        public async Task StressTest()
+        {
+
+            int count = 1000000;
+            var data = Enumerable.Range(0, count).Select(x => Guid.NewGuid().ToString()).ToList();
+
+            var cts = new CancellationTokenSource(TimeSpan.FromMinutes(1));
+            await Task.WhenAll(
+                _shard.PublishAsync(data, cts.Token),
+                AssertIsEqual(_shard.Outputs.AsAsyncEnumerable(cts.Token), Timeout.InfiniteTimeSpan));
         }
 
         private static Task AssertIsEmpty<T>(IAsyncEnumerable<T> enumerable, TimeSpan forTime)
@@ -55,7 +74,7 @@ namespace Eocron.Sharding.Tests
         {
             var logger = new TestLogger();
             _cts = new CancellationTokenSource();
-            _shard = new AutoRestartingShard<string, string, string>(
+            _shard = new RestartUntilFinishedShard<string, string, string>(
                 new ProcessShard<string, string, string>(
                     CreateTestAppInfo("Stream"),
                     new NewLineDeserializer(),
