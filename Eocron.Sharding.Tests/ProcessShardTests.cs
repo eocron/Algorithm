@@ -30,7 +30,7 @@ namespace Eocron.Sharding.Tests
             var logger = new TestLogger();
             return new RestartInfinitelyShard<string, string, string>(
                 new ProcessShard<string, string, string>(
-                    ProcessShardHelper.CreateTestAppInfo(mode),
+                    ProcessShardHelper.CreateTestAppShardOptions(mode),
                     new NewLineDeserializer(),
                     new NewLineDeserializer(),
                     new NewLineSerializer(),

@@ -14,12 +14,18 @@ namespace Eocron.Sharding
         /// <returns></returns>
         bool IsReadyForPublish();
 
+        /// <summary>
+        /// Outputs coming from shard
+        /// </summary>
         IReceivableSourceBlock<TOutput> Outputs { get; }
 
+        /// <summary>
+        /// Errors coming from shard
+        /// </summary>
         IReceivableSourceBlock<TError> Errors { get; }
 
         /// <summary>
-        /// Published message to the shard
+        /// Publish messages to the shard
         /// </summary>
         /// <param name="messages"></param>
         /// <param name="ct"></param>

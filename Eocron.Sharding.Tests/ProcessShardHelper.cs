@@ -42,9 +42,13 @@ namespace Eocron.Sharding.Tests
 
             return result;
         }
-        public static ProcessStartInfo CreateTestAppInfo(string mode)
+        public static ProcessShardOptions CreateTestAppShardOptions(string mode)
         {
-            return new ProcessStartInfo("Tools/Eocron.Sharding.TestApp.exe") { ArgumentList = { mode } }.ConfigureAsService();
+            return new ProcessShardOptions()
+            {
+                StartInfo = new ProcessStartInfo("Tools/Eocron.Sharding.TestApp.exe") { ArgumentList = { mode } }
+                    .ConfigureAsService(),
+            };
         }
     }
 }
