@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using Microsoft.Extensions.Logging;
 
 namespace Eocron.Sharding
@@ -28,9 +28,9 @@ namespace Eocron.Sharding
             return _inner.IsReadyForPublish();
         }
 
-        public IReceivableSourceBlock<TOutput> Outputs => _inner.Outputs;
+        public ChannelReader<TOutput> Outputs => _inner.Outputs;
 
-        public IReceivableSourceBlock<TError> Errors => _inner.Errors;
+        public ChannelReader<TError> Errors => _inner.Errors;
 
         public Task PublishAsync(IEnumerable<TInput> messages, CancellationToken ct)
         {

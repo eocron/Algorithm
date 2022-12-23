@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Threading.Tasks.Dataflow;
+using System.Threading.Channels;
 
 namespace Eocron.Sharding
 {
@@ -20,20 +20,16 @@ namespace Eocron.Sharding
 
         public ProcessStartInfo StartInfo { get; set; }
 
-        public DataflowBlockOptions OutputOptions { get; set; }
+        public BoundedChannelOptions OutputOptions { get; set; }
 
-        public DataflowBlockOptions ErrorOptions { get; set; }
+        public BoundedChannelOptions ErrorOptions { get; set; }
 
         public static TimeSpan DefaultProcessStatusCheckInterval = TimeSpan.FromMilliseconds(100);
-        public static DataflowBlockOptions DefaultOutputOptions = new DataflowBlockOptions
+        public static BoundedChannelOptions DefaultOutputOptions = new BoundedChannelOptions(10000)
         {
-            EnsureOrdered = true,
-            BoundedCapacity = -1,
+            FullMode = BoundedChannelFullMode.Wait
         };
-        public static DataflowBlockOptions DefaultErrorOptions = new DataflowBlockOptions
-        {
-            EnsureOrdered = false,
-            BoundedCapacity = 10000,
-        };
+        public static BoundedChannelOptions DefaultErrorOptions = new BoundedChannelOptions(10000)
+            { FullMode = BoundedChannelFullMode.DropOldest };
     }
 }

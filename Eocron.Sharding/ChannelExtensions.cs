@@ -2,20 +2,20 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks.Dataflow;
+using System.Threading.Channels;
 
 namespace Eocron.Sharding
 {
-    public static class DataflowExtensions
+    public static class ChannelExtensions
     {
-        public static async IAsyncEnumerable<T> AsAsyncEnumerable<T>(this IReceivableSourceBlock<T> output,
+        public static async IAsyncEnumerable<T> AsAsyncEnumerable<T>(this ChannelReader<T> output,
             [EnumeratorCancellation] CancellationToken ct)
         {
             if (output == null)
                 throw new ArgumentNullException(nameof(output));
-            while (await output.OutputAvailableAsync(ct).ConfigureAwait(false))
+            while (await output.WaitToReadAsync(ct).ConfigureAwait(false))
             {
-                yield return await output.ReceiveAsync(ct).ConfigureAwait(false);
+                yield return await output.ReadAsync(ct).ConfigureAwait(false);
             }
         }
     }

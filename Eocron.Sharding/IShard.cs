@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 
 namespace Eocron.Sharding
 {
@@ -17,12 +17,12 @@ namespace Eocron.Sharding
         /// <summary>
         /// Outputs coming from shard
         /// </summary>
-        IReceivableSourceBlock<TOutput> Outputs { get; }
+        ChannelReader<TOutput> Outputs { get; }
 
         /// <summary>
         /// Errors coming from shard
         /// </summary>
-        IReceivableSourceBlock<TError> Errors { get; }
+        ChannelReader<TError> Errors { get; }
 
         /// <summary>
         /// Publish messages to the shard

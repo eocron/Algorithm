@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using Microsoft.Extensions.Logging;
 
 namespace Eocron.Sharding
@@ -19,11 +19,12 @@ namespace Eocron.Sharding
         private readonly ILogger _logger;
         private readonly IProcessStateProvider _stateProvider;
 
-        private readonly BufferBlock<TOutput> _outputs;
-        private readonly BufferBlock<TError> _errors;
+        private readonly Channel<TOutput> _outputs;
+        private readonly Channel<TError> _errors;
+
         private readonly SemaphoreSlim _publishSemaphore;
-        public IReceivableSourceBlock<TOutput> Outputs => _outputs;
-        public IReceivableSourceBlock<TError> Errors => _errors;
+        public ChannelReader<TOutput> Outputs => _outputs.Reader;
+        public ChannelReader<TError> Errors => _errors.Reader;
         private Process _currentProcess;
 
         public ProcessShard(
@@ -40,8 +41,8 @@ namespace Eocron.Sharding
             _inputSerializer = inputSerializer ?? throw new ArgumentNullException(nameof(inputSerializer)); 
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _stateProvider = stateProvider;
-            _outputs = new BufferBlock<TOutput>(_options.OutputOptions ?? ProcessShardOptions.DefaultOutputOptions);
-            _errors = new BufferBlock<TError>(_options.ErrorOptions ?? ProcessShardOptions.DefaultErrorOptions);
+            _outputs = Channel.CreateBounded<TOutput>(_options.OutputOptions ?? ProcessShardOptions.DefaultOutputOptions);
+            _errors = Channel.CreateBounded<TError>(_options.ErrorOptions ?? ProcessShardOptions.DefaultErrorOptions);
             _statusCheckInterval = _options.ProcessStatusCheckInterval ?? ProcessShardOptions.DefaultProcessStatusCheckInterval;
             _publishSemaphore = new SemaphoreSlim(1);
         }
@@ -57,6 +58,8 @@ namespace Eocron.Sharding
 
         public async Task PublishAsync(IEnumerable<TInput> messages, CancellationToken ct)
         {
+            if (messages == null)
+                throw new ArgumentNullException(nameof(messages));
             await _publishSemaphore.WaitAsync(ct).ConfigureAwait(false);
             try
             {
@@ -210,7 +213,7 @@ namespace Eocron.Sharding
             return new ProcessShardException($"Publish was successful but process crashed. Last time process {process.Id} stopped with exit code {process.ExitCode}.", process.Id, process.ExitCode);
         }
 
-        private async Task ProcessStreamReader<T>(StreamReader input, IStreamReaderDeserializer<T> deserializer, BufferBlock<T> output, Process process, CancellationToken ct)
+        private async Task ProcessStreamReader<T>(StreamReader input, IStreamReaderDeserializer<T> deserializer, Channel<T> output, Process process, CancellationToken ct)
         {
             await Task.Yield();
             while (!ct.IsCancellationRequested)
@@ -219,7 +222,7 @@ namespace Eocron.Sharding
                 {
                     await foreach (var item in deserializer.GetDeserializedEnumerableAsync(input, ct).ConfigureAwait(false))
                     {
-                        output.Post(item);
+                        await output.Writer.WriteAsync(item, ct).ConfigureAwait(false);
                     }
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -235,8 +238,6 @@ namespace Eocron.Sharding
 
         public void Dispose()
         {
-            _outputs.Complete();
-            _errors.Complete();
             _publishSemaphore.Dispose();
         }
     }

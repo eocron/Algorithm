@@ -32,25 +32,20 @@ namespace Eocron.Sharding.Tests
         }
 
         [Test]
-        [Explicit]
-        public async Task StressTest2()
+        public async Task TestErrorRemoveOldest()
         {
-            await Task.Delay(TimeSpan.FromSeconds(30));
+            var toPublish = Enumerable
+                .Range(0, ProcessShardOptions.DefaultErrorOptions.Capacity * 2)
+                .Select(x => "error " + x)
+                .ToList();
+            var toAssert = toPublish.Skip(ProcessShardOptions.DefaultErrorOptions.Capacity).ToArray();
+            var cts = new CancellationTokenSource(TestTimeout);
+
+            await _shard.PublishAsync(toPublish, cts.Token);
+            await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
+            await ProcessShardHelper.AssertErrorsAndOutputs(_shard, new string[0], toAssert, cts.Token,
+                TimeSpan.FromSeconds(1));
         }
-        [Test]
-        [Explicit]
-        public async Task StressTest()
-        {
-
-            int count = 1000000;
-            var data = Enumerable.Range(0, count).Select(x => Guid.NewGuid().ToString()).ToList();
-
-            var cts = new CancellationTokenSource(TimeSpan.FromMinutes(1));
-            await Task.WhenAll(
-                _shard.PublishAsync(data, cts.Token),
-                ProcessShardHelper.AssertIsEqual(_shard.Outputs.AsAsyncEnumerable(cts.Token), Timeout.InfiniteTimeSpan));
-        }
-
 
         [OneTimeSetUp]
         public void Setup()
