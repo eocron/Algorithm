@@ -57,7 +57,7 @@ namespace Eocron.Sharding
 
         public async Task PublishAsync(IEnumerable<TInput> messages, CancellationToken ct)
         {
-            await _publishSemaphore.WaitAsync(ct);
+            await _publishSemaphore.WaitAsync(ct).ConfigureAwait(false);
             try
             {
                 var process = await GetRunningProcessAsync(ct).ConfigureAwait(false);
