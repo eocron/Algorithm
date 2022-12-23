@@ -26,7 +26,8 @@ namespace Eocron.Sharding
         public IReceivableSourceBlock<TError> Errors => _errors;
         private Process _currentProcess;
 
-        public ProcessShard(ProcessStartInfo startInfo,
+        public ProcessShard(
+            ProcessStartInfo startInfo,
             IStreamReaderDeserializer<TOutput> outputDeserializer,
             IStreamReaderDeserializer<TError> errorDeserializer,
             IStreamWriterSerializer<TInput> inputSerializer,
@@ -68,8 +69,8 @@ namespace Eocron.Sharding
             try
             {
                 var process = _currentProcess;
-                if (process == null)
-                    throw CreateProcessNotRunningException();
+                if (process == null || process.HasExited)
+                    throw CreateProcessNotRunningException(process);
 
                 await _inputSerializer.SerializeTo(process.StandardInput, messages, ct).ConfigureAwait(false);
             }
@@ -90,19 +91,13 @@ namespace Eocron.Sharding
                 ProcessStreamReader(process.StandardError, _errorDeserializer, _errors, process, cts.Token)
             };
             _currentProcess = process;
-            try
+            while (!process.HasExited)
             {
-                while (!process.HasExited)
-                {
-                    await Task.Delay(_statusCheckInterval).ConfigureAwait(false);
-                }
+                await Task.Delay(_statusCheckInterval).ConfigureAwait(false);
             }
-            finally
-            {
-                _currentProcess = null;
-            }
+
             cts.Cancel();
-            await Task.WhenAll(ioTasks);
+            await Task.WhenAll(ioTasks).ConfigureAwait(false);
 
 
             if (stopToken.IsCancellationRequested)
@@ -146,16 +141,16 @@ namespace Eocron.Sharding
         }
         private static Exception CreateProcessExitCodeException(Process process)
         {
-            var tmp = new Exception($"Process {process.Id} shard suddenly stopped with exit code {process.ExitCode}.");
-            tmp.Data["processId"] = process.Id;
-            tmp.Data["exitCode"] = process.ExitCode;
-            return tmp;
+            return new ProcessShardException($"Process {process.Id} shard suddenly stopped with exit code {process.ExitCode}.", process.Id, process.ExitCode);
         }
 
-        private static Exception CreateProcessNotRunningException()
+        private static Exception CreateProcessNotRunningException(Process process)
         {
-            var tmp = new Exception($"Process not running.");
-            return tmp;
+            if (process == null)
+            {
+                return new ProcessShardException($"Process not running.", null, null);
+            }
+            return CreateProcessExitCodeException(process);
         }
 
         private async Task ProcessStreamReader<T>(StreamReader input, IStreamReaderDeserializer<T> deserializer, BufferBlock<T> output, Process process, CancellationToken ct)
@@ -183,6 +178,8 @@ namespace Eocron.Sharding
 
         public void Dispose()
         {
+            _outputs.Complete();
+            _errors.Complete();
             _publishSemaphore.Dispose();
         }
     }
