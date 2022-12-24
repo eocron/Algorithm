@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading;
 
-namespace Eocron.Sharding
+namespace Eocron.Sharding.Configuration
 {
     public interface IStreamReaderDeserializer<out T>
     {

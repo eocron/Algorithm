@@ -1,25 +1,25 @@
 ﻿using System;
 
-namespace Eocron.Sharding
+namespace Eocron.Sharding.Processing
 {
     [Serializable]
     public class ProcessShardException : Exception
     {
-        public ProcessShardException(){}
+        public ProcessShardException() { }
 
         public ProcessShardException(string message, string shardId, int? processId, int? exitCode) : base(message)
         {
             if (processId != null)
             {
-                Data["processId"] = processId.Value;
+                Data["process_id"] = processId.Value;
             }
 
             if (exitCode != null)
             {
-                Data["exitCode"] = exitCode.Value;
+                Data["exit_code"] = exitCode.Value;
             }
 
-            Data["shardId"] = shardId;
+            Data["shard_id"] = shardId;
         }
     }
 }

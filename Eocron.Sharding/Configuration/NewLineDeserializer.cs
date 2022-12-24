@@ -3,7 +3,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Eocron.Sharding
+namespace Eocron.Sharding.Configuration
 {
     public sealed class NewLineDeserializer : IStreamReaderDeserializer<string>
     {

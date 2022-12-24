@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Threading.Channels;
 
-namespace Eocron.Sharding
+namespace Eocron.Sharding.Processing
 {
     public class ProcessShardOptions
     {
@@ -30,6 +30,6 @@ namespace Eocron.Sharding
             FullMode = BoundedChannelFullMode.Wait
         };
         public static BoundedChannelOptions DefaultErrorOptions = new BoundedChannelOptions(10000)
-            { FullMode = BoundedChannelFullMode.DropOldest };
+        { FullMode = BoundedChannelFullMode.DropOldest };
     }
 }

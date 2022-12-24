@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using System.Diagnostics;
+using Eocron.Sharding.Processing;
 
 namespace Eocron.Sharding.Tests
 {
@@ -15,15 +16,15 @@ namespace Eocron.Sharding.Tests
                 AssertIsEqual(shard.Outputs.AsAsyncEnumerable(ct), forTime, outputs),
                 AssertIsEqual(shard.Errors.AsAsyncEnumerable(ct), forTime, errors));
         }
-        public static Task AssertIsEmpty<T>(IAsyncEnumerable<T> enumerable, TimeSpan forTime)
+        public static Task AssertIsEmpty<T>(IAsyncEnumerable<ShardMessage<T>> enumerable, TimeSpan forTime)
         {
             return AssertIsEqual(enumerable, forTime);
         }
-        public static async Task AssertIsEqual<T>(IAsyncEnumerable<T> enumerable, TimeSpan forTime, params T[] expected)
+        public static async Task AssertIsEqual<T>(IAsyncEnumerable<ShardMessage<T>> enumerable, TimeSpan forTime, params T[] expected)
         {
             expected = expected ?? Array.Empty<T>();
             var result = await ConsumeFor(enumerable, forTime).ConfigureAwait(false);
-            CollectionAssert.AreEqual(expected, result);
+            CollectionAssert.AreEqual(expected, result.Select(x=> x.Value));
         }
         private static async Task<List<T>> ConsumeFor<T>(IAsyncEnumerable<T> enumerable, TimeSpan timeout)
         {

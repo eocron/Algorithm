@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Eocron.Sharding
+namespace Eocron.Sharding.Configuration
 {
     public sealed class NewLineSerializer : IStreamWriterSerializer<string>
     {

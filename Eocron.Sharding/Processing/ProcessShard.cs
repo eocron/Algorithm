@@ -5,13 +5,13 @@ using System.IO;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Eocron.Sharding.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Eocron.Sharding
+namespace Eocron.Sharding.Processing
 {
-    public sealed class ProcessShard<TInput, TOutput, TError> : IShard<TInput, TOutput, TError>
+    public sealed class ProcessShard<TInput, TOutput, TError> : IProcessShard<TInput, TOutput, TError>
     {
-        private static long ShardIdCounter = 0;
         private readonly ProcessShardOptions _options;
         private readonly TimeSpan _statusCheckInterval;
         private readonly IStreamReaderDeserializer<TOutput> _outputDeserializer;
@@ -19,16 +19,17 @@ namespace Eocron.Sharding
         private readonly IStreamWriterSerializer<TInput> _inputSerializer;
         private readonly ILogger _logger;
         private readonly IProcessStateProvider _stateProvider;
-        private readonly Channel<TOutput> _outputs;
-        private readonly Channel<TError> _errors;
+        private readonly Channel<ShardMessage<TOutput>> _outputs;
+        private readonly Channel<ShardMessage<TError>> _errors;
         private readonly SemaphoreSlim _publishSemaphore;
         private readonly string _shardId;
         private Process _currentProcess;
 
         public string Id => _shardId;
-        public ChannelReader<TOutput> Outputs => _outputs.Reader;
-        public ChannelReader<TError> Errors => _errors.Reader;
-
+        public ChannelReader<ShardMessage<TOutput>> Outputs => _outputs.Reader;
+        public ChannelReader<ShardMessage<TError>> Errors => _errors.Reader;
+        public long? WorkingSet64 => _currentProcess?.WorkingSet64;
+        public TimeSpan? TotalProcessorTime => _currentProcess?.TotalProcessorTime;
         public ProcessShard(
             ProcessShardOptions options,
             IStreamReaderDeserializer<TOutput> outputDeserializer,
@@ -40,22 +41,22 @@ namespace Eocron.Sharding
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _outputDeserializer = outputDeserializer ?? throw new ArgumentNullException(nameof(outputDeserializer));
             _errorDeserializer = errorDeserializer ?? throw new ArgumentNullException(nameof(errorDeserializer));
-            _inputSerializer = inputSerializer ?? throw new ArgumentNullException(nameof(inputSerializer)); 
+            _inputSerializer = inputSerializer ?? throw new ArgumentNullException(nameof(inputSerializer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _stateProvider = stateProvider;
-            _outputs = Channel.CreateBounded<TOutput>(_options.OutputOptions ?? ProcessShardOptions.DefaultOutputOptions);
-            _errors = Channel.CreateBounded<TError>(_options.ErrorOptions ?? ProcessShardOptions.DefaultErrorOptions);
+            _outputs = Channel.CreateBounded<ShardMessage<TOutput>>(_options.OutputOptions ?? ProcessShardOptions.DefaultOutputOptions);
+            _errors = Channel.CreateBounded<ShardMessage<TError>>(_options.ErrorOptions ?? ProcessShardOptions.DefaultErrorOptions);
             _statusCheckInterval = _options.ProcessStatusCheckInterval ?? ProcessShardOptions.DefaultProcessStatusCheckInterval;
             _publishSemaphore = new SemaphoreSlim(1);
-            _shardId = $"process_shard_{typeof(TInput).Name}_{typeof(TOutput).Name}_{typeof(TError).Name}_{Interlocked.Increment(ref ShardIdCounter)}".ToLowerInvariant();
+            _shardId = $"process_shard_{Guid.NewGuid():N}";
         }
 
         public bool IsReadyForPublish()
         {
             var process = _currentProcess;
-            return process != null 
-                   && !process.HasExited 
-                   && _publishSemaphore.CurrentCount > 0 
+            return process != null
+                   && !process.HasExited
+                   && _publishSemaphore.CurrentCount > 0
                    && IsReadyForPublish(process);
         }
 
@@ -84,11 +85,11 @@ namespace Eocron.Sharding
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(stopToken);
             using var process = Process.Start(_options.StartInfo);
-            using var register = cts.Token.Register(()=> OnCancellation(process));
+            using var register = cts.Token.Register(() => OnCancellation(process));
             using var logScope = BeginProcessLoggingScope(process);
-            _logger.LogInformation("Process {processId} shard started", process.Id);
+            _logger.LogInformation("Process {process_id} shard started", process.Id);
             await WaitUntilReady(process, cts.Token).ConfigureAwait(false);
-            _logger.LogInformation("Process {processId} shard ready for publish", process.Id);
+            _logger.LogInformation("Process {process_id} shard ready for publish", process.Id);
             var ioTasks = new[]
             {
                 ProcessStreamReader(process.StandardOutput, _outputDeserializer, _outputs, process, cts.Token),
@@ -103,22 +104,22 @@ namespace Eocron.Sharding
             {
                 if (process.ExitCode == 0)
                 {
-                    _logger.LogInformation("Process {processId} shard gracefully cancelled", process.Id);
+                    _logger.LogInformation("Process {process_id} shard gracefully cancelled", process.Id);
                 }
                 else
                 {
-                    _logger.LogWarning("Process {processId} shard cancelled with exit code {exitCode}", process.Id, process.ExitCode);
+                    _logger.LogWarning("Process {process_id} shard cancelled with exit code {exit_code}", process.Id, process.ExitCode);
                 }
             }
             else
             {
                 if (process.ExitCode == 0)
                 {
-                    _logger.LogWarning("Process {processId} shard suddenly stopped without error", process.Id);
+                    _logger.LogWarning("Process {process_id} shard suddenly stopped without error", process.Id);
                 }
                 else
                 {
-                    _logger.LogError("Process {processId} shard suddenly stopped with exit code {exitCode}", process.Id, process.ExitCode);
+                    _logger.LogError("Process {process_id} shard suddenly stopped with exit code {exit_code}", process.Id, process.ExitCode);
                     throw CreateProcessExitCodeException(process);
                 }
             }
@@ -162,9 +163,9 @@ namespace Eocron.Sharding
 
         private async Task WaitUntilReady(Process process, CancellationToken ct)
         {
-            if(_stateProvider == null)
+            if (_stateProvider == null)
                 return;
-            
+
             while (!_stateProvider.IsReadyForPublish(process))
             {
                 await Task.Delay(_statusCheckInterval, ct).ConfigureAwait(false);
@@ -199,7 +200,7 @@ namespace Eocron.Sharding
             }
             catch (Exception ex)
             {
-                _logger.LogCritical(ex, "Cancellation failed on process {processId} shard", process.Id);
+                _logger.LogCritical(ex, "Cancellation failed on process {process_id} shard", process.Id);
             }
         }
         private Exception CreateProcessExitCodeException(Process process)
@@ -222,7 +223,7 @@ namespace Eocron.Sharding
             return new ObjectDisposedException(_shardId, "Shard is disposed.");
         }
 
-        private async Task ProcessStreamReader<T>(StreamReader input, IStreamReaderDeserializer<T> deserializer, Channel<T> output, Process process, CancellationToken ct)
+        private async Task ProcessStreamReader<T>(StreamReader input, IStreamReaderDeserializer<T> deserializer, Channel<ShardMessage<T>> output, Process process, CancellationToken ct)
         {
             await Task.Yield();
             while (!ct.IsCancellationRequested)
@@ -232,7 +233,11 @@ namespace Eocron.Sharding
                     await foreach (var item in deserializer.GetDeserializedEnumerableAsync(input, ct)
                                        .ConfigureAwait(false))
                     {
-                        await output.Writer.WriteAsync(item, ct).ConfigureAwait(false);
+                        await output.Writer.WriteAsync(new ShardMessage<T>
+                        {
+                            Timestamp = DateTime.UtcNow,
+                            Value = item
+                        }, ct).ConfigureAwait(false);
                     }
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -245,7 +250,7 @@ namespace Eocron.Sharding
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(e, "Failed to deserialize from stream reader for process {processId} shard", process.Id);
+                    _logger.LogError(e, "Failed to deserialize from stream reader for process {process_id} shard", process.Id);
                 }
             }
         }

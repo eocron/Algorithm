@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace Eocron.Sharding
+namespace Eocron.Sharding.Processing
 {
     public static class ProcessStartInfoExtensions
     {

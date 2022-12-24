@@ -15,8 +15,8 @@ namespace Eocron.Sharding
         private readonly IShard<TInput, TOutput, TError> _inner;
         private readonly TimeSpan _onCompleteRestartInterval;
         public string Id => _inner.Id;
-        public ChannelReader<TOutput> Outputs => _inner.Outputs;
-        public ChannelReader<TError> Errors => _inner.Errors;
+        public ChannelReader<ShardMessage<TOutput>> Outputs => _inner.Outputs;
+        public ChannelReader<ShardMessage<TError>> Errors => _inner.Errors;
         public RestartInfinitelyShard(IShard<TInput, TOutput, TError> inner, ILogger logger, TimeSpan onErrorRestartInterval, TimeSpan onCompleteRestartInterval)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));

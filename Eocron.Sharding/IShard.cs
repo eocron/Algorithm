@@ -18,12 +18,12 @@ namespace Eocron.Sharding
         /// <summary>
         /// Outputs coming from shard
         /// </summary>
-        ChannelReader<TOutput> Outputs { get; }
+        ChannelReader<ShardMessage<TOutput>> Outputs { get; }
 
         /// <summary>
         /// Errors coming from shard
         /// </summary>
-        ChannelReader<TError> Errors { get; }
+        ChannelReader<ShardMessage<TError>> Errors { get; }
 
         /// <summary>
         /// Publish messages to the shard
