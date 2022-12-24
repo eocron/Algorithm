@@ -20,20 +20,33 @@ namespace Eocron.Sharding.Monitoring
         private readonly GaugeOptions _readyForPublishOptions;
         private readonly CounterOptions _errorCounterOptions;
         private readonly CounterOptions _runCounterOptions;
+        private readonly CancellationTokenSource _cts;
+        private readonly TimeSpan _checkInterval;
+        private Task _monitorTask;
 
-        public AppMetricsShard(IShard<TInput, TOutput, TError> inner, IMetrics metrics)
+        protected event EventHandler<EventArgs> OnCheck; 
+
+        public AppMetricsShard(IShard<TInput, TOutput, TError> inner, IMetrics metrics, TimeSpan? statusCheckInterval = null)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
             _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
+            _checkInterval = statusCheckInterval ?? TimeSpan.FromSeconds(1);
             _errorCounterOptions = CreateOptions<CounterOptions>("error_count");
             _runCounterOptions = CreateOptions<CounterOptions>("run_count");
             _publishCounterOptions = CreateOptions<CounterOptions>("publish_message_count");
-            _publishTimeOptions = CreateOptions<TimerOptions>("publish_time", x =>
+            _publishTimeOptions = CreateOptions<TimerOptions>("publish_rps", x =>
             {
                 x.DurationUnit = TimeUnit.Milliseconds;
-                x.RateUnit = TimeUnit.Milliseconds;
+                x.RateUnit = TimeUnit.Seconds;
             });
             _readyForPublishOptions = CreateOptions<GaugeOptions>("is_ready");
+            _cts = new CancellationTokenSource();
+            OnCheck += AppMetricsShard_OnCheck;
+        }
+
+        private void AppMetricsShard_OnCheck(object sender, EventArgs e)
+        {
+            IsReadyForPublish();
         }
 
         protected T CreateOptions<T>(string name, Action<T> configure = null) where T : MetricValueOptionsBase, new()
@@ -102,6 +115,25 @@ namespace Eocron.Sharding.Monitoring
 
         public virtual async Task RunAsync(CancellationToken ct)
         {
+            if (_monitorTask == null)
+            {
+                _monitorTask = Task.Run(async () =>
+                {
+                    while (!_cts.IsCancellationRequested)
+                    {
+                        try
+                        {
+                            OnCheck?.Invoke(this, EventArgs.Empty);
+                            await Task.Delay(_checkInterval, _cts.Token);
+                        }
+                        catch
+                        {
+
+                        }
+                    }
+                });
+            }
+
             try
             {
                 await _inner.RunAsync(ct).ConfigureAwait(false);
@@ -119,6 +151,9 @@ namespace Eocron.Sharding.Monitoring
 
         public virtual void Dispose()
         {
+            _cts.Cancel();
+            _monitorTask?.Wait();
+            _cts.Dispose();
             _inner.Dispose();
         }
     }

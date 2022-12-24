@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
 using App.Metrics;
 using App.Metrics.Gauge;
 using Eocron.Sharding.Processing;
@@ -11,52 +9,25 @@ namespace Eocron.Sharding.Monitoring
     {
         private readonly IProcessShard<TInput, TOutput, TError> _inner;
         private readonly IMetrics _metrics;
-        private Task _monitorTask;
-        private readonly CancellationTokenSource _cts;
-        private readonly TimeSpan _interval;
         private readonly GaugeOptions _workingSetGauge;
         private readonly GaugeOptions _totalProcessorTime;
 
-        public AppMetricsProcessShard(IProcessShard<TInput, TOutput, TError> inner, IMetrics metrics, TimeSpan? statusCheckInterval) : base(inner, metrics)
+        public AppMetricsProcessShard(IProcessShard<TInput, TOutput, TError> inner, IMetrics metrics, TimeSpan? statusCheckInterval = null) : base(inner, metrics, statusCheckInterval)
         {
             _inner = inner;
             _metrics = metrics;
-            _interval = statusCheckInterval ?? TimeSpan.FromSeconds(1);
             _workingSetGauge = CreateOptions<GaugeOptions>("working_set_bytes", x =>
             {
                 x.MeasurementUnit = Unit.Bytes;
             });
-            _totalProcessorTime = CreateOptions<GaugeOptions>("total_processor_time_ticks");
-            _cts = new CancellationTokenSource();
+            _totalProcessorTime = CreateOptions<GaugeOptions>("total_processor_time_ms");
+            OnCheck += AppMetricsProcessShard_OnCheck;
         }
 
-        public override Task RunAsync(CancellationToken ct)
+        private void AppMetricsProcessShard_OnCheck(object sender, EventArgs e)
         {
-            _monitorTask = Task.Run(async () =>
-            {
-                while (!_cts.IsCancellationRequested)
-                {
-                    try
-                    {
-                        _metrics.Measure.Gauge.SetValue(_workingSetGauge, _inner.WorkingSet64 ?? 0);
-                        _metrics.Measure.Gauge.SetValue(_totalProcessorTime, (_inner.TotalProcessorTime ?? TimeSpan.Zero).Ticks);
-                        await Task.Delay(_interval, _cts.Token);
-                    }
-                    catch
-                    {
-
-                    }
-                }
-            });
-            return base.RunAsync(ct);
-        }
-
-        public override void Dispose()
-        {
-            _cts.Cancel();
-            _monitorTask?.Wait();
-            _cts.Dispose();
-            base.Dispose();
+            _metrics.Measure.Gauge.SetValue(_workingSetGauge, _inner.WorkingSet64 ?? 0);
+            _metrics.Measure.Gauge.SetValue(_totalProcessorTime, (_inner.TotalProcessorTime ?? TimeSpan.Zero).TotalMilliseconds);
         }
     }
 }
