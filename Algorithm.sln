@@ -27,7 +27,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eocron.Serialization.Tests"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eocron.Sharding", "Eocron.Sharding\Eocron.Sharding.csproj", "{112720CD-3805-4DCB-9982-90E5409B1DCA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eocron.Sharding.Tests", "Eocron.Sharding.Tests\Eocron.Sharding.Tests.csproj", "{37559673-B996-4478-93EF-AEA330236BC0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eocron.Sharding.Tests", "Eocron.Sharding.Tests\Eocron.Sharding.Tests.csproj", "{37559673-B996-4478-93EF-AEA330236BC0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sharding", "Sharding", "{7D420EF0-B4BF-4170-9184-8A19F8665038}"
 EndProject
@@ -35,7 +35,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Algorithms", "Algorithms", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Serialization", "Serialization", "{DA81F4C9-103F-4A4F-A898-20DF70235B3B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eocron.Sharding.TestApp", "Eocron.Sharding.TestApp\Eocron.Sharding.TestApp.csproj", "{274A9181-33C0-40F9-9319-A5CD6BF9981A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eocron.Sharding.TestApp", "Eocron.Sharding.TestApp\Eocron.Sharding.TestApp.csproj", "{274A9181-33C0-40F9-9319-A5CD6BF9981A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eocron.Sharding.TestWebApp", "Eocron.Sharding.TestWebApp\Eocron.Sharding.TestWebApp.csproj", "{0D870FE7-0F58-41C2-8B60-CC165F5C142C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,6 +73,10 @@ Global
 		{274A9181-33C0-40F9-9319-A5CD6BF9981A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{274A9181-33C0-40F9-9319-A5CD6BF9981A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{274A9181-33C0-40F9-9319-A5CD6BF9981A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D870FE7-0F58-41C2-8B60-CC165F5C142C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D870FE7-0F58-41C2-8B60-CC165F5C142C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D870FE7-0F58-41C2-8B60-CC165F5C142C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D870FE7-0F58-41C2-8B60-CC165F5C142C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -84,6 +90,7 @@ Global
 		{112720CD-3805-4DCB-9982-90E5409B1DCA} = {7D420EF0-B4BF-4170-9184-8A19F8665038}
 		{37559673-B996-4478-93EF-AEA330236BC0} = {7D420EF0-B4BF-4170-9184-8A19F8665038}
 		{274A9181-33C0-40F9-9319-A5CD6BF9981A} = {7D420EF0-B4BF-4170-9184-8A19F8665038}
+		{0D870FE7-0F58-41C2-8B60-CC165F5C142C} = {7D420EF0-B4BF-4170-9184-8A19F8665038}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {63EFCA1D-9D5F-4CD1-B2EB-A6176645E598}

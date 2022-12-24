@@ -5,7 +5,7 @@ using Eocron.Sharding.Processing;
 
 namespace Eocron.Sharding.Monitoring
 {
-    public class AppMetricsProcessShard<TInput, TOutput, TError> : AppMetricsShard<TInput, TOutput, TError>
+    public class AppMetricsProcessShard<TInput, TOutput, TError> : AppMetricsShard<TInput, TOutput, TError>, IProcessShard<TInput, TOutput, TError>
     {
         private readonly IProcessShard<TInput, TOutput, TError> _inner;
         private readonly IMetrics _metrics;
@@ -80,6 +80,11 @@ namespace Eocron.Sharding.Monitoring
             if (res < 0)
                 return 0;
             return res;
+        }
+
+        public bool TryGetProcessDiagnosticInfo(out ProcessDiagnosticInfo info)
+        {
+            return _inner.TryGetProcessDiagnosticInfo(out info);
         }
     }
 }
