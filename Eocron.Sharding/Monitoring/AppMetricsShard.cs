@@ -30,7 +30,7 @@ namespace Eocron.Sharding.Monitoring
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
             _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
-            _checkInterval = statusCheckInterval ?? TimeSpan.FromSeconds(1);
+            _checkInterval = statusCheckInterval ?? TimeSpan.FromSeconds(5);
             _errorCounterOptions = CreateOptions<CounterOptions>("error_count");
             _runCounterOptions = CreateOptions<CounterOptions>("run_count");
             _publishCounterOptions = CreateOptions<CounterOptions>("publish_message_count");

@@ -28,8 +28,6 @@ namespace Eocron.Sharding.Processing
         public string Id => _shardId;
         public ChannelReader<ShardMessage<TOutput>> Outputs => _outputs.Reader;
         public ChannelReader<ShardMessage<TError>> Errors => _errors.Reader;
-        public long? WorkingSet64 => _currentProcess?.WorkingSet64;
-        public TimeSpan? TotalProcessorTime => _currentProcess?.TotalProcessorTime;
         public ProcessShard(
             ProcessShardOptions options,
             IStreamReaderDeserializer<TOutput> outputDeserializer,
@@ -49,6 +47,23 @@ namespace Eocron.Sharding.Processing
             _statusCheckInterval = _options.ProcessStatusCheckInterval ?? ProcessShardOptions.DefaultProcessStatusCheckInterval;
             _publishSemaphore = new SemaphoreSlim(1);
             _shardId = $"process_shard_{Guid.NewGuid():N}";
+        }
+
+        public bool TryGetProcessDiagnosticInfo(out ProcessDiagnosticInfo info)
+        {
+            info = null;
+            var current = _currentProcess;
+            if (current == null)
+                return false;
+            
+            info = new ProcessDiagnosticInfo
+            {
+                PrivateMemorySize64 = current.PrivateMemorySize64,
+                TotalProcessorTime = current.TotalProcessorTime,
+                WorkingSet64 = current.WorkingSet64,
+                ModuleName = current.MainModule.ModuleName,
+            };
+            return true;
         }
 
         public bool IsReadyForPublish()
