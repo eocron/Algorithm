@@ -19,6 +19,7 @@ namespace Eocron.Sharding.Processing
         private readonly IStreamWriterSerializer<TInput> _inputSerializer;
         private readonly ILogger _logger;
         private readonly IProcessStateProvider _stateProvider;
+        private readonly IChildProcessKiller _childProcessKiller;
         private readonly Channel<ShardMessage<TOutput>> _outputs;
         private readonly Channel<ShardMessage<TError>> _errors;
         private readonly SemaphoreSlim _publishSemaphore;
@@ -35,6 +36,7 @@ namespace Eocron.Sharding.Processing
             IStreamWriterSerializer<TInput> inputSerializer,
             ILogger logger,
             IProcessStateProvider stateProvider = null,
+            IChildProcessKiller childProcessKiller = null,
             string id = null)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -43,6 +45,7 @@ namespace Eocron.Sharding.Processing
             _inputSerializer = inputSerializer ?? throw new ArgumentNullException(nameof(inputSerializer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _stateProvider = stateProvider;
+            _childProcessKiller = childProcessKiller;
             _outputs = Channel.CreateBounded<ShardMessage<TOutput>>(_options.OutputOptions ?? ProcessShardOptions.DefaultOutputOptions);
             _errors = Channel.CreateBounded<ShardMessage<TError>>(_options.ErrorOptions ?? ProcessShardOptions.DefaultErrorOptions);
             _statusCheckInterval = _options.ProcessStatusCheckInterval ?? ProcessShardOptions.DefaultProcessStatusCheckInterval;
@@ -123,6 +126,10 @@ namespace Eocron.Sharding.Processing
             domain.DomainUnload += OnDomainDisposed;
             domain.ProcessExit += OnDomainDisposed;
             domain.UnhandledException += OnUnhandled;
+            if (_childProcessKiller != null)
+            {
+                await _childProcessKiller.ChildrenToWatch.WriteAsync(process.Id, cts.Token).ConfigureAwait(false);
+            }
             try
             {
                 _logger.LogInformation("Process {process_id} shard started", process.Id);

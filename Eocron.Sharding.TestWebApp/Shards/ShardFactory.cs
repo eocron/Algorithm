@@ -13,6 +13,7 @@ namespace Eocron.Sharding.TestWebApp.Shards
         private readonly IStreamReaderDeserializer<TOutput> _outputDeserializer;
         private readonly IStreamReaderDeserializer<TError> _errorDeserializer;
         private readonly IStreamWriterSerializer<TInput> _inputSerializer;
+        private readonly IChildProcessKiller _killer;
         private readonly string _filePath;
         private readonly string _args;
 
@@ -22,6 +23,7 @@ namespace Eocron.Sharding.TestWebApp.Shards
             IStreamReaderDeserializer<TOutput> outputDeserializer, 
             IStreamReaderDeserializer<TError> errorDeserializer, 
             IStreamWriterSerializer<TInput> inputSerializer,
+            IChildProcessKiller killer,
             string filePath,
             string args)
         {
@@ -30,6 +32,7 @@ namespace Eocron.Sharding.TestWebApp.Shards
             _outputDeserializer = outputDeserializer;
             _errorDeserializer = errorDeserializer;
             _inputSerializer = inputSerializer;
+            _killer = killer;
             _filePath = filePath;
             _args = args;
         }
@@ -49,7 +52,8 @@ namespace Eocron.Sharding.TestWebApp.Shards
                         _errorDeserializer,
                         _inputSerializer,
                         logger,
-                        id: id),
+                        id: id,
+                        childProcessKiller: _killer),
                     _metrics,
                     TimeSpan.FromSeconds(5)),
                 logger,
