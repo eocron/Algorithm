@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Tools\Eocron.Sharding.ChildProcessKiller.pdb" />
+    <None Remove="killer\killer.pdb" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,20 +17,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Tools\" />
+    <Folder Include="killer\" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Tools\Eocron.Sharding.ChildProcessKiller.deps.json">
+    <None Update="killer\killer.deps.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Tools\Eocron.Sharding.ChildProcessKiller.dll">
+    <None Update="killer\killer.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Tools\Eocron.Sharding.ChildProcessKiller.exe">
+    <None Update="killer\killer.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Tools\Eocron.Sharding.ChildProcessKiller.runtimeconfig.json">
+    <None Update="killer\killer.runtimeconfig.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

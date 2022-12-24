@@ -40,7 +40,7 @@
                         _idToShardIndex.Add(shard.Id, shard);
                         return shard;
                     })
-                    .Select(x=> Task.Run(()=> Task.FromResult(x.RunAsync(stoppingToken)), stoppingToken))
+                    .Select(x=> Task.Run(()=> x.RunAsync(stoppingToken), stoppingToken))
                     .ToList();
                 await Task.WhenAll(tasks).ConfigureAwait(false);
             }

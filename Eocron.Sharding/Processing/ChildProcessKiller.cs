@@ -17,7 +17,7 @@ namespace Eocron.Sharding.Processing
             _logger = logger;
             _startInfo = new ProcessStartInfo
             {
-                FileName = "Tools/Eocron.Sharding.ChildProcessKiller.exe",
+                FileName = "killer/killer.exe",
                 Arguments = Process.GetCurrentProcess().Id.ToString()
             }.ConfigureAsService();
             _channel = Channel.CreateUnbounded<int>();

@@ -21,6 +21,15 @@ namespace Eocron.Sharding.TestWebApp.Controllers
             return Ok(SearchShardIds(ready));
         }
 
+        [HttpGet("{id}/is_ready")]
+        public IActionResult IsReady([FromRoute(Name = "id")] string shardId)
+        {
+            var shard = _shardProvider.FindShardById(shardId);
+            if (shard == null)
+                return NotFound();
+            return Ok(shard.IsReadyForPublish());
+        }
+
         [HttpGet("{id}/fetch_errors")]
         public IActionResult FetchErrors([FromRoute(Name = "id")] string shardId)
         {
