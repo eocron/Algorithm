@@ -12,7 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{1DA5EA29-2
 		LICENSE.txt = LICENSE.txt
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTests", "NTests\NTests.csproj", "{D7B5517E-1C02-41E0-A9A9-57D8E7347264}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eocron.Algorithms.Tests", "NTests\Eocron.Algorithms.Tests.csproj", "{D7B5517E-1C02-41E0-A9A9-57D8E7347264}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Worflows", "Worflows", "{61765402-573B-4468-A644-7D3BD90BF453}"
 	ProjectSection(SolutionItems) = preProject
