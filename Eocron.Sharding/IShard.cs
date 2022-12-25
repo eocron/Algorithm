@@ -7,13 +7,12 @@ namespace Eocron.Sharding
         string Id { get; }
     }
 
-    public interface IShard<in TInput, TOutput, TError> : 
-        IShard, 
-        IShardInputManager<TInput>, 
-        IShardOutputProvider<TOutput, TError>, 
+    public interface IShard<in TInput, TOutput, TError> :
+        IShard,
+        IShardInputManager<TInput>,
+        IShardOutputProvider<TOutput, TError>,
         ICancellationManager,
         IJob
     {
-
     }
 }

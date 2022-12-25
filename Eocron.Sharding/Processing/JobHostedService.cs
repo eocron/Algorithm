@@ -7,8 +7,6 @@ namespace Eocron.Sharding.Processing
 {
     public sealed class JobHostedService : BackgroundService
     {
-        private readonly IJob _job;
-
         public JobHostedService(IJob job)
         {
             _job = job;
@@ -18,5 +16,7 @@ namespace Eocron.Sharding.Processing
         {
             await _job.RunAsync(stoppingToken).ConfigureAwait(false);
         }
+
+        private readonly IJob _job;
     }
 }

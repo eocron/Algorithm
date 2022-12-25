@@ -11,17 +11,6 @@ namespace Eocron.Sharding.Monitoring
 {
     public class ShardMonitoringJob<TInput> : IJob
     {
-        private readonly IShardInputManager<TInput> _inputManager;
-        private readonly IProcessDiagnosticInfoProvider _infoProvider;
-        private readonly IMetrics _metrics;
-        private readonly TimeSpan _checkInterval;
-
-        private readonly GaugeOptions _workingSetGauge;
-        private readonly GaugeOptions _cpuPercentageGauge;
-        private readonly GaugeOptions _privateMemoryGauge;
-        private DateTime? _lastCheckTime;
-        private TimeSpan? _lastTotalProcessorTime;
-
         public ShardMonitoringJob(
             IShardInputManager<TInput> inputManager,
             IProcessDiagnosticInfoProvider infoProvider,
@@ -34,11 +23,15 @@ namespace Eocron.Sharding.Monitoring
             _metrics = metrics;
             _checkInterval = checkInterval;
             _workingSetGauge = MonitoringHelper.CreateShardOptions<GaugeOptions>("working_set_bytes",
-                x => { x.MeasurementUnit = Unit.Bytes; }, tags: tags);
+                x => { x.MeasurementUnit = Unit.Bytes; }, tags);
             _privateMemoryGauge = MonitoringHelper.CreateShardOptions<GaugeOptions>("private_memory_bytes",
-                x => { x.MeasurementUnit = Unit.Bytes; }, tags: tags);
+                x => { x.MeasurementUnit = Unit.Bytes; }, tags);
             _cpuPercentageGauge = MonitoringHelper.CreateShardOptions<GaugeOptions>("cpu_load_percents",
-                x => { x.MeasurementUnit = Unit.Percent; }, tags: tags);
+                x => { x.MeasurementUnit = Unit.Percent; }, tags);
+        }
+
+        public void Dispose()
+        {
         }
 
         public async Task RunAsync(CancellationToken ct)
@@ -49,6 +42,26 @@ namespace Eocron.Sharding.Monitoring
                 await Task.Delay(_checkInterval, ct).ConfigureAwait(false);
             }
         }
+
+        private static float GetCpuUsage(
+            TimeSpan startTotalProcessorTime,
+            TimeSpan endTotalProcessorTime,
+            DateTime startCheckTime,
+            DateTime endCheckTime)
+        {
+            var diffProcessorTime = endTotalProcessorTime.Ticks - startTotalProcessorTime.Ticks;
+            var diffElapsedTime = (startCheckTime.Ticks - endCheckTime.Ticks) * Environment.ProcessorCount;
+
+            var res = diffProcessorTime / (float)diffElapsedTime;
+            if (float.IsInfinity(res) || float.IsNaN(res))
+                return 0;
+            if (res > 1)
+                return 1;
+            if (res < 0)
+                return 0;
+            return res;
+        }
+
         private void OnCheck()
         {
             _inputManager.IsReady();
@@ -72,7 +85,8 @@ namespace Eocron.Sharding.Monitoring
             _lastTotalProcessorTime ??= TimeSpan.Zero;
             var currentTotalProcessorTime = info.TotalProcessorTime;
             var currentCheckTime = DateTime.UtcNow;
-            var cpuPercents = GetCpuUsage(_lastTotalProcessorTime.Value, currentTotalProcessorTime, _lastCheckTime.Value, currentCheckTime);
+            var cpuPercents = GetCpuUsage(_lastTotalProcessorTime.Value, currentTotalProcessorTime,
+                _lastCheckTime.Value, currentCheckTime);
 
             _lastCheckTime = currentCheckTime;
             _lastTotalProcessorTime = currentTotalProcessorTime;
@@ -80,27 +94,15 @@ namespace Eocron.Sharding.Monitoring
             return cpuPercents;
         }
 
-        private static float GetCpuUsage(
-            TimeSpan startTotalProcessorTime,
-            TimeSpan endTotalProcessorTime,
-            DateTime startCheckTime,
-            DateTime endCheckTime)
-        {
-            var diffProcessorTime = endTotalProcessorTime.Ticks - startTotalProcessorTime.Ticks;
-            var diffElapsedTime = (startCheckTime.Ticks - endCheckTime.Ticks) * Environment.ProcessorCount;
+        private readonly GaugeOptions _cpuPercentageGauge;
+        private readonly GaugeOptions _privateMemoryGauge;
 
-            var res = diffProcessorTime / (float)diffElapsedTime;
-            if (float.IsInfinity(res) || float.IsNaN(res))
-                return 0;
-            if (res > 1)
-                return 1;
-            if (res < 0)
-                return 0;
-            return res;
-        }
-
-        public void Dispose()
-        {
-        }
+        private readonly GaugeOptions _workingSetGauge;
+        private readonly IMetrics _metrics;
+        private readonly IProcessDiagnosticInfoProvider _infoProvider;
+        private readonly IShardInputManager<TInput> _inputManager;
+        private readonly TimeSpan _checkInterval;
+        private DateTime? _lastCheckTime;
+        private TimeSpan? _lastTotalProcessorTime;
     }
 }

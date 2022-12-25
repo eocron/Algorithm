@@ -7,7 +7,8 @@ namespace Eocron.Sharding.Configuration
 {
     public sealed class NewLineDeserializer : IStreamReaderDeserializer<string>
     {
-        public async IAsyncEnumerable<string> GetDeserializedEnumerableAsync(StreamReader reader, [EnumeratorCancellation] CancellationToken ct)
+        public async IAsyncEnumerable<string> GetDeserializedEnumerableAsync(StreamReader reader,
+            [EnumeratorCancellation] CancellationToken ct)
         {
             while (!reader.EndOfStream)
             {

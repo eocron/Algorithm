@@ -6,7 +6,7 @@ namespace Eocron.Sharding.ProcessWatcher
 {
     internal class Program
     {
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
             var logger = new ConsoleLogger();
 
@@ -46,14 +46,10 @@ namespace Eocron.Sharding.ProcessWatcher
         }
 
 
-
-        static async Task WaitWhileAsync(Func<bool> check, TimeSpan? interval = null)
+        private static async Task WaitWhileAsync(Func<bool> check, TimeSpan? interval = null)
         {
             interval ??= TimeSpan.FromMilliseconds(300);
-            while (check())
-            {
-                await Task.Delay(interval.Value).ConfigureAwait(false);
-            }
+            while (check()) await Task.Delay(interval.Value).ConfigureAwait(false);
         }
     }
 }

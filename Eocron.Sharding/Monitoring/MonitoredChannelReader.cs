@@ -10,19 +10,24 @@ namespace Eocron.Sharding.Monitoring
     public class MonitoredChannelReader<TMessage, TValue> : ChannelReader<TMessage>
         where TMessage : ShardMessage<TValue>
     {
-        private readonly ChannelReader<TMessage> _inner;
-        private readonly IMetrics _metrics;
-        private readonly HistogramOptions _messageDelayOptions;
-        public override Task Completion => _inner.Completion;
-        public override bool CanCount => _inner.CanCount;
-        public override bool CanPeek => _inner.CanPeek;
-        public override int Count => _inner.Count;
-
-        public MonitoredChannelReader(ChannelReader<TMessage> inner, IMetrics metrics, HistogramOptions messageDelayOptions)
+        public MonitoredChannelReader(ChannelReader<TMessage> inner, IMetrics metrics,
+            HistogramOptions messageDelayOptions)
         {
             _inner = inner;
             _metrics = metrics;
             _messageDelayOptions = messageDelayOptions;
+        }
+
+        public override async ValueTask<TMessage> ReadAsync(CancellationToken cancellationToken = new())
+        {
+            var result = await _inner.ReadAsync(cancellationToken).ConfigureAwait(false);
+            RecordMetrics(result);
+            return result;
+        }
+
+        public override bool TryPeek(out TMessage item)
+        {
+            return _inner.TryPeek(out item);
         }
 
         public override bool TryRead(out TMessage item)
@@ -36,21 +41,9 @@ namespace Eocron.Sharding.Monitoring
             return false;
         }
 
-        public override bool TryPeek(out TMessage item)
-        {
-            return _inner.TryPeek(out item);
-        }
-
-        public override ValueTask<bool> WaitToReadAsync(CancellationToken cancellationToken = new CancellationToken())
+        public override ValueTask<bool> WaitToReadAsync(CancellationToken cancellationToken = new())
         {
             return _inner.WaitToReadAsync(cancellationToken);
-        }
-
-        public override async ValueTask<TMessage> ReadAsync(CancellationToken cancellationToken = new CancellationToken())
-        {
-            var result = await _inner.ReadAsync(cancellationToken).ConfigureAwait(false);
-            RecordMetrics(result);
-            return result;
         }
 
         private void RecordMetrics(TMessage msg)
@@ -58,5 +51,13 @@ namespace Eocron.Sharding.Monitoring
             var delay = DateTime.UtcNow - msg.Timestamp;
             _metrics.Measure.Histogram.Update(_messageDelayOptions, delay.Ticks / TimeSpan.TicksPerMillisecond);
         }
+
+        public override bool CanCount => _inner.CanCount;
+        public override bool CanPeek => _inner.CanPeek;
+        public override int Count => _inner.Count;
+        public override Task Completion => _inner.Completion;
+        private readonly ChannelReader<TMessage> _inner;
+        private readonly HistogramOptions _messageDelayOptions;
+        private readonly IMetrics _metrics;
     }
 }

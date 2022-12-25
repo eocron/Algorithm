@@ -7,8 +7,6 @@ namespace Eocron.Sharding.Jobs
 {
     public sealed class CancellableJob : IJob, ICancellationManager
     {
-        private readonly IJob _inner;
-        private readonly Channel<CancellationTokenSource> _ctsChannel;
         public CancellableJob(IJob inner)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
@@ -25,16 +23,6 @@ namespace Eocron.Sharding.Jobs
             cts.Cancel();
         }
 
-        public bool TryCancel()
-        {
-            if (_ctsChannel.Reader.TryRead(out var cts))
-            {
-                cts.Cancel();
-                return true;
-            }
-            return false;
-        }
-
         public void Dispose()
         {
             _inner.Dispose();
@@ -48,5 +36,19 @@ namespace Eocron.Sharding.Jobs
                 await _inner.RunAsync(cts.Token).ConfigureAwait(false);
             }
         }
+
+        public bool TryCancel()
+        {
+            if (_ctsChannel.Reader.TryRead(out var cts))
+            {
+                cts.Cancel();
+                return true;
+            }
+
+            return false;
+        }
+
+        private readonly Channel<CancellationTokenSource> _ctsChannel;
+        private readonly IJob _inner;
     }
 }

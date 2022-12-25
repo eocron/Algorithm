@@ -6,11 +6,6 @@ namespace Eocron.Sharding.ProcessWatcher
 {
     public sealed class ProcessWatcher : IWatcherJob
     {
-        private readonly ILogger _logger;
-        private readonly TimeSpan _purgeInterval;
-        private readonly ConcurrentDictionary<int, Process> _watched = new ConcurrentDictionary<int, Process>();
-
-        public IEnumerable<Process> CurrentProcesses => _watched.Values;
         public ProcessWatcher(ILogger logger, TimeSpan purgeInterval)
         {
             _logger = logger;
@@ -29,13 +24,13 @@ namespace Eocron.Sharding.ProcessWatcher
             _watched.AddOrUpdate(processId, process, (_, x) => x);
             _logger.LogInformation("Start watching {process_id}", processId);
         }
-        
+
         public async Task RunAsync(CancellationToken stopToken)
         {
             await Task.Yield();
             while (!stopToken.IsCancellationRequested)
             {
-                var dead = _watched.Where(x => !ProcessHelper.IsAlive(x.Value)).Select(x=> x.Key).ToList();
+                var dead = _watched.Where(x => !ProcessHelper.IsAlive(x.Value)).Select(x => x.Key).ToList();
                 foreach (var id in dead)
                 {
                     _watched.TryRemove(id, out var _);
@@ -53,6 +48,9 @@ namespace Eocron.Sharding.ProcessWatcher
             }
         }
 
-
+        public IEnumerable<Process> CurrentProcesses => _watched.Values;
+        private readonly ConcurrentDictionary<int, Process> _watched = new();
+        private readonly ILogger _logger;
+        private readonly TimeSpan _purgeInterval;
     }
 }

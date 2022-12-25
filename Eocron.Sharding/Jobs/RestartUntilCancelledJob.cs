@@ -8,16 +8,18 @@ namespace Eocron.Sharding.Jobs
 {
     public sealed class RestartUntilCancelledJob : IJob
     {
-        private readonly IJob _inner;
-        private readonly ILogger _logger;
-        private readonly TimeSpan _onErrorRestartInterval;
-        private readonly TimeSpan _onSuccessRestartInterval;
-        public RestartUntilCancelledJob(IJob inner, ILogger logger, TimeSpan onErrorRestartInterval, TimeSpan onSuccessRestartInterval)
+        public RestartUntilCancelledJob(IJob inner, ILogger logger, TimeSpan onErrorRestartInterval,
+            TimeSpan onSuccessRestartInterval)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _onErrorRestartInterval = onErrorRestartInterval;
             _onSuccessRestartInterval = onSuccessRestartInterval;
+        }
+
+        public void Dispose()
+        {
+            _inner.Dispose();
         }
 
         public async Task RunAsync(CancellationToken ct)
@@ -52,9 +54,9 @@ namespace Eocron.Sharding.Jobs
             }
         }
 
-        public void Dispose()
-        {
-            _inner.Dispose();
-        }
+        private readonly IJob _inner;
+        private readonly ILogger _logger;
+        private readonly TimeSpan _onErrorRestartInterval;
+        private readonly TimeSpan _onSuccessRestartInterval;
     }
 }

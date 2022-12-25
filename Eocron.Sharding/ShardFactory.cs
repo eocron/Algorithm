@@ -12,22 +12,11 @@ namespace Eocron.Sharding
 {
     public sealed class ShardFactory<TInput, TOutput, TError> : IShardFactory<TInput, TOutput, TError>
     {
-        private readonly ILoggerFactory _loggerFactory;
-        private readonly IMetrics _metrics;
-        private readonly IStreamReaderDeserializer<TOutput> _outputDeserializer;
-        private readonly IStreamReaderDeserializer<TError> _errorDeserializer;
-        private readonly IStreamWriterSerializer<TInput> _inputSerializer;
-        private readonly IChildProcessWatcher _killer;
-        private readonly ProcessShardOptions _options;
-        private readonly TimeSpan _jobErrorRestartInterval;
-        private readonly TimeSpan _jobSuccessRestartInterval;
-        private readonly TimeSpan _metricCollectionInterval;
-
         public ShardFactory(
-            ILoggerFactory loggerFactory, 
-            IMetrics metrics, 
-            IStreamReaderDeserializer<TOutput> outputDeserializer, 
-            IStreamReaderDeserializer<TError> errorDeserializer, 
+            ILoggerFactory loggerFactory,
+            IMetrics metrics,
+            IStreamReaderDeserializer<TOutput> outputDeserializer,
+            IStreamReaderDeserializer<TError> errorDeserializer,
             IStreamWriterSerializer<TInput> inputSerializer,
             IChildProcessWatcher killer,
             ProcessShardOptions options,
@@ -51,7 +40,7 @@ namespace Eocron.Sharding
         {
             var container = new Container();
 
-            var tags = new Dictionary<string, string>()
+            var tags = new Dictionary<string, string>
             {
                 { "shard_id", id },
                 { "input_type", typeof(TInput).Name },
@@ -60,14 +49,14 @@ namespace Eocron.Sharding
             };
             var logger = _loggerFactory.CreateLogger<IShard<TInput, TOutput, TError>>();
 
-            container.RegisterDelegate<ProcessShardOptions>(_ => _options, Reuse.Singleton);
+            container.RegisterDelegate(_ => _options, Reuse.Singleton);
             container.RegisterDelegate<ILogger>(_ => logger, Reuse.Singleton);
-            container.RegisterDelegate<IStreamReaderDeserializer<TOutput>>(_ => _outputDeserializer, Reuse.Singleton, serviceKey: "output");
-            container.RegisterDelegate<IStreamReaderDeserializer<TError>>(_=> _errorDeserializer, Reuse.Singleton, serviceKey: "error");
-            container.RegisterDelegate<IStreamWriterSerializer<TInput>>(_=> _inputSerializer, Reuse.Singleton);
-            container.RegisterDelegate<IChildProcessWatcher>(_ => _killer, Reuse.Singleton);
-            container.RegisterDelegate<IMetrics>(_ => _metrics, Reuse.Singleton);
-            container.RegisterDelegate<ProcessJob<TInput, TOutput, TError>>(x =>
+            container.RegisterDelegate(_ => _outputDeserializer, Reuse.Singleton, serviceKey: "output");
+            container.RegisterDelegate(_ => _errorDeserializer, Reuse.Singleton, serviceKey: "error");
+            container.RegisterDelegate(_ => _inputSerializer, Reuse.Singleton);
+            container.RegisterDelegate(_ => _killer, Reuse.Singleton);
+            container.RegisterDelegate(_ => _metrics, Reuse.Singleton);
+            container.RegisterDelegate(x =>
                     new ProcessJob<TInput, TOutput, TError>(
                         x.Resolve<ProcessShardOptions>(),
                         x.Resolve<IStreamReaderDeserializer<TOutput>>("output"),
@@ -77,8 +66,9 @@ namespace Eocron.Sharding
                         id: id,
                         watcher: x.Resolve<IChildProcessWatcher>()),
                 Reuse.Singleton);
-            container.RegisterDelegate<IShard>(x=> x.Resolve<ProcessJob<TInput, TOutput, TError>>());
-            container.RegisterDelegate<IProcessDiagnosticInfoProvider>(x=> x.Resolve<ProcessJob<TInput, TOutput, TError>>());
+            container.RegisterDelegate<IShard>(x => x.Resolve<ProcessJob<TInput, TOutput, TError>>());
+            container.RegisterDelegate<IProcessDiagnosticInfoProvider>(x =>
+                x.Resolve<ProcessJob<TInput, TOutput, TError>>());
             container.RegisterDelegate<IShardInputManager<TInput>>(x =>
                     new MonitoredShardInputManager<TInput>(
                         x.Resolve<ProcessJob<TInput, TOutput, TError>>(),
@@ -92,23 +82,25 @@ namespace Eocron.Sharding
                         tags),
                 Reuse.Singleton);
             container.RegisterDelegate<IJob>(x =>
-                new RestartUntilCancelledJob(
-                    new ShardMonitoringJob<TInput>(
-                        x.Resolve<IShardInputManager<TInput>>(),
-                        x.Resolve<IProcessDiagnosticInfoProvider>(),
-                        x.Resolve<IMetrics>(),
-                        _metricCollectionInterval,
-                        tags),
-                    x.Resolve<ILogger>(),
-                    _jobErrorRestartInterval,
-                    _jobSuccessRestartInterval),
+                    new RestartUntilCancelledJob(
+                        new ShardMonitoringJob<TInput>(
+                            x.Resolve<IShardInputManager<TInput>>(),
+                            x.Resolve<IProcessDiagnosticInfoProvider>(),
+                            x.Resolve<IMetrics>(),
+                            _metricCollectionInterval,
+                            tags),
+                        x.Resolve<ILogger>(),
+                        _jobErrorRestartInterval,
+                        _jobSuccessRestartInterval),
                 Reuse.Singleton,
                 serviceKey: "monitoring");
-            
-            container.RegisterDelegate<IJob>(x => x.Resolve<ProcessJob<TInput, TOutput, TError>>(), Reuse.Singleton, serviceKey: "process");
-            container.RegisterDelegate<CancellableJob>(x => new CancellableJob(x.Resolve<IJob>("process")), Reuse.Singleton);
+
+            container.RegisterDelegate<IJob>(x => x.Resolve<ProcessJob<TInput, TOutput, TError>>(), Reuse.Singleton,
+                serviceKey: "process");
+            container.RegisterDelegate(x => new CancellableJob(x.Resolve<IJob>("process")), Reuse.Singleton);
             container.RegisterDelegate<ICancellationManager>(x => x.Resolve<CancellableJob>(), Reuse.Singleton);
-            container.RegisterDelegate<IJob>(x=> x.Resolve<CancellableJob>(), Reuse.Singleton, serviceKey: "cancellable");
+            container.RegisterDelegate<IJob>(x => x.Resolve<CancellableJob>(), Reuse.Singleton,
+                serviceKey: "cancellable");
 
             container.RegisterDelegate<IJob>(x =>
                     new RestartUntilCancelledJob(
@@ -119,9 +111,20 @@ namespace Eocron.Sharding
                 Reuse.Singleton,
                 serviceKey: "main");
 
-            container.RegisterDelegate<IJob>(x => 
+            container.RegisterDelegate<IJob>(x =>
                 new CompoundJob(x.Resolve<IJob>("main"), x.Resolve<IJob>("monitoring")), Reuse.Singleton);
             return new ShardContainerAdapter<TInput, TOutput, TError>(container);
         }
+
+        private readonly IChildProcessWatcher _killer;
+        private readonly ILoggerFactory _loggerFactory;
+        private readonly IMetrics _metrics;
+        private readonly IStreamReaderDeserializer<TError> _errorDeserializer;
+        private readonly IStreamReaderDeserializer<TOutput> _outputDeserializer;
+        private readonly IStreamWriterSerializer<TInput> _inputSerializer;
+        private readonly ProcessShardOptions _options;
+        private readonly TimeSpan _jobErrorRestartInterval;
+        private readonly TimeSpan _jobSuccessRestartInterval;
+        private readonly TimeSpan _metricCollectionInterval;
     }
 }

@@ -9,10 +9,7 @@ namespace Eocron.Sharding.Configuration
     {
         public async Task SerializeTo(StreamWriter writer, IEnumerable<string> items, CancellationToken ct)
         {
-            foreach (var item in items)
-            {
-                await writer.WriteLineAsync(item).ConfigureAwait(false);
-            }
+            foreach (var item in items) await writer.WriteLineAsync(item).ConfigureAwait(false);
         }
     }
 }

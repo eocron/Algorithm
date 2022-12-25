@@ -4,17 +4,9 @@ namespace Eocron.Sharding.ProcessWatcher
 {
     public sealed class ConsoleLogger : ILogger
     {
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
         {
-            var msg = string.Format("[{0}]: {1}", logLevel, formatter(state, exception));
-            if (logLevel == LogLevel.Critical || logLevel == LogLevel.Error)
-            {
-                Console.Error.WriteLine(msg);
-            }
-            else
-            {
-                Console.WriteLine(msg);
-            }
+            return null;
         }
 
         public bool IsEnabled(LogLevel logLevel)
@@ -22,9 +14,14 @@ namespace Eocron.Sharding.ProcessWatcher
             return true;
         }
 
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+            Func<TState, Exception?, string> formatter)
         {
-            return null;
+            var msg = string.Format("[{0}]: {1}", logLevel, formatter(state, exception));
+            if (logLevel == LogLevel.Critical || logLevel == LogLevel.Error)
+                Console.Error.WriteLine(msg);
+            else
+                Console.WriteLine(msg);
         }
     }
 }

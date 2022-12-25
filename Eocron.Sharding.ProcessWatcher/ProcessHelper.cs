@@ -4,6 +4,18 @@ namespace Eocron.Sharding.ProcessWatcher
 {
     public static class ProcessHelper
     {
+        public static bool IsAlive(Process process)
+        {
+            try
+            {
+                return !process.HasExited;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public static async Task KillAllAsync(IEnumerable<Process> processes)
         {
             await Task.WhenAll(processes.Select(KillAsync)).ConfigureAwait(false);
@@ -20,18 +32,8 @@ namespace Eocron.Sharding.ProcessWatcher
                 process.Kill(true);
                 await process.WaitForExitAsync().ConfigureAwait(false);
             }
-            catch { }
-        }
-
-        public static bool IsAlive(Process process)
-        {
-            try
-            {
-                return !process.HasExited;
-            }
             catch
             {
-                return false;
             }
         }
     }

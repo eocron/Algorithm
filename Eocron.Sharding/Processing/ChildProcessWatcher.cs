@@ -10,10 +10,6 @@ namespace Eocron.Sharding.Processing
 {
     public sealed class ChildProcessWatcher : IChildProcessWatcher, IJob
     {
-        private readonly ILogger _logger;
-        private readonly TimeSpan _watchInterval;
-        private readonly ProcessStartInfo _startInfo;
-        private readonly Channel<int> _channel;
         public ChildProcessWatcher(ILogger logger, TimeSpan? watchInterval = null, ProcessStartInfo startInfo = null)
         {
             _logger = logger;
@@ -24,7 +20,11 @@ namespace Eocron.Sharding.Processing
             }.ConfigureAsService();
 
             _startInfo.Arguments = $"--ParentProcessId {Process.GetCurrentProcess().Id}";
-            _channel = Channel.CreateUnbounded<int>();
+            ChildrenToWatch = Channel.CreateUnbounded<int>();
+        }
+
+        public void Dispose()
+        {
         }
 
         public async Task RunAsync(CancellationToken ct)
@@ -33,19 +33,20 @@ namespace Eocron.Sharding.Processing
             using var process = Process.Start(_startInfo);
             while (!process.HasExited)
             {
-                while (_channel.Reader.TryRead(out var childId))
+                while (ChildrenToWatch.Reader.TryRead(out var childId))
                 {
                     await process.StandardInput.WriteLineAsync($"--ProcessId {childId}");
                     _logger.LogDebug("Watching {process_id}", childId);
                 }
+
                 await Task.Delay(_watchInterval, ct).ConfigureAwait(false);
             }
         }
 
-        public Channel<int> ChildrenToWatch => _channel;
-        public void Dispose()
-        {
-            
-        }
+        public Channel<int> ChildrenToWatch { get; }
+
+        private readonly ILogger _logger;
+        private readonly ProcessStartInfo _startInfo;
+        private readonly TimeSpan _watchInterval;
     }
 }
