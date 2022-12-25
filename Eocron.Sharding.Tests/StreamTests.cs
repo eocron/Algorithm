@@ -54,7 +54,7 @@ namespace Eocron.Sharding.Tests
         {
 
             _cts = new CancellationTokenSource();
-            _shard = CreateTestShard("stream");
+            _shard = ProcessShardHelper.CreateTestShard("stream");
             _task = _shard.RunAsync(_cts.Token);
         }
 
@@ -63,21 +63,7 @@ namespace Eocron.Sharding.Tests
         {
             _cts.Cancel();
             await _task.ConfigureAwait(false);
-        }
-
-        private static IShard<string, string, string> CreateTestShard(string mode)
-        {
-            var logger = new TestLogger();
-            return new RestartInfinitelyShard<string, string, string>(
-                new ProcessShard<string, string, string>(
-                    ProcessShardHelper.CreateTestAppShardOptions(mode),
-                    new NewLineDeserializer(),
-                    new NewLineDeserializer(),
-                    new NewLineSerializer(),
-                    logger),
-                logger,
-                TimeSpan.Zero,
-                TimeSpan.Zero);
+            _shard.Dispose();
         }
 
         private CancellationTokenSource _cts;

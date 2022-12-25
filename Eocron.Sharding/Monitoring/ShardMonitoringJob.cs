@@ -1,42 +1,59 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using App.Metrics;
 using App.Metrics.Gauge;
+using Eocron.Sharding.Jobs;
 using Eocron.Sharding.Processing;
 
 namespace Eocron.Sharding.Monitoring
 {
-    public class AppMetricsProcessShard<TInput, TOutput, TError> : AppMetricsShard<TInput, TOutput, TError>, IProcessShard<TInput, TOutput, TError>
+    public class ShardMonitoringJob<TInput> : IJob
     {
-        private readonly IProcessShard<TInput, TOutput, TError> _inner;
+        private readonly IShardInputManager<TInput> _inputManager;
+        private readonly IProcessDiagnosticInfoProvider _infoProvider;
         private readonly IMetrics _metrics;
+        private readonly TimeSpan _checkInterval;
+
         private readonly GaugeOptions _workingSetGauge;
         private readonly GaugeOptions _cpuPercentageGauge;
         private readonly GaugeOptions _privateMemoryGauge;
         private DateTime? _lastCheckTime;
         private TimeSpan? _lastTotalProcessorTime;
 
-        public AppMetricsProcessShard(IProcessShard<TInput, TOutput, TError> inner, IMetrics metrics, TimeSpan? statusCheckInterval = null) : base(inner, metrics, statusCheckInterval)
+        public ShardMonitoringJob(
+            IShardInputManager<TInput> inputManager,
+            IProcessDiagnosticInfoProvider infoProvider,
+            IMetrics metrics,
+            TimeSpan checkInterval,
+            IReadOnlyDictionary<string, string> tags)
         {
-            _inner = inner ?? throw new ArgumentNullException(nameof(inner));
-            _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
-            _workingSetGauge = CreateOptions<GaugeOptions>("working_set_bytes", x =>
-            {
-                x.MeasurementUnit = Unit.Bytes;
-            });
-            _privateMemoryGauge = CreateOptions<GaugeOptions>("private_memory_bytes", x =>
-            {
-                x.MeasurementUnit = Unit.Bytes;
-            });
-            _cpuPercentageGauge = CreateOptions<GaugeOptions>("cpu_load_percents", x =>
-            {
-                x.MeasurementUnit = Unit.Percent;
-            });
-            OnCheck += AppMetricsProcessShard_OnCheck;
+            _inputManager = inputManager;
+            _infoProvider = infoProvider;
+            _metrics = metrics;
+            _checkInterval = checkInterval;
+            _workingSetGauge = MonitoringHelper.CreateShardOptions<GaugeOptions>("working_set_bytes",
+                x => { x.MeasurementUnit = Unit.Bytes; }, tags: tags);
+            _privateMemoryGauge = MonitoringHelper.CreateShardOptions<GaugeOptions>("private_memory_bytes",
+                x => { x.MeasurementUnit = Unit.Bytes; }, tags: tags);
+            _cpuPercentageGauge = MonitoringHelper.CreateShardOptions<GaugeOptions>("cpu_load_percents",
+                x => { x.MeasurementUnit = Unit.Percent; }, tags: tags);
         }
 
-        private void AppMetricsProcessShard_OnCheck(object sender, EventArgs e)
+        public async Task RunAsync(CancellationToken ct)
         {
-            if (!_inner.TryGetProcessDiagnosticInfo(out var info))
+            while (!ct.IsCancellationRequested)
+            {
+                OnCheck();
+                await Task.Delay(_checkInterval, ct).ConfigureAwait(false);
+            }
+        }
+        private void OnCheck()
+        {
+            _inputManager.IsReady();
+
+            if (!_infoProvider.TryGetProcessDiagnosticInfo(out var info))
                 info = new ProcessDiagnosticInfo
                 {
                     PrivateMemorySize64 = 0,
@@ -82,9 +99,8 @@ namespace Eocron.Sharding.Monitoring
             return res;
         }
 
-        public bool TryGetProcessDiagnosticInfo(out ProcessDiagnosticInfo info)
+        public void Dispose()
         {
-            return _inner.TryGetProcessDiagnosticInfo(out info);
         }
     }
 }

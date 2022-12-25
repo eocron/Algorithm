@@ -1,6 +1,10 @@
 ﻿using NUnit.Framework;
 using System.Diagnostics;
 using Eocron.Sharding.Processing;
+using App.Metrics;
+using Eocron.Sharding.Configuration;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace Eocron.Sharding.Tests
 {
@@ -50,6 +54,26 @@ namespace Eocron.Sharding.Tests
                 StartInfo = new ProcessStartInfo("Tools/Eocron.Sharding.TestApp.exe") { ArgumentList = { mode } }
                     .ConfigureAsService(),
             };
+        }
+
+        public static IShard<string, string, string> CreateTestShard(string mode)
+        {
+            var loggerFactory = new Mock<ILoggerFactory>();
+            loggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(new TestLogger());
+            var killer = new TestChildProcessWatcher();
+            var metrics = new MetricsBuilder().Build();
+            var shardFactory = new ShardFactory<string, string, string>(
+                loggerFactory.Object,
+                metrics,
+                new NewLineDeserializer(),
+                new NewLineDeserializer(),
+                new NewLineSerializer(),
+                killer,
+                ProcessShardHelper.CreateTestAppShardOptions(mode),
+                TimeSpan.Zero,
+                TimeSpan.Zero,
+                TimeSpan.FromSeconds(1));
+            return shardFactory.CreateNewShard(nameof(ProcessShardTests) + Guid.NewGuid());
         }
     }
 }

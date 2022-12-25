@@ -1,6 +1,6 @@
 ﻿namespace Eocron.Sharding.Processing
 {
-    public interface IProcessShard<in TInput, TOutput, TError> : IShard<TInput, TOutput, TError>
+    public interface IProcessDiagnosticInfoProvider
     {
         bool TryGetProcessDiagnosticInfo(out ProcessDiagnosticInfo info);
     }

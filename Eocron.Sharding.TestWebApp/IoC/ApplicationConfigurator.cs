@@ -1,7 +1,7 @@
-﻿using App.Metrics;
+﻿using System.Diagnostics;
+using App.Metrics;
 using Eocron.Sharding.Configuration;
 using Eocron.Sharding.Processing;
-using Eocron.Sharding.TestWebApp.Processing;
 using Eocron.Sharding.TestWebApp.Shards;
 
 namespace Eocron.Sharding.TestWebApp.IoC
@@ -16,11 +16,8 @@ namespace Eocron.Sharding.TestWebApp.IoC
             services.AddMetrics();
             services.AddMetricsEndpoints();
 
-            services.AddSingleton<IChildProcessKiller>(x =>
-                new ChildProcessKiller(x.GetRequiredService<ILogger<ChildProcessKiller>>()));
-            services.AddSingleton<IHostedService>(x =>
-                new ChildProcessKillerService(x.GetRequiredService<IChildProcessKiller>(),
-                    x.GetRequiredService<ILogger<ChildProcessKillerService>>()));
+            services.AddSingleton<ChildProcessWatcher>(x => new ChildProcessWatcher(x.GetRequiredService<ILogger<ChildProcessWatcher>>()));
+            services.AddSingleton<IHostedService>(x => new JobHostedService(x.GetRequiredService<ChildProcessWatcher>()));
 
             services.AddSingleton<IStreamReaderDeserializer<string>, NewLineDeserializer>();
             services.AddSingleton<IStreamWriterSerializer<string>, NewLineSerializer>();
@@ -31,9 +28,15 @@ namespace Eocron.Sharding.TestWebApp.IoC
                     x.GetRequiredService<IStreamReaderDeserializer<string>>(),
                     x.GetRequiredService<IStreamReaderDeserializer<string>>(),
                     x.GetRequiredService<IStreamWriterSerializer<string>>(),
-                    x.GetRequiredService<IChildProcessKiller>(),
-                    "Tools/Eocron.Sharding.TestApp.exe",
-                    "stream"));
+                    x.GetRequiredService<ChildProcessWatcher>(),
+                    new ProcessShardOptions
+                    {
+                        StartInfo = new ProcessStartInfo("Tools/Eocron.Sharding.TestApp.exe", "stream")
+                            .ConfigureAsService()
+                    },
+                    TimeSpan.FromSeconds(5),
+                    TimeSpan.FromSeconds(5),
+                    TimeSpan.FromSeconds(5)));
             services.AddSingleton<IShardPool<string, string, string>>(x =>
                 new ConstantShardPool<string, string, string>(
                     x.GetRequiredService<IShardFactory<string, string, string>>(),

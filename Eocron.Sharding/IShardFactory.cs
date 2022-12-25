@@ -1,4 +1,4 @@
-﻿namespace Eocron.Sharding.TestWebApp.Shards
+﻿namespace Eocron.Sharding
 {
     public interface IShardFactory<in TInput, TOutput, TError>
     {

@@ -6,11 +6,17 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Eocron.Sharding.Configuration;
+using Eocron.Sharding.Jobs;
 using Microsoft.Extensions.Logging;
 
 namespace Eocron.Sharding.Processing
 {
-    public sealed class ProcessShard<TInput, TOutput, TError> : IProcessShard<TInput, TOutput, TError>
+    public sealed class ProcessJob<TInput, TOutput, TError> : 
+        IShard, 
+        IShardOutputProvider<TOutput, TError>, 
+        IShardInputManager<TInput>, 
+        IProcessDiagnosticInfoProvider, 
+        IJob
     {
         private readonly ProcessShardOptions _options;
         private readonly TimeSpan _statusCheckInterval;
@@ -19,33 +25,34 @@ namespace Eocron.Sharding.Processing
         private readonly IStreamWriterSerializer<TInput> _inputSerializer;
         private readonly ILogger _logger;
         private readonly IProcessStateProvider _stateProvider;
-        private readonly IChildProcessKiller _childProcessKiller;
+        private readonly IChildProcessWatcher _watcher;
         private readonly Channel<ShardMessage<TOutput>> _outputs;
         private readonly Channel<ShardMessage<TError>> _errors;
         private readonly SemaphoreSlim _publishSemaphore;
         private readonly string _shardId;
         private Process _currentProcess;
+        private bool _disposed;
 
         public string Id => _shardId;
         public ChannelReader<ShardMessage<TOutput>> Outputs => _outputs.Reader;
         public ChannelReader<ShardMessage<TError>> Errors => _errors.Reader;
-        public ProcessShard(
+        public ProcessJob(
             ProcessShardOptions options,
             IStreamReaderDeserializer<TOutput> outputDeserializer,
             IStreamReaderDeserializer<TError> errorDeserializer,
             IStreamWriterSerializer<TInput> inputSerializer,
             ILogger logger,
             IProcessStateProvider stateProvider = null,
-            IChildProcessKiller childProcessKiller = null,
+            IChildProcessWatcher watcher = null,
             string id = null)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-            _outputDeserializer = outputDeserializer ?? throw new ArgumentNullException(nameof(outputDeserializer));
-            _errorDeserializer = errorDeserializer ?? throw new ArgumentNullException(nameof(errorDeserializer));
-            _inputSerializer = inputSerializer ?? throw new ArgumentNullException(nameof(inputSerializer));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _options = options;
+            _outputDeserializer = outputDeserializer;
+            _errorDeserializer = errorDeserializer;
+            _inputSerializer = inputSerializer;
+            _logger = logger;
             _stateProvider = stateProvider;
-            _childProcessKiller = childProcessKiller;
+            _watcher = watcher;
             _outputs = Channel.CreateBounded<ShardMessage<TOutput>>(_options.OutputOptions ?? ProcessShardOptions.DefaultOutputOptions);
             _errors = Channel.CreateBounded<ShardMessage<TError>>(_options.ErrorOptions ?? ProcessShardOptions.DefaultErrorOptions);
             _statusCheckInterval = _options.ProcessStatusCheckInterval ?? ProcessShardOptions.DefaultProcessStatusCheckInterval;
@@ -70,7 +77,7 @@ namespace Eocron.Sharding.Processing
             return true;
         }
 
-        public bool IsReadyForPublish()
+        public bool IsReady()
         {
             var process = _currentProcess;
             return process != null
@@ -99,7 +106,7 @@ namespace Eocron.Sharding.Processing
                 _publishSemaphore.Release();
             }
         }
-        
+
         public async Task RunAsync(CancellationToken stopToken)
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(stopToken);
@@ -107,75 +114,48 @@ namespace Eocron.Sharding.Processing
             using var register = cts.Token.Register(() => OnCancellation(process));
             using var logScope = BeginProcessLoggingScope(process);
 
-            void OnDomainDisposed(object sender, EventArgs args)
+            if (_watcher != null)
             {
-                process.Kill();
-                process.WaitForExit();
+                await _watcher.ChildrenToWatch.Writer.WriteAsync(process.Id, cts.Token).ConfigureAwait(false);
             }
 
-            void OnUnhandled(object sender, UnhandledExceptionEventArgs args)
+            _logger.LogInformation("Process {process_id} shard started", process.Id);
+            await WaitUntilReady(process, cts.Token).ConfigureAwait(false);
+            _logger.LogInformation("Process {process_id} shard ready for publish", process.Id);
+            var ioTasks = new[]
             {
-                if (args.IsTerminating)
-                {
-                    process.Kill();
-                    process.WaitForExit();
-                }
-            }
+                ProcessStreamReader(process.StandardOutput, _outputDeserializer, _outputs, process, cts.Token),
+                ProcessStreamReader(process.StandardError, _errorDeserializer, _errors, process, cts.Token)
+            };
+            _currentProcess = process;
+            await WaitUntilExit(process);
+            cts.Cancel();
+            await Task.WhenAll(ioTasks).ConfigureAwait(false);
 
-            var domain = AppDomain.CurrentDomain;
-            domain.DomainUnload += OnDomainDisposed;
-            domain.ProcessExit += OnDomainDisposed;
-            domain.UnhandledException += OnUnhandled;
-            if (_childProcessKiller != null)
+            if (stopToken.IsCancellationRequested)
             {
-                await _childProcessKiller.ChildrenToWatch.WriteAsync(process.Id, cts.Token).ConfigureAwait(false);
-            }
-            try
-            {
-                _logger.LogInformation("Process {process_id} shard started", process.Id);
-                await WaitUntilReady(process, cts.Token).ConfigureAwait(false);
-                _logger.LogInformation("Process {process_id} shard ready for publish", process.Id);
-                var ioTasks = new[]
+                if (process.ExitCode == 0)
                 {
-                    ProcessStreamReader(process.StandardOutput, _outputDeserializer, _outputs, process, cts.Token),
-                    ProcessStreamReader(process.StandardError, _errorDeserializer, _errors, process, cts.Token)
-                };
-                _currentProcess = process;
-                await WaitUntilExit(process);
-                cts.Cancel();
-                await Task.WhenAll(ioTasks).ConfigureAwait(false);
-
-                if (stopToken.IsCancellationRequested)
-                {
-                    if (process.ExitCode == 0)
-                    {
-                        _logger.LogInformation("Process {process_id} shard gracefully cancelled", process.Id);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Process {process_id} shard cancelled with exit code {exit_code}",
-                            process.Id, process.ExitCode);
-                    }
+                    _logger.LogInformation("Process {process_id} shard gracefully cancelled", process.Id);
                 }
                 else
                 {
-                    if (process.ExitCode == 0)
-                    {
-                        _logger.LogWarning("Process {process_id} shard suddenly stopped without error", process.Id);
-                    }
-                    else
-                    {
-                        _logger.LogError("Process {process_id} shard suddenly stopped with exit code {exit_code}",
-                            process.Id, process.ExitCode);
-                        throw CreateProcessExitCodeException(process);
-                    }
+                    _logger.LogWarning("Process {process_id} shard cancelled with exit code {exit_code}",
+                        process.Id, process.ExitCode);
                 }
             }
-            finally
+            else
             {
-                domain.DomainUnload -= OnDomainDisposed;
-                domain.ProcessExit -= OnDomainDisposed;
-                domain.UnhandledException -= OnUnhandled;
+                if (process.ExitCode == 0)
+                {
+                    _logger.LogWarning("Process {process_id} shard suddenly stopped without error", process.Id);
+                }
+                else
+                {
+                    _logger.LogError("Process {process_id} shard suddenly stopped with exit code {exit_code}",
+                        process.Id, process.ExitCode);
+                    throw CreateProcessExitCodeException(process);
+                }
             }
         }
 
@@ -190,7 +170,7 @@ namespace Eocron.Sharding.Processing
 
         private bool IsReadyForPublish(Process process)
         {
-            return _stateProvider?.IsReadyForPublish(process) ?? true;
+            return _stateProvider?.IsReady(process) ?? true;
         }
 
         private async Task<Process> GetRunningProcessAsync(CancellationToken ct)
@@ -220,7 +200,7 @@ namespace Eocron.Sharding.Processing
             if (_stateProvider == null)
                 return;
 
-            while (!_stateProvider.IsReadyForPublish(process))
+            while (!_stateProvider.IsReady(process))
             {
                 await Task.Delay(_statusCheckInterval, ct).ConfigureAwait(false);
             }
@@ -311,9 +291,13 @@ namespace Eocron.Sharding.Processing
 
         public void Dispose()
         {
+            if(_disposed)
+                return;
+
             _outputs.Writer.Complete(CreateShardDisposedException());
             _errors.Writer.Complete(CreateShardDisposedException());
             _publishSemaphore.Dispose();
+            _disposed = true;
         }
     }
 }

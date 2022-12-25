@@ -10,6 +10,6 @@ namespace Eocron.Sharding.Configuration
         /// </summary>
         /// <param name="process"></param>
         /// <returns>True - if process ready to process messages</returns>
-        bool IsReadyForPublish(Process process);
+        bool IsReady(Process process);
     }
 }

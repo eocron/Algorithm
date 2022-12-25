@@ -6,31 +6,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="killer\killer.pdb" />
+    <None Remove="Tools\ProcessWatcher\process_watcher.pdb" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="App.Metrics.Abstractions" Version="4.3.0" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="1.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.1.1" />
+    <PackageReference Include="DryIoc.dll" Version="5.3.1" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
     <PackageReference Include="System.Threading.Channels" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="killer\" />
+    <Folder Include="Tools\ProcessWatcher\" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="killer\killer.deps.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="killer\killer.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="killer\killer.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="killer\killer.runtimeconfig.json">
+    <None Update="Tools\ProcessWatcher\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

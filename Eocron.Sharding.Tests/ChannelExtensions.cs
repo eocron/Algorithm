@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Threading;
+﻿using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 
-namespace Eocron.Sharding
+namespace Eocron.Sharding.Tests
 {
     public static class ChannelExtensions
     {

@@ -27,10 +27,10 @@ namespace Eocron.Sharding.TestWebApp.Controllers
             var shard = _shardProvider.FindShardById(shardId);
             if (shard == null)
                 return NotFound();
-            return Ok(shard.IsReadyForPublish());
+            return Ok(shard.IsReady());
         }
 
-        [HttpGet("{id}/fetch_errors")]
+        [HttpPost("{id}/fetch_errors")]
         public IActionResult FetchErrors([FromRoute(Name = "id")] string shardId)
         {
             var shard = _shardProvider.FindShardById(shardId);
@@ -40,7 +40,7 @@ namespace Eocron.Sharding.TestWebApp.Controllers
             return Ok(result);
         }
 
-        [HttpGet("{id}/fetch_outputs")]
+        [HttpPost("{id}/fetch_outputs")]
         public IActionResult FetchOutput([FromRoute(Name = "id")] string shardId)
         {
             var shard = _shardProvider.FindShardById(shardId);
@@ -48,6 +48,16 @@ namespace Eocron.Sharding.TestWebApp.Controllers
                 return NotFound();
             var result = FetchLatest(shard.Outputs, 100);
             return Ok(result);
+        }
+
+        [HttpPost("{id}/restart")]
+        public async Task<IActionResult> Restart([FromRoute(Name = "id")] string shardId, CancellationToken ct)
+        {
+            var shard = _shardProvider.FindShardById(shardId);
+            if (shard == null)
+                return NotFound();
+            await shard.CancelAsync(ct).ConfigureAwait(false);
+            return NoContent();
         }
 
         [HttpPost("{id}/publish")]
@@ -64,7 +74,7 @@ namespace Eocron.Sharding.TestWebApp.Controllers
         {
             return _shardProvider
                 .GetAllShards()
-                .Where(x => isReady == null || (isReady.Value ? x.IsReadyForPublish() : !x.IsReadyForPublish()))
+                .Where(x => isReady == null || (isReady.Value ? x.IsReady() : !x.IsReady()))
                 .Select(x => x.Id)
                 .ToList();
         }
