@@ -2,6 +2,7 @@
 using System.Threading.Channels;
 using App.Metrics;
 using App.Metrics.Histogram;
+using Eocron.Sharding.Processing;
 
 namespace Eocron.Sharding.Monitoring
 {

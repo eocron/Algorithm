@@ -8,6 +8,7 @@ using App.Metrics;
 using App.Metrics.Counter;
 using App.Metrics.Gauge;
 using App.Metrics.Histogram;
+using Eocron.Sharding.Processing;
 
 namespace Eocron.Sharding.Monitoring
 {

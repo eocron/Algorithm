@@ -31,8 +31,7 @@ namespace Eocron.Sharding.ProcessWatcher
                     inputHandler.RunAsync(cts.Token),
                     processWatcher.RunAsync(cts.Token));
 
-                await WaitWhileAsync(() => ProcessHelper.IsAlive(parentProcess), TimeSpan.FromMilliseconds(300))
-                    .ConfigureAwait(false);
+                await WaitWhileAsync(() => ProcessHelper.IsAlive(parentProcess), TimeSpan.FromMilliseconds(300));
                 cts.Cancel();
                 await jobs;
                 var processes = processWatcher.CurrentProcesses.ToList();

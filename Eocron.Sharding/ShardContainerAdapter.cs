@@ -4,6 +4,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using DryIoc;
 using Eocron.Sharding.Jobs;
+using Eocron.Sharding.Processing;
 
 namespace Eocron.Sharding
 {

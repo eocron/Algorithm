@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>process_watcher</AssemblyName>
+    <Description>Used to look for orphaned child processes and kills them on parent unexpected death</Description>
   </PropertyGroup>
 
   <ItemGroup>

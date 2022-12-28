@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Eocron.Sharding
+namespace Eocron.Sharding.Processing
 {
     public interface IShardInputManager<in TInput>
     {

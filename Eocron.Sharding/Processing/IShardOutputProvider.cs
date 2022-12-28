@@ -1,6 +1,6 @@
 ﻿using System.Threading.Channels;
 
-namespace Eocron.Sharding
+namespace Eocron.Sharding.Processing
 {
     public interface IShardOutputProvider<TOutput, TError>
     {
