@@ -80,15 +80,17 @@ namespace Eocron.Sharding.Processing
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(stopToken);
             using var process = Process.Start(_options.StartInfo);
+            var processId = ProcessHelper.GetId(process);
+
             using var register = cts.Token.Register(() => OnCancellation(process));
             using var logScope = BeginProcessLoggingScope(process);
 
-            if (_watcher != null)
-                await _watcher.ChildrenToWatch.Writer.WriteAsync(process.Id, cts.Token).ConfigureAwait(false);
+            if (_watcher != null && processId != null)
+                await _watcher.ChildrenToWatch.Writer.WriteAsync(processId.Value, cts.Token).ConfigureAwait(false);
 
-            _logger.LogInformation("Process {process_id} shard started", process.Id);
+            _logger.LogInformation("Process {process_id} shard started", processId);
             await WaitUntilReady(process, cts.Token).ConfigureAwait(false);
-            _logger.LogInformation("Process {process_id} shard ready for publish", process.Id);
+            _logger.LogInformation("Process {process_id} shard ready for publish", processId);
             var ioTasks = new[]
             {
                 ProcessStreamReader(process.StandardOutput, _outputDeserializer, _outputs, process, cts.Token),
@@ -96,28 +98,29 @@ namespace Eocron.Sharding.Processing
             };
             _currentProcess = process;
             await WaitUntilExit(process);
+            var exitCode = ProcessHelper.GetExitCode(process) ?? -1;
             cts.Cancel();
             await Task.WhenAll(ioTasks).ConfigureAwait(false);
 
             if (stopToken.IsCancellationRequested)
             {
-                if (process.ExitCode == 0)
-                    _logger.LogInformation("Process {process_id} shard gracefully cancelled", process.Id);
+                if (exitCode == 0)
+                    _logger.LogInformation("Process {process_id} shard gracefully cancelled", processId);
                 else
                     _logger.LogWarning("Process {process_id} shard cancelled with exit code {exit_code}",
-                        process.Id, process.ExitCode);
+                        processId, exitCode);
             }
             else
             {
-                if (process.ExitCode == 0)
+                if (exitCode == 0)
                 {
-                    _logger.LogWarning("Process {process_id} shard suddenly stopped without error", process.Id);
+                    _logger.LogWarning("Process {process_id} shard suddenly stopped without error", processId);
                 }
                 else
                 {
                     _logger.LogError("Process {process_id} shard suddenly stopped with exit code {exit_code}",
-                        process.Id, process.ExitCode);
-                    throw CreateProcessExitCodeException(process);
+                        processId, exitCode);
+                    throw CreateProcessExitCodeException(processId, exitCode);
                 }
             }
         }
@@ -141,25 +144,28 @@ namespace Eocron.Sharding.Processing
 
         private IDisposable BeginProcessLoggingScope(Process process)
         {
+            var processId = ProcessHelper.GetId(process);
             return _logger.BeginScope(new Dictionary<string, string>
             {
-                { "process_id", process.Id.ToString() },
+                { "process_id", processId?.ToString() },
                 { "shard_id", Id }
             });
         }
 
-        private Exception CreateProcessExitCodeException(Process process)
+        private Exception CreateProcessExitCodeException(int? processId, int? exitCode)
         {
             return new ProcessShardException(
-                $"Process {process.Id} shard suddenly stopped with exit code {process.ExitCode}.", Id, process.Id,
-                process.ExitCode);
+                $"Process {processId} shard suddenly stopped with exit code {exitCode}.", Id, processId,
+                exitCode);
         }
 
         private Exception CreatePublishedWithErrorException(Process process)
         {
+            var processId = ProcessHelper.GetId(process);
+            var exitCode = ProcessHelper.GetExitCode(process);
             return new ProcessShardException(
-                $"Publish was successful but process crashed. Last time process {process.Id} stopped with exit code {process.ExitCode}.",
-                Id, process.Id, process.ExitCode);
+                $"Publish was successful but process crashed. Last time process {processId} stopped with exit code {exitCode}.",
+                Id, processId, exitCode);
         }
 
         private Exception CreateShardDisposedException()
@@ -169,9 +175,11 @@ namespace Eocron.Sharding.Processing
 
         private Exception CreateUnableToPublishException(Process process)
         {
+            var processId = ProcessHelper.GetId(process);
+            var exitCode = ProcessHelper.GetExitCode(process);
             return new ProcessShardException(
-                $"Unable to publish messages because publish was cancelled waiting for process to start. Last time process {process.Id} stopped with exit code {process.ExitCode}.",
-                Id, process.Id, process.ExitCode);
+                $"Unable to publish messages because publish was cancelled waiting for process to start. Last time process {processId} stopped with exit code {exitCode}.",
+                Id, processId, exitCode);
         }
 
         private async Task<Process> GetRunningProcessAsync(CancellationToken ct)
@@ -200,6 +208,7 @@ namespace Eocron.Sharding.Processing
 
         private void OnCancellation(Process process)
         {
+            var processId = ProcessHelper.GetId(process);
             using var logScope = BeginProcessLoggingScope(process);
             try
             {
@@ -214,7 +223,7 @@ namespace Eocron.Sharding.Processing
             }
             catch (Exception ex)
             {
-                _logger.LogCritical(ex, "Cancellation failed on process {process_id} shard", process.Id);
+                _logger.LogCritical(ex, "Cancellation failed on process {process_id} shard", processId);
             }
         }
 
@@ -243,8 +252,9 @@ namespace Eocron.Sharding.Processing
                 }
                 catch (Exception e)
                 {
+                    var processId = ProcessHelper.GetId(process);
                     _logger.LogError(e, "Failed to deserialize from stream reader for process {process_id} shard",
-                        process.Id);
+                        processId);
                 }
         }
 

@@ -15,11 +15,6 @@ namespace Eocron.Sharding
             _container = container;
         }
 
-        public async Task CancelAsync(CancellationToken ct)
-        {
-            await _container.GetRequiredService<ICancellationManager>().CancelAsync(ct).ConfigureAwait(false);
-        }
-
         public void Dispose()
         {
             _container.Dispose();
@@ -40,11 +35,6 @@ namespace Eocron.Sharding
             await _container.GetRequiredService<IJob>().RunAsync(ct).ConfigureAwait(false);
         }
 
-        public bool TryCancel()
-        {
-            return _container.GetRequiredService<ICancellationManager>().TryCancel();
-        }
-
         public ChannelReader<ShardMessage<TError>> Errors =>
             _container.GetRequiredService<IShardOutputProvider<TOutput, TError>>().Errors;
 
@@ -53,5 +43,29 @@ namespace Eocron.Sharding
 
         public string Id => _container.GetRequiredService<IShard>().Id;
         private readonly ServiceProvider _container;
+        public bool IsStopped()
+        {
+            return _container.GetRequiredService<IShardLifetimeManager>().IsStopped();
+        }
+
+        public async Task StopAsync(CancellationToken ct)
+        {
+            await _container.GetRequiredService<IShardLifetimeManager>().StopAsync(ct).ConfigureAwait(false);
+        }
+
+        public bool TryStop()
+        {
+            return _container.GetRequiredService<IShardLifetimeManager>().TryStop();
+        }
+
+        public async Task StartAsync(CancellationToken ct)
+        {
+            await _container.GetRequiredService<IShardLifetimeManager>().StartAsync(ct).ConfigureAwait(false);
+        }
+
+        public async Task RestartAsync(CancellationToken ct)
+        {
+            await _container.GetRequiredService<IShardLifetimeManager>().RestartAsync(ct).ConfigureAwait(false);
+        }
     }
 }

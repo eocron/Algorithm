@@ -22,5 +22,29 @@ namespace Eocron.Sharding.Processing
         {
             return !IsDead(process);
         }
+
+        public static int? GetId(Process process)
+        {
+            try
+            {
+                return process.Id;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static int? GetExitCode(Process process)
+        {
+            try
+            {
+                return process.ExitCode;
+            }
+            catch
+            {
+                return null;
+            }
+        }
     }
 }

@@ -33,7 +33,7 @@ namespace Eocron.Sharding.Tests
             var task = shard.RunAsync(cts.Token);
             await shard.PublishAsync(new[] { "hang" }, cts.Token);
             await Task.Delay(100);
-            await shard.CancelAsync(cts.Token);
+            await shard.RestartAsync(cts.Token);
             await shard.PublishAsync(new[] { "test" }, cts.Token);
             await Task.Delay(100);
             cts.Cancel();

@@ -30,6 +30,15 @@ namespace Eocron.Sharding.TestWebApp.Controllers
             return Ok(shard.IsReady());
         }
 
+        [HttpGet("{id}/is_stopped")]
+        public IActionResult IsStopped([FromRoute(Name = "id")] string shardId, CancellationToken ct)
+        {
+            var shard = _shardProvider.FindShardById(shardId);
+            if (shard == null)
+                return NotFound();
+            return Ok(shard.IsStopped());
+        }
+
         [HttpPost("{id}/fetch_errors")]
         public IActionResult FetchErrors([FromRoute(Name = "id")] string shardId)
         {
@@ -56,7 +65,27 @@ namespace Eocron.Sharding.TestWebApp.Controllers
             var shard = _shardProvider.FindShardById(shardId);
             if (shard == null)
                 return NotFound();
-            await shard.CancelAsync(ct).ConfigureAwait(false);
+            await shard.RestartAsync(ct).ConfigureAwait(false);
+            return NoContent();
+        }
+
+        [HttpPost("{id}/stop")]
+        public async Task<IActionResult> Stop([FromRoute(Name = "id")] string shardId, CancellationToken ct)
+        {
+            var shard = _shardProvider.FindShardById(shardId);
+            if (shard == null)
+                return NotFound();
+            await shard.StopAsync(ct).ConfigureAwait(false);
+            return NoContent();
+        }
+
+        [HttpPost("{id}/start")]
+        public async Task<IActionResult> Start([FromRoute(Name = "id")] string shardId, CancellationToken ct)
+        {
+            var shard = _shardProvider.FindShardById(shardId);
+            if (shard == null)
+                return NotFound();
+            await shard.StartAsync(ct).ConfigureAwait(false);
             return NoContent();
         }
 

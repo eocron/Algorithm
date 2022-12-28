@@ -12,7 +12,7 @@ namespace Eocron.Sharding
         IShard,
         IShardInputManager<TInput>,
         IShardOutputProvider<TOutput, TError>,
-        ICancellationManager,
+        IShardLifetimeManager,
         IJob
     {
     }
