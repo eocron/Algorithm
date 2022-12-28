@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using App.Metrics;
-using DryIoc;
 using Eocron.Sharding.Configuration;
 using Eocron.Sharding.Jobs;
 using Eocron.Sharding.Monitoring;
 using Eocron.Sharding.Processing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Eocron.Sharding
@@ -38,7 +39,7 @@ namespace Eocron.Sharding
 
         public IShard<TInput, TOutput, TError> CreateNewShard(string id)
         {
-            var container = new Container();
+            var container = new ServiceCollection();
 
             var tags = new Dictionary<string, string>
             {
@@ -47,73 +48,72 @@ namespace Eocron.Sharding
                 { "output_type", typeof(TOutput).Name },
                 { "error_type", typeof(TError).Name }
             };
-            var logger = _loggerFactory.CreateLogger<IShard<TInput, TOutput, TError>>();
-
-            container.RegisterDelegate(_ => _options, Reuse.Singleton);
-            container.RegisterDelegate<ILogger>(_ => logger, Reuse.Singleton);
-            container.RegisterDelegate(_ => _outputDeserializer, Reuse.Singleton, serviceKey: "output");
-            container.RegisterDelegate(_ => _errorDeserializer, Reuse.Singleton, serviceKey: "error");
-            container.RegisterDelegate(_ => _inputSerializer, Reuse.Singleton);
-            container.RegisterDelegate(_ => _killer, Reuse.Singleton);
-            container.RegisterDelegate(_ => _metrics, Reuse.Singleton);
-            container.RegisterDelegate(x =>
+            container.AddSingleton<ILogger>(_ => _loggerFactory.CreateLogger<IShard<TInput, TOutput, TError>>());
+            container.AddSingleton(_ => _metrics);
+            container.AddSingleton<IProcessJob<TInput, TOutput, TError>>(x =>
                     new ProcessJob<TInput, TOutput, TError>(
-                        x.Resolve<ProcessShardOptions>(),
-                        x.Resolve<IStreamReaderDeserializer<TOutput>>("output"),
-                        x.Resolve<IStreamReaderDeserializer<TError>>("error"),
-                        x.Resolve<IStreamWriterSerializer<TInput>>(),
-                        x.Resolve<ILogger>(),
+                        _options,
+                        _outputDeserializer,
+                        _errorDeserializer,
+                        _inputSerializer,
+                        x.GetRequiredService<ILogger>(),
                         id: id,
-                        watcher: x.Resolve<IChildProcessWatcher>()),
-                Reuse.Singleton);
-            container.RegisterDelegate<IShard>(x => x.Resolve<ProcessJob<TInput, TOutput, TError>>());
-            container.RegisterDelegate<IProcessDiagnosticInfoProvider>(x =>
-                x.Resolve<ProcessJob<TInput, TOutput, TError>>());
-            container.RegisterDelegate<IShardInputManager<TInput>>(x =>
-                    new MonitoredShardInputManager<TInput>(
-                        x.Resolve<ProcessJob<TInput, TOutput, TError>>(),
-                        x.Resolve<IMetrics>(),
-                        tags),
-                Reuse.Singleton);
-            container.RegisterDelegate<IShardOutputProvider<TOutput, TError>>(x =>
-                    new MonitoredShardOutputProvider<TOutput, TError>(
-                        x.Resolve<ProcessJob<TInput, TOutput, TError>>(),
-                        x.Resolve<IMetrics>(),
-                        tags),
-                Reuse.Singleton);
-            container.RegisterDelegate<IJob>(x =>
-                    new RestartUntilCancelledJob(
-                        new ShardMonitoringJob<TInput>(
-                            x.Resolve<IShardInputManager<TInput>>(),
-                            x.Resolve<IProcessDiagnosticInfoProvider>(),
-                            x.Resolve<IMetrics>(),
-                            _metricCollectionInterval,
-                            tags),
-                        x.Resolve<ILogger>(),
-                        _jobErrorRestartInterval,
-                        _jobSuccessRestartInterval),
-                Reuse.Singleton,
-                serviceKey: "monitoring");
+                        watcher: _killer,
+                        stateProvider: x.GetService<IProcessStateProvider>()))
+                .AddSingleton<IShard>(x =>
+                    x.GetRequiredService<IProcessJob<TInput, TOutput, TError>>())
+                .AddSingleton<IProcessDiagnosticInfoProvider>(x =>
+                    x.GetRequiredService<IProcessJob<TInput, TOutput, TError>>())
+                .AddSingleton<IShardInputManager<TInput>>(x =>
+                    x.GetRequiredService<IProcessJob<TInput, TOutput, TError>>())
+                .AddSingleton<IShardOutputProvider<TOutput, TError>>(x =>
+                    x.GetRequiredService<IProcessJob<TInput, TOutput, TError>>())
+                .AddSingleton<IJob>(x =>
+                    x.GetRequiredService<IProcessJob<TInput, TOutput, TError>>())
+                .Replace<IJob, CancellableJob>((x, prev) => new CancellableJob(prev))
+                .AddSingleton<ICancellationManager>(x => x.GetRequiredService<CancellableJob>())
+                .Replace<IJob>((x, prev) => new RestartUntilCancelledJob(
+                    prev,
+                    x.GetRequiredService<ILogger>(),
+                    _jobErrorRestartInterval,
+                    _jobSuccessRestartInterval));
 
-            container.RegisterDelegate<IJob>(x => x.Resolve<ProcessJob<TInput, TOutput, TError>>(), Reuse.Singleton,
-                serviceKey: "process");
-            container.RegisterDelegate(x => new CancellableJob(x.Resolve<IJob>("process")), Reuse.Singleton);
-            container.RegisterDelegate<ICancellationManager>(x => x.Resolve<CancellableJob>(), Reuse.Singleton);
-            container.RegisterDelegate<IJob>(x => x.Resolve<CancellableJob>(), Reuse.Singleton,
-                serviceKey: "cancellable");
+            AddAppMetrics(
+                container, 
+                tags, 
+                _metricCollectionInterval, 
+                _jobErrorRestartInterval,
+                _jobSuccessRestartInterval);
 
-            container.RegisterDelegate<IJob>(x =>
-                    new RestartUntilCancelledJob(
-                        x.Resolve<IJob>("cancellable"),
-                        x.Resolve<ILogger>(),
-                        _jobErrorRestartInterval,
-                        _jobSuccessRestartInterval),
-                Reuse.Singleton,
-                serviceKey: "main");
+            return new ShardContainerAdapter<TInput, TOutput, TError>(container.BuildServiceProvider());
+        }
 
-            container.RegisterDelegate<IJob>(x =>
-                new CompoundJob(x.Resolve<IJob>("main"), x.Resolve<IJob>("monitoring")), Reuse.Singleton);
-            return new ShardContainerAdapter<TInput, TOutput, TError>(container);
+        private static IServiceCollection AddAppMetrics(
+            IServiceCollection container, 
+            IReadOnlyDictionary<string, string> tags,
+            TimeSpan metricCollectionInterval,
+            TimeSpan errorRestartInterval,
+            TimeSpan successRestartInterval)
+        {
+
+            return container
+                .Replace<IShardInputManager<TInput>>((x, prev) =>
+                    new MonitoredShardInputManager<TInput>(prev, x.GetRequiredService<IMetrics>(), tags))
+                .Replace<IShardOutputProvider<TOutput, TError>>((x, prev) =>
+                    new MonitoredShardOutputProvider<TOutput, TError>(prev, x.GetRequiredService<IMetrics>(), tags))
+                .Replace<IJob>((x, prev) =>
+                    new CompoundJob(
+                        prev,
+                        new RestartUntilCancelledJob(
+                            new ShardMonitoringJob<TInput>(
+                                x.GetRequiredService<IShardInputManager<TInput>>(),
+                                x.GetRequiredService<IProcessDiagnosticInfoProvider>(),
+                                x.GetRequiredService<IMetrics>(),
+                                metricCollectionInterval,
+                                tags),
+                            x.GetRequiredService<ILogger>(),
+                            errorRestartInterval,
+                            successRestartInterval)));
         }
 
         private readonly IChildProcessWatcher _killer;

@@ -6,17 +6,11 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Eocron.Sharding.Configuration;
-using Eocron.Sharding.Jobs;
 using Microsoft.Extensions.Logging;
 
 namespace Eocron.Sharding.Processing
 {
-    public sealed class ProcessJob<TInput, TOutput, TError> :
-        IShard,
-        IShardOutputProvider<TOutput, TError>,
-        IShardInputManager<TInput>,
-        IProcessDiagnosticInfoProvider,
-        IJob
+    public sealed class ProcessJob<TInput, TOutput, TError> : IProcessJob<TInput, TOutput, TError>
     {
         public ProcessJob(
             ProcessShardOptions options,
@@ -59,8 +53,7 @@ namespace Eocron.Sharding.Processing
         public bool IsReady()
         {
             var process = _currentProcess;
-            return process != null
-                   && !process.HasExited
+            return ProcessHelper.IsAlive(process)
                    && _publishSemaphore.CurrentCount > 0
                    && IsReadyForPublish(process);
         }
@@ -75,7 +68,7 @@ namespace Eocron.Sharding.Processing
                 var process = await GetRunningProcessAsync(ct).ConfigureAwait(false);
                 using var logScope = BeginProcessLoggingScope(process);
                 await _inputSerializer.SerializeTo(process.StandardInput, messages, ct).ConfigureAwait(false);
-                if (process.HasExited && process.ExitCode != 0) throw CreatePublishedWithErrorException(process);
+                if (ProcessHelper.IsDead(process) && process.ExitCode != 0) throw CreatePublishedWithErrorException(process);
             }
             finally
             {
@@ -133,7 +126,7 @@ namespace Eocron.Sharding.Processing
         {
             info = null;
             var current = _currentProcess;
-            if (current == null)
+            if (ProcessHelper.IsDead(current))
                 return false;
 
             info = new ProcessDiagnosticInfo
@@ -186,7 +179,7 @@ namespace Eocron.Sharding.Processing
             while (true)
             {
                 var process = _currentProcess;
-                if (process != null && !process.HasExited && IsReadyForPublish(process))
+                if (ProcessHelper.IsAlive(process) && IsReadyForPublish(process))
                     return process;
                 try
                 {
@@ -210,7 +203,7 @@ namespace Eocron.Sharding.Processing
             using var logScope = BeginProcessLoggingScope(process);
             try
             {
-                if (process.HasExited)
+                if (ProcessHelper.IsDead(process))
                     return;
 
                 if (_options.GracefulStopTimeout != null)
@@ -257,7 +250,7 @@ namespace Eocron.Sharding.Processing
 
         private async Task WaitUntilExit(Process process)
         {
-            while (!process.HasExited) await Task.Delay(_statusCheckInterval).ConfigureAwait(false);
+            while (ProcessHelper.IsAlive(process)) await Task.Delay(_statusCheckInterval).ConfigureAwait(false);
         }
 
         private async Task WaitUntilReady(Process process, CancellationToken ct)

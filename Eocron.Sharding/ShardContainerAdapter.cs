@@ -2,22 +2,22 @@
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using DryIoc;
 using Eocron.Sharding.Jobs;
 using Eocron.Sharding.Processing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Eocron.Sharding
 {
-    public class ShardContainerAdapter<TInput, TOutput, TError> : IShard<TInput, TOutput, TError>
+    public sealed class ShardContainerAdapter<TInput, TOutput, TError> : IShard<TInput, TOutput, TError>
     {
-        public ShardContainerAdapter(IContainer container)
+        public ShardContainerAdapter(ServiceProvider container)
         {
             _container = container;
         }
 
         public async Task CancelAsync(CancellationToken ct)
         {
-            await _container.Resolve<ICancellationManager>().CancelAsync(ct).ConfigureAwait(false);
+            await _container.GetRequiredService<ICancellationManager>().CancelAsync(ct).ConfigureAwait(false);
         }
 
         public void Dispose()
@@ -27,31 +27,31 @@ namespace Eocron.Sharding
 
         public bool IsReady()
         {
-            return _container.Resolve<IShardInputManager<TInput>>().IsReady();
+            return _container.GetRequiredService<IShardInputManager<TInput>>().IsReady();
         }
 
         public async Task PublishAsync(IEnumerable<TInput> messages, CancellationToken ct)
         {
-            await _container.Resolve<IShardInputManager<TInput>>().PublishAsync(messages, ct).ConfigureAwait(false);
+            await _container.GetRequiredService<IShardInputManager<TInput>>().PublishAsync(messages, ct).ConfigureAwait(false);
         }
 
         public async Task RunAsync(CancellationToken ct)
         {
-            await _container.Resolve<IJob>().RunAsync(ct).ConfigureAwait(false);
+            await _container.GetRequiredService<IJob>().RunAsync(ct).ConfigureAwait(false);
         }
 
         public bool TryCancel()
         {
-            return _container.Resolve<ICancellationManager>().TryCancel();
+            return _container.GetRequiredService<ICancellationManager>().TryCancel();
         }
 
         public ChannelReader<ShardMessage<TError>> Errors =>
-            _container.Resolve<IShardOutputProvider<TOutput, TError>>().Errors;
+            _container.GetRequiredService<IShardOutputProvider<TOutput, TError>>().Errors;
 
         public ChannelReader<ShardMessage<TOutput>> Outputs =>
-            _container.Resolve<IShardOutputProvider<TOutput, TError>>().Outputs;
+            _container.GetRequiredService<IShardOutputProvider<TOutput, TError>>().Outputs;
 
-        public string Id => _container.Resolve<IShard>().Id;
-        private readonly IContainer _container;
+        public string Id => _container.GetRequiredService<IShard>().Id;
+        private readonly ServiceProvider _container;
     }
 }
