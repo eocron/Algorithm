@@ -93,7 +93,7 @@ namespace Eocron.Sharding.Jobs
                     try
                     {
                         await _inner.RunAsync(cts.Token).ConfigureAwait(false);
-                        if (_stopChannel.Reader.TryPeek(out var _))
+                        if (!cts.IsCancellationRequested)
                         {
                             await ResetAsync().ConfigureAwait(false);
                         }
@@ -106,10 +106,17 @@ namespace Eocron.Sharding.Jobs
                     {
                         _logger.LogInformation("Shard stopped");
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
-                        await ResetAsync().ConfigureAwait(false);
-                        throw;
+                        if (!cts.IsCancellationRequested)
+                        {
+                            await ResetAsync().ConfigureAwait(false);
+                            throw;
+                        }
+                        else
+                        {
+                            _logger.LogWarning(e, "Shard stopped with error");
+                        }
                     }
                 }
             }
