@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using System.Diagnostics;
+using System.Threading.Channels;
 using Eocron.Sharding.Processing;
 using App.Metrics;
 using Eocron.Sharding.Configuration;
@@ -60,7 +61,7 @@ namespace Eocron.Sharding.Tests
             };
         }
 
-        public static IShard<string, string, string> CreateTestShard(string mode)
+        public static IShard<string, string, string> CreateTestShard(string mode, ITestProcessJobHandle handle = null)
         {
             var loggerFactory = new Mock<ILoggerFactory>();
             loggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(new TestLogger());
@@ -76,10 +77,62 @@ namespace Eocron.Sharding.Tests
                         new NewLineDeserializer())
                     .WithProcessJob(
                         CreateTestAppShardOptions(mode))
+                    .WithProcessJobWrap(x=> new TestProcessJob<string, string, string>(x, handle))
                     .WithTransient<IMetrics>(metrics)
                     .WithAppMetrics(new AppMetricsShardOptions())
                     .CreateFactory();
             return shardFactory.CreateNewShard(nameof(ProcessShardTests) + Guid.NewGuid());
+        }
+
+        public interface ITestProcessJobHandle
+        {
+            void OnStarting();
+
+            void OnStopped();
+        }
+        public class TestProcessJob<TInput, TOutput, TError> : IProcessJob<TInput, TOutput, TError>
+        {
+            private readonly IProcessJob<TInput, TOutput, TError> _processJobImplementation;
+            private readonly ITestProcessJobHandle _handle;
+
+            public TestProcessJob(IProcessJob<TInput, TOutput, TError> processJobImplementation, ITestProcessJobHandle handle)
+            {
+                _processJobImplementation = processJobImplementation;
+                _handle = handle;
+            }
+
+            public string Id => _processJobImplementation.Id;
+
+            public ChannelReader<ShardMessage<TError>> Errors => _processJobImplementation.Errors;
+
+            public ChannelReader<ShardMessage<TOutput>> Outputs => _processJobImplementation.Outputs;
+
+            public Task<bool> IsReadyAsync(CancellationToken ct)
+            {
+                return _processJobImplementation.IsReadyAsync(ct);
+            }
+
+            public Task PublishAsync(IEnumerable<TInput> messages, CancellationToken ct)
+            {
+                return _processJobImplementation.PublishAsync(messages, ct);
+            }
+
+            public bool TryGetProcessDiagnosticInfo(out ProcessDiagnosticInfo info)
+            {
+                return _processJobImplementation.TryGetProcessDiagnosticInfo(out info);
+            }
+
+            public void Dispose()
+            {
+                _processJobImplementation.Dispose();
+            }
+
+            public async Task RunAsync(CancellationToken ct)
+            {
+                _handle?.OnStarting();
+                await _processJobImplementation.RunAsync(ct).ConfigureAwait(false);
+                _handle?.OnStopped();
+            }
         }
     }
 }

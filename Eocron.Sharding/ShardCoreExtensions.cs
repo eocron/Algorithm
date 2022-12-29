@@ -42,7 +42,11 @@ namespace Eocron.Sharding
             this ShardBuilder<TInput, TOutput, TError> builder,
             Func<IProcessJob<TInput, TOutput, TError>, IProcessJob<TInput, TOutput, TError>> wrapProvider)
         {
-            builder.Add((s, shardId) => s.Replace<IProcessJob<TInput, TOutput,TError>>((_, prev)=> wrapProvider(prev)));
+            builder.Add((s, shardId) => { s.Replace<IProcessJob<TInput, TOutput, TError>>((_, prev) =>
+                {
+                    return wrapProvider(prev);
+                });
+            });
             return builder;
         }
 

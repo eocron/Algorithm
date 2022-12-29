@@ -6,7 +6,8 @@ switch (mode)
         break;
     case TestMode.ErrorImmediately:
     default:
-        throw new Exception("Test immediate exception");
+        Environment.Exit(-1);
+        break;
 }
 
 

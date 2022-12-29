@@ -1,4 +1,3 @@
-using Eocron.Sharding.Configuration;
 using Eocron.Sharding.Processing;
 using NUnit.Framework;
 
@@ -53,7 +52,6 @@ namespace Eocron.Sharding.Tests
         [OneTimeSetUp]
         public void Setup()
         {
-
             _cts = new CancellationTokenSource();
             _shard = ProcessShardHelper.CreateTestShard("stream");
             _task = _shard.RunAsync(_cts.Token);
