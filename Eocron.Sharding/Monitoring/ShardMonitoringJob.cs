@@ -6,18 +6,21 @@ using App.Metrics;
 using App.Metrics.Gauge;
 using Eocron.Sharding.Jobs;
 using Eocron.Sharding.Processing;
+using Microsoft.Extensions.Logging;
 
 namespace Eocron.Sharding.Monitoring
 {
     public class ShardMonitoringJob<TInput> : IJob
     {
         public ShardMonitoringJob(
+            ILogger logger,
             IShardInputManager<TInput> inputManager,
             IProcessDiagnosticInfoProvider infoProvider,
             IMetrics metrics,
             TimeSpan checkInterval,
             IReadOnlyDictionary<string, string> tags)
         {
+            _logger = logger;
             _inputManager = inputManager;
             _infoProvider = infoProvider;
             _metrics = metrics;
@@ -38,8 +41,24 @@ namespace Eocron.Sharding.Monitoring
         {
             while (!ct.IsCancellationRequested)
             {
-                OnCheck();
-                await Task.Delay(_checkInterval, ct).ConfigureAwait(false);
+                using var cts = new CancellationTokenSource(_checkTimeout);
+                try
+                {
+                    await OnCheck(cts.Token);
+                }
+                catch(Exception e)
+                {
+                    _logger.LogError(e, "Failed to check shard status.");
+                }
+
+                try
+                {
+                    await Task.Delay(_checkInterval, ct).ConfigureAwait(false);
+                }
+                catch
+                {
+                    break;
+                }
             }
         }
 
@@ -62,9 +81,9 @@ namespace Eocron.Sharding.Monitoring
             return res;
         }
 
-        private void OnCheck()
+        private async Task OnCheck(CancellationToken ct)
         {
-            _inputManager.IsReady();
+            await _inputManager.IsReadyAsync(ct).ConfigureAwait(false);
 
             if (!_infoProvider.TryGetProcessDiagnosticInfo(out var info))
                 info = new ProcessDiagnosticInfo
@@ -100,9 +119,11 @@ namespace Eocron.Sharding.Monitoring
         private readonly GaugeOptions _workingSetGauge;
         private readonly IMetrics _metrics;
         private readonly IProcessDiagnosticInfoProvider _infoProvider;
+        private readonly ILogger _logger;
         private readonly IShardInputManager<TInput> _inputManager;
         private readonly TimeSpan _checkInterval;
         private DateTime? _lastCheckTime;
         private TimeSpan? _lastTotalProcessorTime;
+        private TimeSpan _checkTimeout;
     }
 }

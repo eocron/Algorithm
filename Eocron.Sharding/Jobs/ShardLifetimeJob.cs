@@ -43,7 +43,7 @@ namespace Eocron.Sharding.Jobs
             }
         }
 
-        public bool TryStop()
+        public Task<bool> TryStopAsync(CancellationToken ct)
         {
             if (_stopChannel.Reader.TryRead(out var cts))
             {
@@ -54,27 +54,27 @@ namespace Eocron.Sharding.Jobs
                 catch (ObjectDisposedException)
                 {
                 }
-                return true;
+                return Task.FromResult(true);
             }
-            return false;
+            return Task.FromResult(false);
         }
 
         public async Task StartAsync(CancellationToken ct)
         {
-            if (IsStopped())
+            if (await IsStoppedAsync(ct).ConfigureAwait(false))
             {
                 await _startChannel.Writer.WriteAsync(new object(), ct).ConfigureAwait(false);
             }
         }
 
-        public bool IsStopped()
+        public Task<bool> IsStoppedAsync(CancellationToken ct)
         {
-            return !_stopChannel.Reader.TryPeek(out var _);
+            return Task.FromResult(!_stopChannel.Reader.TryPeek(out var _));
         }
 
         public async Task RestartAsync(CancellationToken ct)
         {
-            TryStop();
+            await TryStopAsync(ct).ConfigureAwait(false);
             await _startChannel.Writer.WriteAsync(new object(), CancellationToken.None).ConfigureAwait(false);
         }
 
@@ -89,19 +89,26 @@ namespace Eocron.Sharding.Jobs
                     await _startChannel.Reader.ReadAsync(ct).ConfigureAwait(false);
                     await _stopChannel.Writer.WriteAsync(cts, ct).ConfigureAwait(false);
 
-                    _logger.LogInformation("Job starting");
+                    _logger.LogInformation("Shard starting");
                     try
                     {
                         await _inner.RunAsync(cts.Token).ConfigureAwait(false);
-                        await ResetAsync();
+                        if (_stopChannel.Reader.TryPeek(out var _))
+                        {
+                            await ResetAsync().ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("Shard stopped");
+                        }
                     }
                     catch (OperationCanceledException) when (cts.Token.IsCancellationRequested)
                     {
-                        _logger.LogInformation("Job stopped");
+                        _logger.LogInformation("Shard stopped");
                     }
                     catch (Exception)
                     {
-                        await ResetAsync();
+                        await ResetAsync().ConfigureAwait(false);
                         throw;
                     }
                 }

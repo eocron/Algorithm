@@ -99,7 +99,7 @@ namespace Eocron.Sharding.Tests
             await _job.StopAsync(_cts.Token);
             await Task.Delay(1);
             VerifyRunCount(1);
-            Assert.IsFalse(_job.TryStop());
+            Assert.IsFalse(await _job.TryStopAsync(_cts.Token));
             await Task.Delay(1);
             VerifyRunCount(1);
         }
@@ -108,10 +108,10 @@ namespace Eocron.Sharding.Tests
         public async Task StartTryStopTryStop()
         {
             VerifyRunCount(1);
-            Assert.IsTrue(_job.TryStop());
+            Assert.IsTrue(await _job.TryStopAsync(_cts.Token));
             await Task.Delay(1);
             VerifyRunCount(1);
-            Assert.IsFalse(_job.TryStop());
+            Assert.IsFalse(await _job.TryStopAsync(_cts.Token));
             await Task.Delay(1);
             VerifyRunCount(1);
         }

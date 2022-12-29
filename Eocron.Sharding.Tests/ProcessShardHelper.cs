@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Eocron.Sharding.Processing;
 using App.Metrics;
 using Eocron.Sharding.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -62,17 +63,27 @@ namespace Eocron.Sharding.Tests
             loggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(new TestLogger());
             var killer = new TestChildProcessWatcher();
             var metrics = new MetricsBuilder().Build();
-            var shardFactory = new ShardFactory<string, string, string>(
-                loggerFactory.Object,
-                metrics,
-                new NewLineDeserializer(),
-                new NewLineDeserializer(),
-                new NewLineSerializer(),
-                killer,
-                ProcessShardHelper.CreateTestAppShardOptions(mode),
-                TimeSpan.Zero,
-                TimeSpan.Zero,
-                TimeSpan.FromSeconds(1));
+            var shardFactory =
+                new ShardBuilder<string, string, string>()
+                    .WithLogging(loggerFactory.Object)
+                    .WithProcessJob((x, id) =>
+                            new ProcessJob<string, string, string>(
+                                CreateTestAppShardOptions(mode),
+                                new NewLineDeserializer(),
+                                new NewLineDeserializer(),
+                                new NewLineSerializer(),
+                                x.GetRequiredService<ILogger>(),
+                                id: id,
+                                watcher: killer,
+                                stateProvider: x.GetService<IProcessStateProvider>()),
+                        TimeSpan.Zero,
+                        TimeSpan.Zero)
+                    .WithAppMetrics(
+                        metrics,
+                        null,
+                        TimeSpan.FromSeconds(1),
+                        TimeSpan.Zero)
+                    .CreateFactory();
             return shardFactory.CreateNewShard(nameof(ProcessShardTests) + Guid.NewGuid());
         }
     }

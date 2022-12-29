@@ -16,31 +16,31 @@ namespace Eocron.Sharding.TestWebApp.Controllers
         }
 
         [HttpGet("search")]
-        public IActionResult SearchShards(bool? ready)
+        public async Task<IActionResult> SearchShards(bool? ready, CancellationToken ct)
         {
-            return Ok(SearchShardIds(ready));
+            return Ok(await SearchShardIds(ready, ct).ConfigureAwait(false));
         }
 
         [HttpGet("{id}/is_ready")]
-        public IActionResult IsReady([FromRoute(Name = "id")] string shardId)
+        public async Task<IActionResult> IsReady([FromRoute(Name = "id")] string shardId, CancellationToken ct)
         {
             var shard = _shardProvider.FindShardById(shardId);
             if (shard == null)
                 return NotFound();
-            return Ok(shard.IsReady());
+            return Ok(await shard.IsReadyAsync(ct).ConfigureAwait(false));
         }
 
         [HttpGet("{id}/is_stopped")]
-        public IActionResult IsStopped([FromRoute(Name = "id")] string shardId, CancellationToken ct)
+        public async Task<IActionResult> IsStopped([FromRoute(Name = "id")] string shardId, CancellationToken ct)
         {
             var shard = _shardProvider.FindShardById(shardId);
             if (shard == null)
                 return NotFound();
-            return Ok(shard.IsStopped());
+            return Ok(await shard.IsStoppedAsync(ct).ConfigureAwait(false));
         }
 
         [HttpPost("{id}/fetch_errors")]
-        public IActionResult FetchErrors([FromRoute(Name = "id")] string shardId)
+        public IActionResult FetchErrors([FromRoute(Name = "id")] string shardId, CancellationToken ct)
         {
             var shard = _shardProvider.FindShardById(shardId);
             if (shard == null)
@@ -50,7 +50,7 @@ namespace Eocron.Sharding.TestWebApp.Controllers
         }
 
         [HttpPost("{id}/fetch_outputs")]
-        public IActionResult FetchOutput([FromRoute(Name = "id")] string shardId)
+        public IActionResult FetchOutput([FromRoute(Name = "id")] string shardId, CancellationToken ct)
         {
             var shard = _shardProvider.FindShardById(shardId);
             if (shard == null)
@@ -99,13 +99,20 @@ namespace Eocron.Sharding.TestWebApp.Controllers
             return NoContent();
         }
 
-        private List<string> SearchShardIds(bool? isReady)
+        private async Task<List<string>> SearchShardIds(bool? isReady, CancellationToken ct)
         {
-            return _shardProvider
-                .GetAllShards()
-                .Where(x => isReady == null || (isReady.Value ? x.IsReady() : !x.IsReady()))
-                .Select(x => x.Id)
-                .ToList();
+            var all = await Task.WhenAll(_shardProvider
+                    .GetAllShards()
+                    .Select(async x =>
+                    {
+                        if (isReady == null)
+                            return x;
+                        var ready = await x.IsReadyAsync(ct).ConfigureAwait(false);
+                        return ready == isReady.Value ? x : null;
+                    }))
+                .ConfigureAwait(false);
+
+            return all.Where(x => x != null).Select(x => x.Id).ToList();
         }
 
         private static IList<T> FetchLatest<T>(ChannelReader<T> channel, int maxSize)

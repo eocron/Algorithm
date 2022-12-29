@@ -9,8 +9,9 @@ namespace Eocron.Sharding.Processing
         /// <summary>
         ///     Checks if shard is ready to process data
         /// </summary>
+        /// <param name="ct"></param>
         /// <returns></returns>
-        bool IsReady();
+        Task<bool> IsReadyAsync(CancellationToken ct);
 
         /// <summary>
         ///     Publish messages to the shard

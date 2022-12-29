@@ -50,12 +50,12 @@ namespace Eocron.Sharding.Processing
             _disposed = true;
         }
 
-        public bool IsReady()
+        public Task<bool> IsReadyAsync(CancellationToken ct)
         {
             var process = _currentProcess;
-            return ProcessHelper.IsAlive(process)
-                   && _publishSemaphore.CurrentCount > 0
-                   && IsReadyForPublish(process);
+            return Task.FromResult(ProcessHelper.IsAlive(process)
+                                   && _publishSemaphore.CurrentCount > 0
+                                   && IsReadyForPublish(process));
         }
 
         public async Task PublishAsync(IEnumerable<TInput> messages, CancellationToken ct)

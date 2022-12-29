@@ -20,9 +20,9 @@ namespace Eocron.Sharding
             _container.Dispose();
         }
 
-        public bool IsReady()
+        public async Task<bool> IsReadyAsync(CancellationToken ct)
         {
-            return _container.GetRequiredService<IShardInputManager<TInput>>().IsReady();
+            return await _container.GetRequiredService<IShardInputManager<TInput>>().IsReadyAsync(ct).ConfigureAwait(false);
         }
 
         public async Task PublishAsync(IEnumerable<TInput> messages, CancellationToken ct)
@@ -43,9 +43,9 @@ namespace Eocron.Sharding
 
         public string Id => _container.GetRequiredService<IShard>().Id;
         private readonly ServiceProvider _container;
-        public bool IsStopped()
+        public async Task<bool> IsStoppedAsync(CancellationToken ct)
         {
-            return _container.GetRequiredService<IShardLifetimeManager>().IsStopped();
+            return await _container.GetRequiredService<IShardLifetimeManager>().IsStoppedAsync(ct).ConfigureAwait(false);
         }
 
         public async Task StopAsync(CancellationToken ct)
@@ -53,9 +53,9 @@ namespace Eocron.Sharding
             await _container.GetRequiredService<IShardLifetimeManager>().StopAsync(ct).ConfigureAwait(false);
         }
 
-        public bool TryStop()
+        public async Task<bool> TryStopAsync(CancellationToken ct)
         {
-            return _container.GetRequiredService<IShardLifetimeManager>().TryStop();
+            return await _container.GetRequiredService<IShardLifetimeManager>().TryStopAsync(ct).ConfigureAwait(false);
         }
 
         public async Task StartAsync(CancellationToken ct)

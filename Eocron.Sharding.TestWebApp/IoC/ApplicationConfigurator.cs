@@ -15,28 +15,34 @@ namespace Eocron.Sharding.TestWebApp.IoC
             services.AddSwaggerGen();
             services.AddMetrics();
             services.AddMetricsEndpoints();
-
-            services.AddSingleton<ChildProcessWatcher>(x => new ChildProcessWatcher(x.GetRequiredService<ILogger<ChildProcessWatcher>>()));
-            services.AddSingleton<IHostedService>(x => new JobHostedService(x.GetRequiredService<ChildProcessWatcher>()));
-
+            services.AddShardProcessWatcherHostedService();
             services.AddSingleton<IStreamReaderDeserializer<string>, NewLineDeserializer>();
             services.AddSingleton<IStreamWriterSerializer<string>, NewLineSerializer>();
             services.AddSingleton<IShardFactory<string, string, string>>(x =>
-                new ShardFactory<string, string, string>(
-                    x.GetRequiredService<ILoggerFactory>(),
-                    x.GetRequiredService<IMetrics>(),
-                    x.GetRequiredService<IStreamReaderDeserializer<string>>(),
-                    x.GetRequiredService<IStreamReaderDeserializer<string>>(),
-                    x.GetRequiredService<IStreamWriterSerializer<string>>(),
-                    x.GetRequiredService<ChildProcessWatcher>(),
-                    new ProcessShardOptions
-                    {
-                        StartInfo = new ProcessStartInfo("Tools/Eocron.Sharding.TestApp.exe", "stream")
-                            .ConfigureAsService()
-                    },
-                    TimeSpan.FromSeconds(5),
-                    TimeSpan.FromSeconds(5),
-                    TimeSpan.FromSeconds(5)));
+                new ShardBuilder<string, string, string>()
+                    .WithLogging(x.GetRequiredService<ILoggerFactory>())
+                    .WithProcessJob((s, id) =>
+                            new ProcessJob<string, string, string>(
+                                new ProcessShardOptions
+                                {
+                                    StartInfo = new ProcessStartInfo("Tools/Eocron.Sharding.TestApp.exe", "stream")
+                                        .ConfigureAsService()
+                                },
+                                x.GetRequiredService<IStreamReaderDeserializer<string>>(),
+                                x.GetRequiredService<IStreamReaderDeserializer<string>>(),
+                                x.GetRequiredService<IStreamWriterSerializer<string>>(),
+                                s.GetRequiredService<ILogger>(),
+                                id: id,
+                                watcher: x.GetRequiredService<IChildProcessWatcher>(),
+                                stateProvider: x.GetService<IProcessStateProvider>()),
+                        TimeSpan.FromSeconds(5),
+                        TimeSpan.FromSeconds(5))
+                    .WithAppMetrics(
+                        x.GetRequiredService<IMetrics>(),
+                        null,
+                        TimeSpan.FromSeconds(1),
+                        TimeSpan.FromSeconds(5))
+                    .CreateFactory());
             services.AddSingleton<IShardPool<string, string, string>>(x =>
                 new ConstantShardPool<string, string, string>(
                     x.GetRequiredService<IShardFactory<string, string, string>>(),

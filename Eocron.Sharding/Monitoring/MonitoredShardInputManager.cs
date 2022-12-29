@@ -25,11 +25,11 @@ namespace Eocron.Sharding.Monitoring
             _readyForPublishOptions = MonitoringHelper.CreateShardOptions<GaugeOptions>("is_ready", tags: tags);
         }
 
-        public bool IsReady()
+        public async Task<bool> IsReadyAsync(CancellationToken ct)
         {
             try
             {
-                var tmp = _inner.IsReady();
+                var tmp = await _inner.IsReadyAsync(ct).ConfigureAwait(false);
                 _metrics.Measure.Gauge.SetValue(_readyForPublishOptions, tmp ? 1 : 0);
                 return tmp;
             }
