@@ -29,12 +29,8 @@ namespace Eocron.Sharding.Processing
             _logger = logger;
             _stateProvider = stateProvider;
             _watcher = watcher;
-            _outputs = Channel.CreateBounded<ShardMessage<TOutput>>(_options.OutputOptions ??
-                                                                    ProcessShardOptions.DefaultOutputOptions);
-            _errors = Channel.CreateBounded<ShardMessage<TError>>(_options.ErrorOptions ??
-                                                                  ProcessShardOptions.DefaultErrorOptions);
-            _statusCheckInterval =
-                _options.ProcessStatusCheckInterval ?? ProcessShardOptions.DefaultProcessStatusCheckInterval;
+            _outputs = Channel.CreateBounded<ShardMessage<TOutput>>(_options.OutputOptions);
+            _errors = Channel.CreateBounded<ShardMessage<TError>>(_options.ErrorOptions);
             _publishSemaphore = new SemaphoreSlim(1);
             Id = id ?? $"process_shard_{Guid.NewGuid():N}";
         }
@@ -129,17 +125,26 @@ namespace Eocron.Sharding.Processing
         {
             info = null;
             var current = _currentProcess;
-            if (ProcessHelper.IsDead(current))
-                return false;
+            info = ProcessHelper.DefaultIfNotFound(
+                current,
+                x =>
+                {
+                    if (x.HasExited)
+                        return null;
 
-            info = new ProcessDiagnosticInfo
-            {
-                PrivateMemorySize64 = current.PrivateMemorySize64,
-                TotalProcessorTime = current.TotalProcessorTime,
-                WorkingSet64 = current.WorkingSet64,
-                ModuleName = current.MainModule.ModuleName
-            };
-            return true;
+                    return new ProcessDiagnosticInfo
+                    {
+                        PagedMemorySize64 = current.PagedMemorySize64,
+                        PrivateMemorySize64 = current.PrivateMemorySize64,
+                        TotalProcessorTime = current.TotalProcessorTime,
+                        WorkingSet64 = current.WorkingSet64,
+                        ModuleName = current.MainModule?.ModuleName,
+                        StartTime = current.StartTime,
+                        HandleCount = current.HandleCount,
+                    };
+                },
+                null);
+            return info != null;
         }
 
         private IDisposable BeginProcessLoggingScope(Process process)
@@ -191,7 +196,7 @@ namespace Eocron.Sharding.Processing
                     return process;
                 try
                 {
-                    await Task.Delay(_statusCheckInterval, ct);
+                    await Task.Delay(_options.ProcessStatusCheckInterval, ct);
                 }
                 catch (OperationCanceledException)
                 {
@@ -260,7 +265,7 @@ namespace Eocron.Sharding.Processing
 
         private async Task WaitUntilExit(Process process)
         {
-            while (ProcessHelper.IsAlive(process)) await Task.Delay(_statusCheckInterval).ConfigureAwait(false);
+            while (ProcessHelper.IsAlive(process)) await Task.Delay(_options.ProcessStatusCheckInterval).ConfigureAwait(false);
         }
 
         private async Task WaitUntilReady(Process process, CancellationToken ct)
@@ -268,7 +273,7 @@ namespace Eocron.Sharding.Processing
             if (_stateProvider == null)
                 return;
 
-            while (!_stateProvider.IsReady(process)) await Task.Delay(_statusCheckInterval, ct).ConfigureAwait(false);
+            while (!_stateProvider.IsReady(process)) await Task.Delay(_options.ProcessStatusCheckInterval, ct).ConfigureAwait(false);
         }
 
         public ChannelReader<ShardMessage<TError>> Errors => _errors.Reader;
@@ -287,7 +292,6 @@ namespace Eocron.Sharding.Processing
         private readonly IStreamWriterSerializer<TInput> _inputSerializer;
         private readonly ProcessShardOptions _options;
         private readonly SemaphoreSlim _publishSemaphore;
-        private readonly TimeSpan _statusCheckInterval;
         private bool _disposed;
         private Process _currentProcess;
     }

@@ -18,6 +18,7 @@ namespace Eocron.Sharding.Monitoring
             IProcessDiagnosticInfoProvider infoProvider,
             IMetrics metrics,
             TimeSpan checkInterval,
+            TimeSpan checkTimeout,
             IReadOnlyDictionary<string, string> tags)
         {
             _logger = logger;
@@ -25,12 +26,17 @@ namespace Eocron.Sharding.Monitoring
             _infoProvider = infoProvider;
             _metrics = metrics;
             _checkInterval = checkInterval;
-            _workingSetGauge = MonitoringHelper.CreateShardOptions<GaugeOptions>("working_set_bytes",
+            _workingSetGauge = MonitoringHelper.CreateShardOptions<GaugeOptions>("process_working_set_bytes",
                 x => { x.MeasurementUnit = Unit.Bytes; }, tags);
-            _privateMemoryGauge = MonitoringHelper.CreateShardOptions<GaugeOptions>("private_memory_bytes",
+            _privateMemoryGauge = MonitoringHelper.CreateShardOptions<GaugeOptions>("process_private_memory_bytes",
                 x => { x.MeasurementUnit = Unit.Bytes; }, tags);
-            _cpuPercentageGauge = MonitoringHelper.CreateShardOptions<GaugeOptions>("cpu_load_percents",
+            _pagedMemoryGauge = MonitoringHelper.CreateShardOptions<GaugeOptions>("process_paged_memory_bytes",
+                x => { x.MeasurementUnit = Unit.Bytes; }, tags);
+            _cpuPercentageGauge = MonitoringHelper.CreateShardOptions<GaugeOptions>("process_cpu_load_percents",
                 x => { x.MeasurementUnit = Unit.Percent; }, tags);
+            _handleCountGauge = MonitoringHelper.CreateShardOptions<GaugeOptions>("process_os_handle_count",
+                x => { x.MeasurementUnit = Unit.Items; }, tags);
+            _checkTimeout = checkTimeout;
         }
 
         public void Dispose()
@@ -86,16 +92,13 @@ namespace Eocron.Sharding.Monitoring
             await _inputManager.IsReadyAsync(ct).ConfigureAwait(false);
 
             if (!_infoProvider.TryGetProcessDiagnosticInfo(out var info))
-                info = new ProcessDiagnosticInfo
-                {
-                    PrivateMemorySize64 = 0,
-                    TotalProcessorTime = TimeSpan.Zero,
-                    WorkingSet64 = 0
-                };
+                info = new ProcessDiagnosticInfo();
 
             _metrics.Measure.Gauge.SetValue(_workingSetGauge, info.WorkingSet64);
             _metrics.Measure.Gauge.SetValue(_privateMemoryGauge, info.PrivateMemorySize64);
+            _metrics.Measure.Gauge.SetValue(_pagedMemoryGauge, info.PagedMemorySize64);
             _metrics.Measure.Gauge.SetValue(_cpuPercentageGauge, SampleCpuUsage(info) * 100);
+            _metrics.Measure.Gauge.SetValue(_handleCountGauge, info.HandleCount);
         }
 
         private float SampleCpuUsage(ProcessDiagnosticInfo info)
@@ -115,8 +118,10 @@ namespace Eocron.Sharding.Monitoring
 
         private readonly GaugeOptions _cpuPercentageGauge;
         private readonly GaugeOptions _privateMemoryGauge;
-
+        private readonly GaugeOptions _pagedMemoryGauge;
         private readonly GaugeOptions _workingSetGauge;
+        private readonly GaugeOptions _handleCountGauge;
+        private readonly TimeSpan _checkTimeout;
         private readonly IMetrics _metrics;
         private readonly IProcessDiagnosticInfoProvider _infoProvider;
         private readonly ILogger _logger;
@@ -124,6 +129,5 @@ namespace Eocron.Sharding.Monitoring
         private readonly TimeSpan _checkInterval;
         private DateTime? _lastCheckTime;
         private TimeSpan? _lastTotalProcessorTime;
-        private TimeSpan _checkTimeout;
     }
 }

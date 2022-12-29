@@ -36,11 +36,12 @@ namespace Eocron.Sharding.Tests
         [Test]
         public async Task TestErrorRemoveOldest()
         {
+            var options = new ProcessShardOptions();
             var toPublish = Enumerable
-                .Range(0, ProcessShardOptions.DefaultErrorOptions.Capacity * 2)
+                .Range(0, options.ErrorOptions.Capacity * 2)
                 .Select(x => "error " + x)
                 .ToList();
-            var toAssert = toPublish.Skip(ProcessShardOptions.DefaultErrorOptions.Capacity).ToArray();
+            var toAssert = toPublish.Skip(options.ErrorOptions.Capacity).ToArray();
             var cts = new CancellationTokenSource(TestTimeout);
 
             await _shard.PublishAsync(toPublish, cts.Token);

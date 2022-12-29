@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
+using Eocron.Sharding.Configuration;
 
 namespace Eocron.Sharding
 {
@@ -21,6 +22,24 @@ namespace Eocron.Sharding
             this ShardBuilder<TInput, TOutput, TError> builder,
             ILoggerFactory loggerFactory)
         {
+
+            return builder;
+        }
+
+        public static ShardBuilder<TInput, TOutput, TError> WithProcessJobDependencies<TInput, TOutput, TError>(
+            this ShardBuilder<TInput, TOutput, TError> builder,
+            IStreamWriterSerializer<TInput> inputSerializer,
+            IStreamReaderDeserializer<TOutput> outputDeserializer,
+            IStreamReaderDeserializer<TError> errorDeserializer,
+            ILoggerFactory loggerFactory,
+            IProcessStateProvider processStateProvider,
+            IChildProcessWatcher watcher)
+        {
+            builder.InputSerializer = inputSerializer;
+            builder.OutputDeserializer = outputDeserializer;
+            builder.ErrorDeserializer = errorDeserializer;
+            builder.ProcessStateProvider = processStateProvider;
+            builder.Watcher = watcher;
             builder.Add((s, shardId) =>
                 s.AddSingleton<ILogger>(_ => loggerFactory.CreateLogger<IShard<TInput, TOutput, TError>>()));
             return builder;
@@ -28,22 +47,32 @@ namespace Eocron.Sharding
 
         public static ShardBuilder<TInput, TOutput, TError> WithProcessJob<TInput, TOutput, TError>(
             this ShardBuilder<TInput, TOutput, TError> builder,
-            Func<IServiceProvider, string, IProcessJob<TInput, TOutput, TError>> processJobProvider,
+            ProcessShardOptions options,
             TimeSpan jobErrorRestartInterval,
             TimeSpan jobSuccessRestartInterval)
         {
-            builder.Add((s, shardId) => AddCoreDependencies(s, shardId, processJobProvider, jobErrorRestartInterval, jobSuccessRestartInterval));
+            builder.Add((s, shardId) => AddCoreDependencies(s, shardId, options, builder, jobErrorRestartInterval, jobSuccessRestartInterval));
             return builder;
         }
 
         private static IServiceCollection AddCoreDependencies<TInput, TOutput, TError>(
             IServiceCollection container,
             string shardId,
-            Func<IServiceProvider, string, IProcessJob<TInput, TOutput, TError>> processJobProvider,
+            ProcessShardOptions options,
+            ShardBuilder<TInput, TOutput, TError> builder,
             TimeSpan jobErrorRestartInterval,
             TimeSpan jobSuccessRestartInterval)
         {
-            container.AddSingleton<IProcessJob<TInput, TOutput, TError>>(x => processJobProvider(x, shardId))
+            container.AddSingleton<IProcessJob<TInput, TOutput, TError>>(x => 
+                    new ProcessJob<TInput, TOutput, TError>(
+                    options,
+                    builder.OutputDeserializer,
+                    builder.ErrorDeserializer,
+                    builder.InputSerializer,
+                    x.GetRequiredService<ILogger>(),
+                    builder.ProcessStateProvider,
+                    builder.Watcher,
+                    shardId))
                 .AddSingleton<IShard>(x =>
                     x.GetRequiredService<IProcessJob<TInput, TOutput, TError>>())
                 .AddSingleton<IProcessDiagnosticInfoProvider>(x =>
@@ -60,7 +89,7 @@ namespace Eocron.Sharding
                     prev,
                     x.GetRequiredService<ILogger>(),
                     jobErrorRestartInterval,
-                    jobErrorRestartInterval));
+                    jobSuccessRestartInterval));
             return container;
         }
     }

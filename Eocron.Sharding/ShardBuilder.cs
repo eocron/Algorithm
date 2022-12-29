@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Eocron.Sharding.Configuration;
+using Eocron.Sharding.Processing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Eocron.Sharding
 {
@@ -6,6 +8,11 @@ namespace Eocron.Sharding
     {
         public delegate void ConfiguratorStep<TInput, TOutput, TError>(IServiceCollection shardServices, string shardId);
         public ConfiguratorStep<TInput, TOutput, TError> Configurator { get; set; }
+        public IStreamWriterSerializer<TInput> InputSerializer { get; set; }
+        public IStreamReaderDeserializer<TOutput> OutputDeserializer { get; set; }
+        public IStreamReaderDeserializer<TError> ErrorDeserializer { get; set; }
+        public IProcessStateProvider ProcessStateProvider { get; set; }
+        public IChildProcessWatcher Watcher { get; set; }
 
         public ShardBuilder()
         {

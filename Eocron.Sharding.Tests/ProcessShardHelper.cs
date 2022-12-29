@@ -61,21 +61,20 @@ namespace Eocron.Sharding.Tests
         {
             var loggerFactory = new Mock<ILoggerFactory>();
             loggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(new TestLogger());
-            var killer = new TestChildProcessWatcher();
+            var watcher = new TestChildProcessWatcher();
             var metrics = new MetricsBuilder().Build();
             var shardFactory =
                 new ShardBuilder<string, string, string>()
                     .WithLogging(loggerFactory.Object)
-                    .WithProcessJob((x, id) =>
-                            new ProcessJob<string, string, string>(
-                                CreateTestAppShardOptions(mode),
-                                new NewLineDeserializer(),
-                                new NewLineDeserializer(),
-                                new NewLineSerializer(),
-                                x.GetRequiredService<ILogger>(),
-                                id: id,
-                                watcher: killer,
-                                stateProvider: x.GetService<IProcessStateProvider>()),
+                    .WithProcessJobDependencies(
+                        new NewLineSerializer(),
+                        new NewLineDeserializer(),
+                        new NewLineDeserializer(),
+                        loggerFactory.Object,
+                        null,
+                        watcher)
+                    .WithProcessJob(
+                        CreateTestAppShardOptions(mode),
                         TimeSpan.Zero,
                         TimeSpan.Zero)
                     .WithAppMetrics(

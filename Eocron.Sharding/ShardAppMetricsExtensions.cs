@@ -29,9 +29,8 @@ namespace Eocron.Sharding
             TimeSpan errorRestartInterval)
         {
             return container
-                .AddSingleton<IMetrics>(metrics)
                 .Replace<IShardInputManager<TInput>>((x, prev) =>
-                    new MonitoredShardInputManager<TInput>(prev, x.GetRequiredService<IMetrics>(),
+                    new MonitoredShardInputManager<TInput>(prev, metrics,
                         Merge(
                             tags,
                             new[]
@@ -39,7 +38,7 @@ namespace Eocron.Sharding
                                 new KeyValuePair<string, string>("shard_id", x.GetRequiredService<IShard>().Id)
                             })))
                 .Replace<IShardOutputProvider<TOutput, TError>>((x, prev) =>
-                    new MonitoredShardOutputProvider<TOutput, TError>(prev, x.GetRequiredService<IMetrics>(),
+                    new MonitoredShardOutputProvider<TOutput, TError>(prev, metrics,
                         Merge(
                             tags,
                             new[]
@@ -54,7 +53,8 @@ namespace Eocron.Sharding
                                 x.GetRequiredService<ILogger>(),
                                 x.GetRequiredService<IShardInputManager<TInput>>(),
                                 x.GetRequiredService<IProcessDiagnosticInfoProvider>(),
-                                x.GetRequiredService<IMetrics>(),
+                                metrics,
+                                metricCollectionInterval,
                                 metricCollectionInterval,
                                 Merge(
                                     tags,

@@ -22,16 +22,19 @@ namespace Eocron.Sharding.Processing
         ///     How frequently process state is monitored in shard.
         ///     Default: 100ms
         /// </summary>
-        public TimeSpan? ProcessStatusCheckInterval { get; set; }
-
-        public static BoundedChannelOptions DefaultOutputOptions = new(10000)
+        public TimeSpan ProcessStatusCheckInterval { get; set; }
+        
+        public ProcessShardOptions()
         {
-            FullMode = BoundedChannelFullMode.Wait
-        };
-
-        public static BoundedChannelOptions DefaultErrorOptions = new(10000)
-            { FullMode = BoundedChannelFullMode.DropOldest };
-
-        public static TimeSpan DefaultProcessStatusCheckInterval = TimeSpan.FromMilliseconds(100);
+            ProcessStatusCheckInterval = TimeSpan.FromMilliseconds(100);
+            ErrorOptions = new(10000)
+            {
+                FullMode = BoundedChannelFullMode.DropOldest
+            };
+            OutputOptions = new(10000)
+            {
+                FullMode = BoundedChannelFullMode.Wait
+            };
+        }
     }
 }
