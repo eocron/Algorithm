@@ -35,7 +35,7 @@ namespace Eocron.Sharding.Tests
         }
 
         [Test]
-        public void RunErrorRun()
+        public async Task RunErrorRun()
         {
             var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
             var jobMock = new Mock<IJob>();
@@ -43,53 +43,65 @@ namespace Eocron.Sharding.Tests
             var logger = new TestLogger();
             var job = new ShardLifetimeJob(jobMock.Object, logger, true);
             Assert.ThrowsAsync<Exception>(() => job.RunAsync(cts.Token));
+            Assert.IsFalse(await _job.IsStoppedAsync(_cts.Token));//check if it is not stopped manually
             Assert.ThrowsAsync<Exception>(() => job.RunAsync(cts.Token));
+            Assert.IsFalse(await _job.IsStoppedAsync(_cts.Token));
         }
 
         [Test]
         public async Task StartStopStart()
         {
             VerifyRunCount(1);
+            Assert.IsFalse(await _job.IsStoppedAsync(_cts.Token));
             await _job.StopAsync(_cts.Token);
             await Task.Delay(1);
             VerifyRunCount(1);
+            Assert.IsTrue(await _job.IsStoppedAsync(_cts.Token));
             await _job.StartAsync(_cts.Token);
             await Task.Delay(1);
             VerifyRunCount(2);
-
+            Assert.IsFalse(await _job.IsStoppedAsync(_cts.Token));
         }
 
         [Test]
         public async Task StartRestartRestart()
         {
             VerifyRunCount(1);
+            Assert.IsFalse(await _job.IsStoppedAsync(_cts.Token));
             await _job.RestartAsync(_cts.Token);
             await Task.Delay(1);
             VerifyRunCount(2);
+            Assert.IsFalse(await _job.IsStoppedAsync(_cts.Token));
             await _job.RestartAsync(_cts.Token);
             await Task.Delay(1);
             VerifyRunCount(3);
+            Assert.IsFalse(await _job.IsStoppedAsync(_cts.Token));
         }
 
         [Test]
         public async Task StartStart()
         {
             VerifyRunCount(1);
+            Assert.IsFalse(await _job.IsStoppedAsync(_cts.Token));
             await _job.StartAsync(_cts.Token);
             await Task.Delay(1);
             VerifyRunCount(1);
+            Assert.IsFalse(await _job.IsStoppedAsync(_cts.Token));
         }
 
         [Test]
         public async Task StartStopStop()
         {
             VerifyRunCount(1);
+            Assert.IsFalse(await _job.IsStoppedAsync(_cts.Token));
             await _job.StopAsync(_cts.Token);
             await Task.Delay(1);
             VerifyRunCount(1);
+            Assert.IsTrue(await _job.IsStoppedAsync(_cts.Token));
             await _job.StopAsync(_cts.Token);
             await Task.Delay(1);
             VerifyRunCount(1);
+            Assert.IsTrue(await _job.IsStoppedAsync(_cts.Token));
         }
 
         private void VerifyRunCount(int count)
