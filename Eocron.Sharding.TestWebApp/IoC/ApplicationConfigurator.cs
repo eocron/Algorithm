@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using App.Metrics;
 using Eocron.Sharding.Configuration;
+using Eocron.Sharding.Monitoring;
 using Eocron.Sharding.Processing;
 using Eocron.Sharding.TestWebApp.Shards;
 
@@ -20,27 +21,22 @@ namespace Eocron.Sharding.TestWebApp.IoC
             services.AddSingleton<IStreamWriterSerializer<string>, NewLineSerializer>();
             services.AddSingleton(x =>
                 new ShardBuilder<string, string, string>()
-                    .WithLogging(x.GetRequiredService<ILoggerFactory>())
+                    .WithTransient(x.GetRequiredService<ILoggerFactory>())
+                    .WithTransient(x.GetRequiredService<IChildProcessWatcher>())
                     .WithProcessJobDependencies(
                         x.GetRequiredService<IStreamWriterSerializer<string>>(),
                         x.GetRequiredService<IStreamReaderDeserializer<string>>(),
-                        x.GetRequiredService<IStreamReaderDeserializer<string>>(),
-                        x.GetRequiredService<ILoggerFactory>(),
-                        x.GetService<IProcessStateProvider>(),
-                        x.GetRequiredService<IChildProcessWatcher>())
+                        x.GetRequiredService<IStreamReaderDeserializer<string>>())
                     .WithProcessJob(
                         new ProcessShardOptions
                                 {
                                     StartInfo = new ProcessStartInfo("Tools/Eocron.Sharding.TestApp.exe", "stream")
-                                        .ConfigureAsService()
-                                },
-                        TimeSpan.FromSeconds(5),
-                        TimeSpan.FromSeconds(5))
-                    .WithAppMetrics(
-                        x.GetRequiredService<IMetrics>(),
-                        null,
-                        TimeSpan.FromSeconds(1),
-                        TimeSpan.FromSeconds(5))
+                                        .ConfigureAsService(),
+                                    ErrorRestartInterval = TimeSpan.FromSeconds(5),
+                                    SuccessRestartInterval = TimeSpan.FromSeconds(5)
+                                })
+                    .WithTransient(x.GetRequiredService<IMetrics>())
+                    .WithAppMetrics(new AppMetricsShardOptions())
                     .CreateFactory());
             services.AddSingleton(x =>
                 new ConstantShardPool<string, string, string>(

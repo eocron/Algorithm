@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Eocron.Sharding.Processing;
 using App.Metrics;
 using Eocron.Sharding.Configuration;
+using Eocron.Sharding.Monitoring;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -54,6 +55,8 @@ namespace Eocron.Sharding.Tests
             {
                 StartInfo = new ProcessStartInfo("Tools/Eocron.Sharding.TestApp.exe") { ArgumentList = { mode } }
                     .ConfigureAsService(),
+                ErrorRestartInterval = TimeSpan.Zero,
+                SuccessRestartInterval = TimeSpan.Zero
             };
         }
 
@@ -65,23 +68,16 @@ namespace Eocron.Sharding.Tests
             var metrics = new MetricsBuilder().Build();
             var shardFactory =
                 new ShardBuilder<string, string, string>()
-                    .WithLogging(loggerFactory.Object)
+                    .WithTransient<ILoggerFactory>(loggerFactory.Object)
+                    .WithTransient<IChildProcessWatcher>(watcher)
                     .WithProcessJobDependencies(
                         new NewLineSerializer(),
                         new NewLineDeserializer(),
-                        new NewLineDeserializer(),
-                        loggerFactory.Object,
-                        null,
-                        watcher)
+                        new NewLineDeserializer())
                     .WithProcessJob(
-                        CreateTestAppShardOptions(mode),
-                        TimeSpan.Zero,
-                        TimeSpan.Zero)
-                    .WithAppMetrics(
-                        metrics,
-                        null,
-                        TimeSpan.FromSeconds(1),
-                        TimeSpan.Zero)
+                        CreateTestAppShardOptions(mode))
+                    .WithTransient<IMetrics>(metrics)
+                    .WithAppMetrics(new AppMetricsShardOptions())
                     .CreateFactory();
             return shardFactory.CreateNewShard(nameof(ProcessShardTests) + Guid.NewGuid());
         }

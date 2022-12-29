@@ -23,6 +23,10 @@ namespace Eocron.Sharding.Processing
         ///     Default: 100ms
         /// </summary>
         public TimeSpan ProcessStatusCheckInterval { get; set; }
+
+        public TimeSpan ErrorRestartInterval { get; set; }
+
+        public TimeSpan SuccessRestartInterval { get; set; }
         
         public ProcessShardOptions()
         {
@@ -35,6 +39,8 @@ namespace Eocron.Sharding.Processing
             {
                 FullMode = BoundedChannelFullMode.Wait
             };
+            ErrorRestartInterval = TimeSpan.Zero;
+            SuccessRestartInterval = TimeSpan.Zero;
         }
     }
 }

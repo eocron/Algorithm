@@ -11,13 +11,6 @@ namespace Eocron.Sharding
         public IStreamWriterSerializer<TInput> InputSerializer { get; set; }
         public IStreamReaderDeserializer<TOutput> OutputDeserializer { get; set; }
         public IStreamReaderDeserializer<TError> ErrorDeserializer { get; set; }
-        public IProcessStateProvider ProcessStateProvider { get; set; }
-        public IChildProcessWatcher Watcher { get; set; }
-
-        public ShardBuilder()
-        {
-
-        }
 
         public void Add(ConfiguratorStep<TInput, TOutput, TError> next)
         {
@@ -30,6 +23,21 @@ namespace Eocron.Sharding
                 prev?.Invoke(s, id);
                 next(s, id);
             };
+        }
+
+        public ShardBuilder<TInput, TOutput, TError> WithTransient<TInterface, TImplementation>(TImplementation implementation)
+            where TImplementation : TInterface
+            where TInterface : class
+        {
+            Add((s, id)=> s.AddTransient<TInterface>(sp=> implementation));
+            return this;
+        }
+
+        public ShardBuilder<TInput, TOutput, TError> WithTransient<TInterface>(TInterface implementation)
+            where TInterface : class
+        {
+            Add((s, id) => s.AddTransient<TInterface>(sp => implementation));
+            return this;
         }
 
         public IShard<TInput, TOutput, TError> Build(string shardId)

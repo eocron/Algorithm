@@ -12,35 +12,29 @@ namespace Eocron.Sharding
     public static class ShardAppMetricsExtensions
     {
         public static ShardBuilder<TInput, TOutput, TError> WithAppMetrics<TInput, TOutput, TError>(
-            this ShardBuilder<TInput, TOutput, TError> builder,
-            IMetrics metrics,
-            IReadOnlyDictionary<string, string> tags,
-            TimeSpan metricCollectionInterval,
-            TimeSpan errorRestartInterval)
+            this ShardBuilder<TInput, TOutput, TError> builder, 
+            AppMetricsShardOptions options)
         {
-            builder.Add((s, shardId)=> AddAppMetrics<TInput, TOutput, TError>(s, metrics, tags, metricCollectionInterval, errorRestartInterval));
+            builder.Add((s, shardId)=> AddAppMetrics<TInput, TOutput, TError>(s, options));
             return builder;
         }
         private static IServiceCollection AddAppMetrics<TInput, TOutput, TError>(
             IServiceCollection container,
-            IMetrics metrics,
-            IReadOnlyDictionary<string, string> tags,
-            TimeSpan metricCollectionInterval,
-            TimeSpan errorRestartInterval)
+            AppMetricsShardOptions options)
         {
             return container
                 .Replace<IShardInputManager<TInput>>((x, prev) =>
-                    new MonitoredShardInputManager<TInput>(prev, metrics,
+                    new MonitoredShardInputManager<TInput>(prev, x.GetRequiredService<IMetrics>(),
                         Merge(
-                            tags,
+                            options.Tags,
                             new[]
                             {
                                 new KeyValuePair<string, string>("shard_id", x.GetRequiredService<IShard>().Id)
                             })))
                 .Replace<IShardOutputProvider<TOutput, TError>>((x, prev) =>
-                    new MonitoredShardOutputProvider<TOutput, TError>(prev, metrics,
+                    new MonitoredShardOutputProvider<TOutput, TError>(prev, x.GetRequiredService<IMetrics>(),
                         Merge(
-                            tags,
+                            options.Tags,
                             new[]
                             {
                                 new KeyValuePair<string, string>("shard_id", x.GetRequiredService<IShard>().Id)
@@ -53,17 +47,17 @@ namespace Eocron.Sharding
                                 x.GetRequiredService<ILogger>(),
                                 x.GetRequiredService<IShardInputManager<TInput>>(),
                                 x.GetRequiredService<IProcessDiagnosticInfoProvider>(),
-                                metrics,
-                                metricCollectionInterval,
-                                metricCollectionInterval,
+                                x.GetRequiredService<IMetrics>(),
+                                options.CheckInterval,
+                                options.CheckTimeout,
                                 Merge(
-                                    tags,
+                                    options.Tags,
                                     new[]
                                     {
                                         new KeyValuePair<string, string>("shard_id", x.GetRequiredService<IShard>().Id)
                                     })),
                             x.GetRequiredService<ILogger>(),
-                            errorRestartInterval,
+                            options.ErrorRestartInterval,
                             TimeSpan.Zero)));
         }
 
