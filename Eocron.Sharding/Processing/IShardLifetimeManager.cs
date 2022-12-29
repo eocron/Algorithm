@@ -9,8 +9,6 @@ namespace Eocron.Sharding.Processing
 
         Task StopAsync(CancellationToken ct);
 
-        Task<bool> TryStopAsync(CancellationToken ct);
-
         Task StartAsync(CancellationToken ct);
 
         Task RestartAsync(CancellationToken ct);

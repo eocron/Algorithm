@@ -30,21 +30,9 @@ namespace Eocron.Sharding.Jobs
             ResetAsync().Wait();
         }
 
-        public async Task StopAsync(CancellationToken ct)
+        public Task StopAsync(CancellationToken ct)
         {
             _startChannel.Reader.TryRead(out var _);
-            var cts = await _stopChannel.Reader.ReadAsync(ct).ConfigureAwait(false);
-            try
-            {
-                cts.Cancel();
-            }
-            catch (ObjectDisposedException)
-            {
-            }
-        }
-
-        public Task<bool> TryStopAsync(CancellationToken ct)
-        {
             if (_stopChannel.Reader.TryRead(out var cts))
             {
                 try
@@ -74,8 +62,12 @@ namespace Eocron.Sharding.Jobs
 
         public async Task RestartAsync(CancellationToken ct)
         {
-            await TryStopAsync(ct).ConfigureAwait(false);
-            await _startChannel.Writer.WriteAsync(new object(), CancellationToken.None).ConfigureAwait(false);
+            await StopAsync(ct).ConfigureAwait(false);
+            while (!await IsStoppedAsync(ct).ConfigureAwait(false))
+            {
+                await Task.Delay(100, ct).ConfigureAwait(false);
+            }
+            await StartAsync(ct).ConfigureAwait(false);
         }
 
         public async Task RunAsync(CancellationToken ct)

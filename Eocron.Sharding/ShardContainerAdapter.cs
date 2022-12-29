@@ -53,11 +53,6 @@ namespace Eocron.Sharding
             await _container.GetRequiredService<IShardLifetimeManager>().StopAsync(ct).ConfigureAwait(false);
         }
 
-        public async Task<bool> TryStopAsync(CancellationToken ct)
-        {
-            return await _container.GetRequiredService<IShardLifetimeManager>().TryStopAsync(ct).ConfigureAwait(false);
-        }
-
         public async Task StartAsync(CancellationToken ct)
         {
             await _container.GetRequiredService<IShardLifetimeManager>().StartAsync(ct).ConfigureAwait(false);
