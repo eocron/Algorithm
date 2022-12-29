@@ -18,7 +18,7 @@ namespace Eocron.Sharding
             return services;
         }
 
-        public static ShardBuilder<TInput, TOutput, TError> WithProcessJobDependencies<TInput, TOutput, TError>(
+        public static ShardBuilder<TInput, TOutput, TError> WithSerializers<TInput, TOutput, TError>(
             this ShardBuilder<TInput, TOutput, TError> builder,
             IStreamWriterSerializer<TInput> inputSerializer,
             IStreamReaderDeserializer<TOutput> outputDeserializer,
@@ -35,6 +35,14 @@ namespace Eocron.Sharding
             ProcessShardOptions options)
         {
             builder.Add((s, shardId) => AddCoreDependencies(s, shardId, options, builder));
+            return builder;
+        }
+
+        public static ShardBuilder<TInput, TOutput, TError> WithProcessJobWrap<TInput, TOutput, TError>(
+            this ShardBuilder<TInput, TOutput, TError> builder,
+            Func<IProcessJob<TInput, TOutput, TError>, IProcessJob<TInput, TOutput, TError>> wrapProvider)
+        {
+            builder.Add((s, shardId) => s.Replace<IProcessJob<TInput, TOutput,TError>>((_, prev)=> wrapProvider(prev)));
             return builder;
         }
 

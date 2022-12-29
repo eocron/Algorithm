@@ -70,7 +70,7 @@ namespace Eocron.Sharding.Tests
                 new ShardBuilder<string, string, string>()
                     .WithTransient<ILoggerFactory>(loggerFactory.Object)
                     .WithTransient<IChildProcessWatcher>(watcher)
-                    .WithProcessJobDependencies(
+                    .WithSerializers(
                         new NewLineSerializer(),
                         new NewLineDeserializer(),
                         new NewLineDeserializer())

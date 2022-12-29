@@ -23,7 +23,7 @@ namespace Eocron.Sharding.TestWebApp.IoC
                 new ShardBuilder<string, string, string>()
                     .WithTransient(x.GetRequiredService<ILoggerFactory>())
                     .WithTransient(x.GetRequiredService<IChildProcessWatcher>())
-                    .WithProcessJobDependencies(
+                    .WithSerializers(
                         x.GetRequiredService<IStreamWriterSerializer<string>>(),
                         x.GetRequiredService<IStreamReaderDeserializer<string>>(),
                         x.GetRequiredService<IStreamReaderDeserializer<string>>())

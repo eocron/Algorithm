@@ -31,7 +31,7 @@ namespace Eocron.Sharding.Processing
         {
             await Task.Yield();
             using var process = Process.Start(_startInfo);
-            while (!process.HasExited)
+            while (ProcessHelper.IsAlive(process))
             {
                 while (ChildrenToWatch.Reader.TryRead(out var childId))
                 {
