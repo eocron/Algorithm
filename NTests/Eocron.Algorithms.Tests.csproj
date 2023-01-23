@@ -15,12 +15,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.4" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
     <PackageReference Include="NUnit" Version="3.13.3" />
-    <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
-    <PackageReference Include="QuikGraph.Graphviz" Version="2.3.1" />
-    <PackageReference Include="System.Memory" Version="4.5.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.3.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
+    <PackageReference Include="QuikGraph.Graphviz" Version="2.5.0" />
+    <PackageReference Include="System.Memory" Version="4.5.5" />
   </ItemGroup>
 
   <ItemGroup>

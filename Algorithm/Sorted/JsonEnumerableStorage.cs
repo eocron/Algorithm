@@ -21,24 +21,14 @@ namespace Eocron.Algorithms.Sorted
             _serializer = new JsonSerializer(){Formatting = Formatting.None};
         }
 
-        private sealed class ObjectHolder
-        {
-            public T V { get; set; }
-        }
-
         public void Push(IEnumerable<T> data)
         {
             if (!Directory.Exists(_tempFolder))
                 Directory.CreateDirectory(_tempFolder);
 
             var filePath = Path.Combine(_tempFolder, Guid.NewGuid().ToString() + ".json");
-            using var stream = File.OpenWrite(filePath);
-            using var streamWriter = new StreamWriter(stream);
-            using var writer = new JsonTextWriter(streamWriter);
-            foreach (var d in data)
-            {
-                _serializer.Serialize(writer, new ObjectHolder(){V = d});
-            }
+            using var stream = File.CreateText(filePath);
+            _serializer.Serialize(stream, data);
             _files.Add(filePath);
         }
 
@@ -48,18 +38,8 @@ namespace Eocron.Algorithms.Sorted
             {
                 try
                 {
-                    using var stream = File.OpenRead(path);
-                    using var streamReader = new StreamReader(stream);
-                    using var reader = new JsonTextReader(streamReader);
-                    reader.SupportMultipleContent = true;
-
-                    while (reader.Read())
-                    {
-                        if (reader.TokenType != JsonToken.StartObject) continue;
-                        var tmp = _serializer.Deserialize<ObjectHolder>(reader);
-                        yield return tmp.V;
-                    }
-                    yield break;
+                    using var stream = File.OpenText(path);
+                    return (List<T>)_serializer.Deserialize(stream, typeof(List<T>));
                 }
                 finally
                 {

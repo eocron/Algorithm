@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Eocron.Algorithms.Sorted
 {
@@ -18,17 +19,21 @@ namespace Eocron.Algorithms.Sorted
 
             comparer = comparer ?? Comparer<TKey>.Default;
             storage.Clear();
-            foreach (var chunk in sourceEnumerable.Chunk(minimalChunkSize))
+            foreach (var chunk in sourceEnumerable.ChunkInPlace(minimalChunkSize))
             {
-                storage.Push(chunk.OrderBy(keyProvider, comparer));
+                chunk.Sort((x,y)=> comparer.Compare(keyProvider(x), keyProvider(y)));
+                storage.Push(chunk);
             }
 
             while (storage.Count / 2 > 0)
             {
-                var first = storage.Pop();
-                var second = storage.Pop();
+                Parallel.For(0, storage.Count / 2, new ParallelOptions(){MaxDegreeOfParallelism = Environment.ProcessorCount * 2}, _ =>
+                {
+                    var first = storage.Pop();
+                    var second = storage.Pop();
 
-                storage.Push(MergeSorted(first, second, keyProvider, comparer));
+                    storage.Push(MergeSorted(first, second, keyProvider, comparer));
+                });
             }
 
             return storage.Count > 0 ? storage.Pop() : Enumerable.Empty<TElement>();
@@ -57,25 +62,25 @@ namespace Eocron.Algorithms.Sorted
             }
         }
 
-        private static IEnumerable<IEnumerable<TValue>> Chunk<TValue>(
+        private static IEnumerable<List<TValue>> ChunkInPlace<TValue>(
             this IEnumerable<TValue> values,
             int chunkSize)
         {
+            var list = new List<TValue>(chunkSize);
             using var enumerator = values.GetEnumerator();
             while (enumerator.MoveNext())
             {
-                yield return GetChunk(enumerator, chunkSize);
+                list.Add(enumerator.Current);
+                if (list.Count == chunkSize)
+                {
+                    yield return list;
+                    list.Clear();
+                }
             }
-        }
 
-        private static IEnumerable<T> GetChunk<T>(
-            IEnumerator<T> enumerator,
-            int chunkSize)
-        {
-            do
-            {
-                yield return enumerator.Current;
-            } while (--chunkSize > 0 && enumerator.MoveNext());
+            if (list.Count > 0)
+                yield return list;
+            list.Clear();
         }
     }
 }
