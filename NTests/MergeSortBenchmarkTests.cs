@@ -35,7 +35,8 @@ namespace Eocron.Algorithms.Tests
             Console.WriteLine(logger.GetLog());
         }
 
-        [MemoryDiagnoser()]
+        [ThreadingDiagnoser]
+        [MemoryDiagnoser(false)]
         public class BenchmarkSuit
         {
             private int[] _data;
