@@ -24,13 +24,18 @@ namespace Eocron.Algorithms.Sorted
                 storage.Push(chunk);
             }
 
-            var iter = storage.Count > 0 ? storage.Pop() : Enumerable.Empty<TElement>();
+            if (storage.Count == 0)
+                return Enumerable.Empty<TElement>();
+            var queue = new Queue<IEnumerable<TElement>>();
             while (storage.Count > 0)
             {
-                iter = MergeSorted(iter, storage.Pop(), keyProvider, comparer);
+                queue.Enqueue(storage.Pop());
             }
-
-            return iter;
+            while (queue.Count > 1)
+            {
+                queue.Enqueue(MergeSorted(queue.Dequeue(), queue.Dequeue(), keyProvider, comparer));
+            }
+            return queue.Dequeue();
         }
 
         private static IEnumerable<TElement> MergeSorted<TElement, TKey>(IEnumerable<TElement> a, IEnumerable<TElement> b, Func<TElement, TKey> keyProvider, IComparer<TKey> comparer)
