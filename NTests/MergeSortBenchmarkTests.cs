@@ -15,29 +15,63 @@ namespace Eocron.Algorithms.Tests
     {
 
         [Test]
-        public void Measure()
+        public void MeasureInJson()
         {
-            //var n = new BenchmarkSuit();
-            //n.Setup();
-
-            //for (int i = 0; i < 10; i++)
-            //{
-            //    n.MergeSortOnDisk();
-            //}
-
             var logger = new AccumulationLogger();
             var config = ManualConfig.Create(DefaultConfig.Instance)
                 .AddLogger(logger)
                 .WithOptions(ConfigOptions.DisableOptimizationsValidator);
 
-            BenchmarkRunner.Run<BenchmarkSuit>(config);
+            BenchmarkRunner.Run<BenchmarkSuitInJson>(config);
+            Console.WriteLine(logger.GetLog());
+        }
 
+        [Test]
+        public void MeasureInMemory()
+        {
+            var logger = new AccumulationLogger();
+            var config = ManualConfig.Create(DefaultConfig.Instance)
+                .AddLogger(logger)
+                .WithOptions(ConfigOptions.DisableOptimizationsValidator);
+
+            BenchmarkRunner.Run<BenchmarkSuitInMemory>(config);
             Console.WriteLine(logger.GetLog());
         }
 
         [ThreadingDiagnoser]
         [MemoryDiagnoser(false)]
-        public class BenchmarkSuit
+        public class BenchmarkSuitInMemory
+        {
+            private int[] _data;
+            private Comparer<int> _cmp;
+            private IEnumerableStorage<int> _storage;
+            private int _chunkSize;
+            [GlobalSetup]
+            public void Setup()
+            {
+                var rnd = new Random(42);
+                _data = Enumerable.Range(0, 1000000).Select(x => rnd.Next()).ToArray();
+                _cmp = Comparer<int>.Default;
+                _storage = new InMemoryEnumerableStorage<int>();
+                _chunkSize = 100000;
+            }
+
+            [GlobalCleanup]
+            public void Cleanup()
+            {
+                _storage.Clear();
+            }
+
+            [Benchmark]
+            public List<int> MergeSortOnDisk()
+            {
+                return _data.MergeOrderBy(x => x, _storage, _cmp, _chunkSize).ToList();
+            }
+        }
+
+        [ThreadingDiagnoser]
+        [MemoryDiagnoser(false)]
+        public class BenchmarkSuitInJson
         {
             private int[] _data;
             private Comparer<int> _cmp;

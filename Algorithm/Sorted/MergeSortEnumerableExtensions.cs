@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Eocron.Algorithms.Sorted
 {
@@ -25,18 +24,13 @@ namespace Eocron.Algorithms.Sorted
                 storage.Push(chunk);
             }
 
-            while (storage.Count / 2 > 0)
+            var iter = storage.Count > 0 ? storage.Pop() : Enumerable.Empty<TElement>();
+            while (storage.Count > 0)
             {
-                Parallel.For(0, storage.Count / 2, new ParallelOptions(){MaxDegreeOfParallelism = Environment.ProcessorCount * 2}, _ =>
-                {
-                    var first = storage.Pop();
-                    var second = storage.Pop();
-
-                    storage.Push(MergeSorted(first, second, keyProvider, comparer));
-                });
+                iter = MergeSorted(iter, storage.Pop(), keyProvider, comparer);
             }
 
-            return storage.Count > 0 ? storage.Pop() : Enumerable.Empty<TElement>();
+            return iter;
         }
 
         private static IEnumerable<TElement> MergeSorted<TElement, TKey>(IEnumerable<TElement> a, IEnumerable<TElement> b, Func<TElement, TKey> keyProvider, IComparer<TKey> comparer)

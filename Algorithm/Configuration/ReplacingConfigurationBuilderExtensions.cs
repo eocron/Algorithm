@@ -18,7 +18,7 @@ namespace Eocron.Algorithms
         /// <param name="throwIfNotFound">If true - replacer will throw error on not found names</param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public static IConfigurationBuilder AddDefaultPatternReplacing(this IConfigurationBuilder builder, IEnumerable<KeyValuePair<string, string>> map, bool throwIfNotFound = false)
+        public static IConfigurationBuilder WithDefaultPatternReplacing(this IConfigurationBuilder builder, IEnumerable<KeyValuePair<string, string>> map, bool throwIfNotFound = false)
         {
             if (builder == null)
                 throw new ArgumentNullException(nameof(builder));
@@ -26,7 +26,7 @@ namespace Eocron.Algorithms
                 throw new ArgumentNullException(nameof(map));
 
             var reps = new Dictionary<string, string>(map);
-            return AddPatternReplacing(
+            return WithPatternReplacing(
                 builder,
                 DefaultNamePattern,
                 x =>
@@ -40,7 +40,7 @@ namespace Eocron.Algorithms
                 });
         }
 
-        public static IConfigurationBuilder AddPatternReplacing(this IConfigurationBuilder builder, Regex pattern, MatchEvaluator evaluator)
+        public static IConfigurationBuilder WithPatternReplacing(this IConfigurationBuilder builder, Regex pattern, MatchEvaluator evaluator)
         {
             if (builder == null)
                 throw new ArgumentNullException(nameof(builder));
