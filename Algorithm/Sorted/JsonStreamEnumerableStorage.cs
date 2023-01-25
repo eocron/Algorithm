@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace Eocron.Algorithms.Sorted
 {
-    public sealed class JsonMemoryCheapEnumerableStorage<T> : IEnumerableStorage<T>, IDisposable
+    public sealed class JsonStreamEnumerableStorage<T> : IEnumerableStorage<T>, IDisposable
     {
         private readonly string _tempFolder;
         private readonly JsonSerializer _serializer;
@@ -15,7 +15,7 @@ namespace Eocron.Algorithms.Sorted
 
         public string TempFolder => _tempFolder;
 
-        public JsonMemoryCheapEnumerableStorage(string tempFolder = null)
+        public JsonStreamEnumerableStorage(string tempFolder = null)
         {
             _tempFolder = tempFolder ?? Path.Combine(Path.GetTempPath(), "merge_sort");
             _serializer = new JsonSerializer() { Formatting = Formatting.None };
