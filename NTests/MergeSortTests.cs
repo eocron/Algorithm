@@ -30,7 +30,7 @@ namespace Eocron.Algorithms.Tests
         [TestCase(new[] { 1, 1, 1 })]
         public void CheckPersistent(int[] data)
         {
-            using var storage = new JsonEnumerableStorage<int>();
+            using var storage = new JsonMemoryCheapEnumerableStorage<int>();
             var expected = data.OrderBy(x => x).ToList();
             var actual = data.MergeOrderBy(x => x, storage, minimalChunkSize: 2).ToList();
             CollectionAssert.AreEqual(expected, actual, storage.TempFolder);
