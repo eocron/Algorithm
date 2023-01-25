@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -32,10 +31,9 @@ namespace Eocron.Algorithms.Sorted
             if (!Directory.Exists(_tempFolder))
                 Directory.CreateDirectory(_tempFolder);
 
-            var filePath = Path.Combine(_tempFolder, Guid.NewGuid().ToString() + ".bin");
+            var filePath = Path.Combine(_tempFolder, Guid.NewGuid().ToString() + ".json");
             using (var stream = File.OpenWrite(filePath)) 
-            using (var compressed = new DeflateStream(stream, CompressionMode.Compress))
-            using (var writer = new StreamWriter(compressed, Encoding.UTF8))
+            using (var writer = new StreamWriter(stream, Encoding.UTF8))
             using (var jwriter = new JsonTextWriter(writer))
             {
                 foreach (var d in data)
@@ -50,18 +48,17 @@ namespace Eocron.Algorithms.Sorted
         {
             if (_files.TryTake(out var path))
             {
-                return EnumeratePoped(path);
+                return EnumeratePopped(path);
             }
             throw new InvalidOperationException("Storage is empty.");
         }
 
-        private IEnumerable<T> EnumeratePoped(string path)
+        private IEnumerable<T> EnumeratePopped(string path)
         {
             try
             {
                 using var stream = File.OpenRead(path);
-                using var decompressed = new DeflateStream(stream, CompressionMode.Decompress);
-                using var reader = new StreamReader(decompressed, Encoding.UTF8);
+                using var reader = new StreamReader(stream, Encoding.UTF8);
                 using var jreader = new JsonTextReader(reader);
                 jreader.SupportMultipleContent = true;
 
