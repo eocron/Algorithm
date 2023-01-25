@@ -26,7 +26,7 @@ namespace Eocron.Algorithms.Sorted
 
             if (storage.Count == 0)
                 return Enumerable.Empty<TElement>();
-            var queue = new Queue<IEnumerable<TElement>>();
+            var queue = new Queue<IEnumerable<TElement>>(storage.Count);
             while (storage.Count > 0)
             {
                 queue.Enqueue(storage.Pop());
