@@ -52,8 +52,7 @@ namespace Eocron.Algorithms.Sorted
             string filePath;
             do
             {
-                filePath = Path.Combine(_tempFolder,
-                    Guid.NewGuid() + (_useCompress ? ".deflate" : ".json"));
+                filePath = Path.Combine(_tempFolder, Guid.NewGuid() + ".bin");
             } while (File.Exists(filePath));
 
             return filePath;
