@@ -18,18 +18,21 @@ namespace Eocron.Algorithms.Sorted
 
             comparer = comparer ?? Comparer<TKey>.Default;
             storage.Clear();
+            //chunking, sorting, saving
             foreach (var chunk in sourceEnumerable.ChunkInPlace(minimalChunkSize))
             {
                 chunk.Sort((x,y)=> comparer.Compare(keyProvider(x), keyProvider(y)));
-                storage.Push(chunk);
+                storage.Add(chunk);
             }
 
             if (storage.Count == 0)
                 return Enumerable.Empty<TElement>();
+
+            //making a merge tree IEnumerable out of all files, it will cost us O(totalSize/chunkSize) open handles
             var queue = new Queue<IEnumerable<TElement>>(storage.Count);
             while (storage.Count > 0)
             {
-                queue.Enqueue(storage.Pop());
+                queue.Enqueue(storage.Take());
             }
             while (queue.Count > 1)
             {
@@ -61,6 +64,7 @@ namespace Eocron.Algorithms.Sorted
             }
         }
 
+        //chop incoming enumerable into chunks, but uses same array each time to lower GC usage
         private static IEnumerable<List<TValue>> ChunkInPlace<TValue>(
             this IEnumerable<TValue> values,
             int chunkSize)
