@@ -9,7 +9,7 @@ namespace Eocron.Algorithms.Sorted
     {
         private readonly int _bufferSize;
         private readonly JsonSerializer _serializer;
-        public JsonStreamEnumerableStorage(string tempFolder = null, int bufferSize = 64*1024, bool useCompress = false) : base(tempFolder, useCompress)
+        public JsonStreamEnumerableStorage(string tempFolder = null, int bufferSize = 8*1024, bool useCompress = false) : base(tempFolder, useCompress)
         {
             _bufferSize = bufferSize;
             _serializer = new JsonSerializer() { Formatting = Formatting.None };
