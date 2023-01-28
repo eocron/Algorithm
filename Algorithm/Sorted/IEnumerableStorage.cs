@@ -8,7 +8,7 @@ namespace Eocron.Algorithms.Sorted
         /// Add collection
         /// </summary>
         /// <param name="data"></param>
-        void Add(IEnumerable<TElement> data);
+        void Add(IReadOnlyCollection<TElement> data);
         
         /// <summary>
         /// Take any available collection

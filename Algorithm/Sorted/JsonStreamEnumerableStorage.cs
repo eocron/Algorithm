@@ -20,7 +20,7 @@ namespace Eocron.Algorithms.Sorted
             public T Value;
         }
 
-        protected override void SerializeToStream(IEnumerable<T> data, Stream outputStream)
+        protected override void SerializeToStream(IReadOnlyCollection<T> data, Stream outputStream)
         {
             using (var writer = new StreamWriter(outputStream, Encoding.UTF8, bufferSize: _bufferSize))
             using (var jwriter = new JsonTextWriter(writer))

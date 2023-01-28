@@ -12,7 +12,7 @@ namespace Eocron.Algorithms.Sorted
     public sealed class InMemoryEnumerableStorage<T> : IEnumerableStorage<T>
     {
         private readonly ConcurrentBag<List<T>> _bag = new ConcurrentBag<List<T>>();
-        public void Add(IEnumerable<T> data)
+        public void Add(IReadOnlyCollection<T> data)
         {
             _bag.Add(data.ToList());
         }

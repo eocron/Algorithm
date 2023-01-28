@@ -20,7 +20,7 @@ namespace Eocron.Algorithms.Sorted
             _tempFolder = tempFolder ?? Path.Combine(Path.GetTempPath(), "merge_sort");
         }
 
-        public void Add(IEnumerable<T> data)
+        public void Add(IReadOnlyCollection<T> data)
         {
             var filePath = GetTempFilePath();
             Stream tmp = File.OpenWrite(filePath);
@@ -40,7 +40,7 @@ namespace Eocron.Algorithms.Sorted
             _files.Add(filePath);
         }
 
-        protected abstract void SerializeToStream(IEnumerable<T> data, Stream outputStream);
+        protected abstract void SerializeToStream(IReadOnlyCollection<T> data, Stream outputStream);
 
         protected abstract IEnumerable<T> DeserializeFromStream(Stream inputStream);
 
