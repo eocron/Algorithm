@@ -8,34 +8,38 @@ namespace Eocron.Algorithms
 {
     public static class ReplacingConfigurationBuilderExtensions
     {
-        public static readonly Regex DefaultNamePattern = new Regex(@"{(?<name>[a-z0-9_\-\.]+?)}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public static readonly Regex DefaultPlaceholderNamePattern = new Regex(@"{(?<name>[a-z0-9_\-\.\:\[\]]+?)}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
-        /// Replace {name} matches in configuration values to map[name]
+        /// Uses other config values to replace placeholders in format {path:in:placeholder:config}
         /// </summary>
         /// <param name="builder"></param>
-        /// <param name="map"></param>
-        /// <param name="throwIfNotFound">If true - replacer will throw error on not found names</param>
+        /// <param name="placeholders">Configu which contains placeholder mappings</param>
+        /// <param name="throwIfNotFound">Should placeholding throw error if placeholder path not found</param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public static IConfigurationBuilder WithDefaultPatternReplacing(this IConfigurationBuilder builder, IEnumerable<KeyValuePair<string, string>> map, bool throwIfNotFound = false)
+        /// <exception cref="KeyNotFoundException"></exception>
+        public static IConfigurationBuilder WithPlaceholders(this IConfigurationBuilder builder,
+            IConfiguration placeholders, bool throwIfNotFound = false)
         {
             if (builder == null)
                 throw new ArgumentNullException(nameof(builder));
-            if (map == null)
-                throw new ArgumentNullException(nameof(map));
+            if (placeholders == null)
+                throw new ArgumentNullException(nameof(placeholders));
 
-            var reps = new Dictionary<string, string>(map);
-            return WithPatternReplacing(
-                builder,
-                DefaultNamePattern,
+            return builder.WithPatternReplacing(
+                DefaultPlaceholderNamePattern,
                 x =>
                 {
-                    var name = x.Groups["name"].Value;
-                    if (reps.TryGetValue(name, out var newValue))
-                        return newValue;
+                    var key = x.Groups["name"].Value;
+                    var res = placeholders[x.Groups["name"].Value];
+                    if (res != null)
+                    {
+                        return res;
+                    }
+
                     if (throwIfNotFound)
-                        throw new KeyNotFoundException($"Key '{name}' not found when replacing.");
+                        throw new KeyNotFoundException($"Placeholder '{key}' not found.");
                     return x.Value;
                 });
         }
