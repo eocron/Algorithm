@@ -65,14 +65,19 @@ namespace Eocron.Algorithms
                 {
                     int offset = data.Offset;
                     int count = data.Count;
-                    int rem = count % (sizeof(long));
+                    int rem = count % (sizeof(long)*16);
                     long* b = (long*)(bytes + offset);
                     long* e = (long*)(bytes + offset + count - rem);
-
+                    
                     while (b < e)
                     {
-                        hash = hash * 31 + *b;
-                        b++;
+                        var h0 = *(b+0) + *(b+4) + *(b+8)  + *(b+12);
+                        var h1 = *(b+1) + *(b+5) + *(b+9)  + *(b+13);
+                        var h2 = *(b+3) + *(b+6) + *(b+10) + *(b+14);
+                        var h3 = *(b+4) + *(b+7) + *(b+11) + *(b+15);
+                        
+                        hash = (((hash * 31 + h0) * 31 + h1) * 31 + h2) * 31 + h3;
+                        b+=16;
                     }
 
                     for (int i = 0; i < rem; i++)
