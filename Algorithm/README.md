@@ -81,10 +81,25 @@ PS:
 As silly as it sounds, byte array comparer is widely used, but it's very slow,
 and it is not present in common libraries. 
 
-  - Around 180 faster than `SequenceEquals` almost like memcmp.
   - Has fast but not precise hash code. By default, invoked when byte array is greater than certain bound.
     This makes hashing of same size arrays more efficient than just by length comparison.
-  - Has slow but full hash code (optional).
+  - Performance similar to memcmp.
+  - No intrinsics involved (.netstandard 2.0 support)
+
+#### Benchmark vs base64 string of same byte array of size 12 mb
+
+| Method                     |  Categories |                 Mean |             Error |            StdDev | Ratio | RatioSD |
+|----------------------------|------------ |---------------------:|------------------:|------------------:|------:|--------:|
+| Equals_SequenceEquals      |      Equals |    97,738,583.333 ns | 1,865,298.6873 ns | 1,995,848.6973 ns | 25.76 |    1.57 |
+| Equals_Base64String        |      Equals |     3,694,088.954 ns |    73,389.0375 ns |   154,802.3886 ns |  1.00 |    0.00 |
+| **Equals_fast**            |      Equals | **1,449,748.465 ns** |    22,448.8073 ns |    19,900.2830 ns |  0.38 |    0.02 |
+|                            |             |                      |                   |                   |       |         |
+| GetHashCode_Base64String   | GetHashCode |    15,833,649.178 ns |   305,151.1762 ns |   339,174.7238 ns |  1.00 |    0.00 |
+| **GetHashCode_fast**       | GetHashCode |   **978,634.923 ns** |     5,682.2306 ns |     4,744.9199 ns |  0.06 |    0.00 |
+|                            |             |                      |                   |                   |       |         |
+| NotEquals_SequenceEquals   |   NotEquals |            40.200 ns |         0.2521 ns |         0.2105 ns | 13.53 |    0.19 |
+| NotEquals_fast             |   NotEquals |             9.930 ns |         0.1783 ns |         0.1831 ns |  3.34 |    0.06 |
+| **NotEquals_Base64String** |   NotEquals |         **2.971 ns** |         0.0401 ns |         0.0335 ns |  1.00 |    0.00 |
 
 ### Hex format parsing
 
