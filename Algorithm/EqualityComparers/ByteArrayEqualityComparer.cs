@@ -125,9 +125,9 @@ namespace Eocron.Algorithms
             }
         }
 
-        private static unsafe ulong GetHashCode128Bit(ArraySegment<byte> source)
+        private static unsafe int GetHashCode128Bit(ArraySegment<byte> source)
         {
-            ulong hash1 = 31 ^ (ulong)source.Count;
+            ulong hash1 = 31 + (ulong)source.Count;
             ulong hash2 = 37;
             const int step = 2;
             const int stepSize = sizeof(ulong) * step;
@@ -140,21 +140,21 @@ namespace Eocron.Algorithms
 
                     while (b < e)
                     {
-                        hash1 = Rehash(hash1) ^ *b;
-                        hash2 = Rehash(hash2) ^ *(b + 1);
+                        hash1 = MultiplyBy2147483647AndAdd(hash1, *b);
+                        hash2 = MultiplyBy2147483647AndAdd(hash2, *(b + 1));
                         b += step;
                     }
 
                     for (int i = source.Count - tail; i < source.Count; i++)
-                        hash1 = Rehash(hash1) ^ source[i];
+                        hash1 = MultiplyBy2147483647AndAdd(hash1, source[i]);
                 }
 
-            return hash1 ^ hash2;
+            return Squash(MultiplyBy31AndAdd(hash1, hash2));
         }
 
-        private static unsafe ulong GetHashCode512Bit(ArraySegment<byte> source)
+        private static unsafe int GetHashCode512Bit(ArraySegment<byte> source)
         {
-            ulong hash1 = Rehash(17) ^ (ulong)source.Count;
+            ulong hash1 = 17 + (ulong)source.Count;
             ulong hash2 = 3;
             ulong hash3 = 5;
             ulong hash4 = 7;
@@ -173,25 +173,25 @@ namespace Eocron.Algorithms
 
                     while (b < e)
                     {
-                        hash1 = Rehash(hash1) ^ *b;
-                        hash2 = Rehash(hash2) ^ *(b + 1);
-                        hash3 = Rehash(hash3) ^ *(b + 2);
-                        hash4 = Rehash(hash4) ^ *(b + 3);
-                        hash5 = Rehash(hash5) ^ *(b + 4);
-                        hash6 = Rehash(hash6) ^ *(b + 5);
-                        hash7 = Rehash(hash7) ^ *(b + 6);
-                        hash8 = Rehash(hash8) ^ *(b + 7);
+                        hash1 = MultiplyBy2147483647AndAdd(hash1, *b);
+                        hash2 = MultiplyBy2147483647AndAdd(hash2, *(b + 1));
+                        hash3 = MultiplyBy2147483647AndAdd(hash3, *(b + 2));
+                        hash4 = MultiplyBy2147483647AndAdd(hash4, *(b + 3));
+                        hash5 = MultiplyBy2147483647AndAdd(hash5, *(b + 4));
+                        hash6 = MultiplyBy2147483647AndAdd(hash6, *(b + 5));
+                        hash7 = MultiplyBy2147483647AndAdd(hash7, *(b + 6));
+                        hash8 = MultiplyBy2147483647AndAdd(hash8, *(b + 7));
                         b += step;
                     }
 
                     for (int i = source.Count - tail; i < source.Count; i++)
-                        hash1 = Rehash(hash1) ^ source[i];
+                        hash1 = MultiplyBy2147483647AndAdd(hash1, source[i]);
                 }
 
-            return hash1 ^ hash2 ^ hash3 ^ hash4 ^ hash5 ^ hash6 ^ hash7 ^ hash8;
+            return Squash(FinalRehash512Bit(hash1, hash2, hash3, hash4, hash5, hash6, hash7, hash8));
         }
 
-        private static unsafe ulong GetHashCodeLoss(ArraySegment<byte> source)
+        private static unsafe int GetHashCodeLoss(ArraySegment<byte> source)
         {
             ulong hash = 17L;
             var step = (source.Count >> _hashLossPow);
@@ -205,19 +205,37 @@ namespace Eocron.Algorithms
                     ulong* e2 = (ulong*)(pSource + source.Offset + source.Count - sizeof(ulong));
                     while (b < e)
                     {
-                        hash = Rehash(hash) ^ *b;
+                        hash = MultiplyBy2147483647AndAdd(hash, *b);
                         b += step;
                     }
-
-                    hash = Rehash(hash) ^ *e2;
-                    return hash;
+                    return Squash(MultiplyBy2147483647AndAdd(hash, *e2));
                 }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ulong Rehash(ulong x)
+        private static ulong MultiplyBy2147483647AndAdd(ulong hash, ulong n)
         {
-            return ((x << 5) | (x >> 63)) + x;
+            //2147483647 is a Mercen prime 2^31-1
+            return  (hash << 31) - hash + n;//hash * (2^31-1) + n
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ulong MultiplyBy31AndAdd(ulong hash, ulong n)
+        {
+            //std java implementation
+            return (hash << 5) - hash + n;//hash * 31 + n
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ulong FinalRehash512Bit(ulong h1, ulong h2,ulong h3, ulong h4, ulong h5, ulong h6,ulong h7, ulong h8)
+        {
+            return 19 * h1 + 17 * h2 + 13 * h3 + 11 * h4 + 7 * h5 + 5 * h6 + 3 * h7 + h8;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int Squash(ulong x)
+        {
+            return (int)((x >> 1) - (x >> 32) + x);//Higher bits * (2^31-1) + Lower bits
         }
     }
 }
