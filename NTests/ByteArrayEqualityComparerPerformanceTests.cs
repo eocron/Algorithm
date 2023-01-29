@@ -31,87 +31,116 @@ namespace NTests
             BenchmarkRunner.Run<BenchmarkSuit>(config);
         }
         
-        [Orderer(SummaryOrderPolicy.SlowestToFastest, MethodOrderPolicy.Declared)]
+        [Orderer(SummaryOrderPolicy.SlowestToFastest, MethodOrderPolicy.Alphabetical)]
         //[HardwareCounters(
         //    HardwareCounter.BranchMispredictions,
         //    HardwareCounter.BranchInstructions)]
-        [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
+        [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByParams)]
         [CategoriesColumn]
         public class BenchmarkSuit
         {
-            private byte[] _data;
-            private byte[] _dataNotEqual;
-            private byte[] _dataEqual;
-            private ByteArrayEqualityComparer _fastComparer;
-            private string _dataAsString;
-            private string _dataEqualAsString;
-            private string _dataNotEqualAsString;
+            #region fast
 
-            [GlobalSetup]
-            public void Setup()
-            {
-                var rnd = new Random();
-                int size = 16*1024*1024;
-                _data = new byte[size];
-                _dataNotEqual = new byte[size];
-                _dataEqual = new byte[size];
-                rnd.NextBytes(_dataNotEqual);
-                rnd.NextBytes(_data);
-                Array.Copy(_data, _dataEqual, size);
-                
-                _dataAsString = Convert.ToBase64String(_data);
-                _dataEqualAsString = Convert.ToBase64String(_dataEqual);
-                _dataNotEqualAsString = Convert.ToBase64String(_dataNotEqual);
-                _fastComparer = new ByteArrayEqualityComparer(false);
-            }
-            
-            [BenchmarkCategory("GetHashCode"), Benchmark(Baseline = true)]
-            public int GetHashCode_Base64String()
-            {
-                return _dataAsString.GetHashCode();
-            }
-            
             [BenchmarkCategory("GetHashCode"), Benchmark(Baseline = false)]
             public int GetHashCode_fast()
             {
-                return _fastComparer.GetHashCode(_data);
-            }
-
-            [BenchmarkCategory("Equals"), Benchmark(Baseline = true)]
-            public bool Equals_Base64String()
-            {
-                return _dataAsString.Equals(_dataEqualAsString);
+                return _fastComparer.GetHashCode(_sets[TestDataId].Data);
             }
             
             [BenchmarkCategory("Equals"), Benchmark(Baseline = false)]
             public bool Equals_fast()
             {
-                return _fastComparer.Equals(_data, _dataEqual);
-            }
-            
-            [BenchmarkCategory("Equals"), Benchmark(Baseline = false)]
-            public bool Equals_SequenceEquals()
-            {
-                return _data.SequenceEqual(_dataEqual);
-            }
-            
-            [BenchmarkCategory("NotEquals"), Benchmark(Baseline = true)]
-            public bool NotEquals_Base64String()
-            {
-                return _dataAsString.Equals(_dataNotEqualAsString);
+                return _fastComparer.Equals(_sets[TestDataId].Data, _sets[TestDataId].DataEqual);
             }
             
             [BenchmarkCategory("NotEquals"), Benchmark(Baseline = false)]
             public bool NotEquals_fast()
             {
-                return _fastComparer.Equals(_data, _dataNotEqual);
+                return _fastComparer.Equals(_sets[TestDataId].Data, _sets[TestDataId].DataNotEqual);
+            }
+
+            #endregion
+            
+            #region Base64Equivalent
+
+            [BenchmarkCategory("GetHashCode"), Benchmark(Baseline = true)]
+            public int GetHashCode_Base64String()
+            {
+                return _sets[TestDataId].DataAsString.GetHashCode();
+            }
+            
+            [BenchmarkCategory("Equals"), Benchmark(Baseline = true)]
+            public bool Equals_Base64String()
+            {
+                return _sets[TestDataId].DataAsString.Equals(_sets[TestDataId].DataEqualAsString);
+            }
+            
+            [BenchmarkCategory("NotEquals"), Benchmark(Baseline = true)]
+            public bool NotEquals_Base64String()
+            {
+                return _sets[TestDataId].DataAsString.Equals(_sets[TestDataId].DataNotEqualAsString);
+            }
+
+            #endregion
+
+            /*#region SequenceEquals
+
+            [BenchmarkCategory("Equals"), Benchmark(Baseline = false)]
+            public bool Equals_SequenceEquals()
+            {
+                return _sets[TestDataId].Data.SequenceEqual(_sets[TestDataId].DataEqual);
             }
             
             [BenchmarkCategory("NotEquals"), Benchmark(Baseline = false)]
             public bool NotEquals_SequenceEquals()
             {
-                return _data.SequenceEqual(_dataNotEqual);
+                return _sets[TestDataId].Data.SequenceEqual(_sets[TestDataId].DataNotEqual);
             }
+
+            #endregion*/
+            
+            #region Setup
+            
+            [GlobalSetup]
+            public void Setup()
+            {
+                var rnd = new Random();
+                _sets = new[]
+                {                    
+                    new BenchmarkTestData(16, rnd),
+                    new BenchmarkTestData(16 * 1024, rnd),
+                };
+                _fastComparer = new ByteArrayEqualityComparer(false);
+            }
+
+            [Params(0,1)]
+            public int TestDataId;
+            public class BenchmarkTestData
+            {
+                public byte[] Data;
+                public byte[] DataNotEqual;
+                public byte[] DataEqual;
+                public string DataAsString;
+                public string DataNotEqualAsString;
+                public string DataEqualAsString;
+
+                public BenchmarkTestData(int size, Random rnd)
+                {
+                    Data = new byte[size];
+                    DataNotEqual = new byte[size];
+                    DataEqual = new byte[size];
+                    rnd.NextBytes(DataNotEqual);
+                    rnd.NextBytes(Data);
+                    Array.Copy(Data, DataEqual, size);
+                    DataAsString = Convert.ToBase64String(Data);
+                    DataEqualAsString = Convert.ToBase64String(DataEqual);
+                    DataNotEqualAsString = Convert.ToBase64String(DataNotEqual);
+                }
+            }
+            private ByteArrayEqualityComparer _fastComparer;
+            private BenchmarkTestData[] _sets;
+            
+            #endregion
         }
     }
 }

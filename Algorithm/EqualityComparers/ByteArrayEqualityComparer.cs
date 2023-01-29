@@ -208,7 +208,7 @@ namespace Eocron.Algorithms
                         hash = MultiplyBy2147483647AndAdd(hash, *b);
                         b += step;
                     }
-                    return Squash(MultiplyBy2147483647AndAdd(hash, *e2));
+                    return Squash(MultiplyBy31AndAdd(hash, *e2));
                 }
         }
 
