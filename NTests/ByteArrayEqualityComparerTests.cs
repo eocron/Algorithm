@@ -35,7 +35,7 @@ namespace NTests
         
         [Test]
         public void GetHashSelfCollisions()
-        {            
+        {
             var cmp = ByteArrayEqualityComparer.Default;
             var data = new byte[16];
             //_rnd.NextBytes(data);
@@ -130,8 +130,10 @@ namespace NTests
 
         private static IEnumerable<TestCaseData> GetAreEqualTests()
         {
-            yield return Eq(1).SetName("+1b");
-            yield return Eq(20000).SetName("+20000b");
+            for (int i = 1; i < 66; i++)
+            {
+                yield return Eq(i).SetName($"+{i:00}b");
+            }
             yield return Eq(20 * 1024 * 1024).SetName("+20mb");
             yield return new TestCaseData(Array.Empty<byte>(), Array.Empty<byte>()).SetName("+empty");
             yield return new TestCaseData(null, null).SetName("+null");

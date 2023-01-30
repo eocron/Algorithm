@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace Eocron.Algorithms
@@ -15,7 +16,6 @@ namespace Eocron.Algorithms
         private readonly bool _hashWithLoss;
         private const int _hashLossPow = 10;
         private const int _hashLoss = (1 << _hashLossPow) * sizeof(long);
-
         public ByteArrayEqualityComparer(bool hashWithLoss = true)
         {
             _hashWithLoss = hashWithLoss;
@@ -26,9 +26,9 @@ namespace Eocron.Algorithms
             if (obj == null)
                 return 0;
             if (_hashWithLoss && obj.Count > _hashLoss)
-                return (int)GetHashCodeLoss(obj);
+                return Squash(GetHashCodeLoss(obj));
             const int sizeBorder = sizeof(ulong) * 8;
-            return obj.Count < sizeBorder ? (int)GetHashCode128Bit(obj) : (int)GetHashCode512Bit(obj);
+            return Squash(obj.Count < sizeBorder ? GetHashCode128Bit(obj) : GetHashCode512Bit(obj));
         }
 
         public bool Equals(byte[] x, byte[] y)
@@ -59,8 +59,7 @@ namespace Eocron.Algorithms
                 return false;
             if (x.Count != x.Count)
                 return false;
-            const int sizeBorder = sizeof(ulong) * 8;
-            return x.Count < sizeBorder ? Equal128Bit(x, y) : Equal512Bit(x, y);
+            return Equal512Bit(x, y);
         }
 
         private static unsafe bool Equal128Bit(ArraySegment<byte> data1, ArraySegment<byte> data2)
@@ -83,12 +82,22 @@ namespace Eocron.Algorithms
                     b2 += step;
                 }
 
-                for (int i = data1.Count - tail; i < data1.Count; i++)
-                    if (data1[i] != data2[i])
-                        return false;
-
-                return true;
+                return tail == 0 || Equals128BitTail(*b1, *(b1+1), *b2, *(b2+1), tail << 3);
             }
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool Equals128BitTail(ulong a1, ulong a2, ulong b1, ulong b2, int nBits)
+        {
+            return a1 >> nBits == b1 >> nBits && ((a2 >> nBits) | (a1 << (64 - nBits))) == ((b2 >> nBits) | (b1 << (64 - nBits)));
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ulong GetHashCode128BitTail(ulong hash, ulong a1, ulong a2, int nBits)
+        {
+            hash = MultiplyBy2147483647AndAdd(hash, a1 >> nBits);
+            hash = MultiplyBy2147483647AndAdd(hash, (a2 >> nBits) | (a1 << (64 - nBits)));
+            return hash;
         }
 
         private static unsafe bool Equal512Bit(ArraySegment<byte> data1, ArraySegment<byte> data2)
@@ -117,15 +126,11 @@ namespace Eocron.Algorithms
                     b2 += step;
                 }
 
-                for (int i = data1.Count - tail; i < data1.Count; i++)
-                    if (data1[i] != data2[i])
-                        return false;
-
-                return true;
+                return tail == 0 || Equal128Bit(data1.Slice(data1.Count - tail, tail), data2.Slice(data2.Count - tail, tail));
             }
         }
 
-        private static unsafe int GetHashCode128Bit(ArraySegment<byte> source)
+        private static unsafe ulong GetHashCode128Bit(ArraySegment<byte> source)
         {
             ulong hash1 = 31 + (ulong)source.Count;
             ulong hash2 = 37;
@@ -145,14 +150,13 @@ namespace Eocron.Algorithms
                         b += step;
                     }
 
-                    for (int i = source.Count - tail; i < source.Count; i++)
-                        hash1 = MultiplyBy2147483647AndAdd(hash1, source[i]);
+                    hash1 = tail == 0 ? hash1 : GetHashCode128BitTail(hash1, *b, *(b + 1), tail << 3);
                 }
 
-            return Squash(MultiplyBy31AndAdd(hash1, hash2));
+            return MultiplyBy31AndAdd(hash1, hash2);
         }
 
-        private static unsafe int GetHashCode512Bit(ArraySegment<byte> source)
+        private static unsafe ulong GetHashCode512Bit(ArraySegment<byte> source)
         {
             ulong hash1 = 17 + (ulong)source.Count;
             ulong hash2 = 3;
@@ -184,14 +188,14 @@ namespace Eocron.Algorithms
                         b += step;
                     }
 
-                    for (int i = source.Count - tail; i < source.Count; i++)
-                        hash1 = MultiplyBy2147483647AndAdd(hash1, source[i]);
+                    hash1 = tail == 0 ? hash1 : MultiplyBy2147483647AndAdd(hash1,
+                        GetHashCode128Bit(source.Slice(source.Count - tail, tail)));
                 }
 
-            return Squash(FinalRehash512Bit(hash1, hash2, hash3, hash4, hash5, hash6, hash7, hash8));
+            return FinalRehash512Bit(hash1, hash2, hash3, hash4, hash5, hash6, hash7, hash8);
         }
 
-        private static unsafe int GetHashCodeLoss(ArraySegment<byte> source)
+        private static unsafe ulong GetHashCodeLoss(ArraySegment<byte> source)
         {
             ulong hash = 17L;
             var step = (source.Count >> _hashLossPow);
@@ -208,7 +212,7 @@ namespace Eocron.Algorithms
                         hash = MultiplyBy2147483647AndAdd(hash, *b);
                         b += step;
                     }
-                    return Squash(MultiplyBy31AndAdd(hash, *e2));
+                    return MultiplyBy31AndAdd(hash, *e2);
                 }
         }
 

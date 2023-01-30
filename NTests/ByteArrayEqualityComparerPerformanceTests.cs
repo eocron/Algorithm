@@ -35,7 +35,7 @@ namespace NTests
         //[HardwareCounters(
         //    HardwareCounter.BranchMispredictions,
         //    HardwareCounter.BranchInstructions)]
-        [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByParams)]
+        [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
         [CategoriesColumn]
         public class BenchmarkSuit
         {
@@ -107,13 +107,14 @@ namespace NTests
                 var rnd = new Random();
                 _sets = new[]
                 {                    
+                    new BenchmarkTestData(15, rnd),
                     new BenchmarkTestData(16, rnd),
                     new BenchmarkTestData(16 * 1024, rnd),
                 };
                 _fastComparer = new ByteArrayEqualityComparer(false);
             }
 
-            [Params(0,1)]
+            [Params(0,1,2)]
             public int TestDataId;
             public class BenchmarkTestData
             {
