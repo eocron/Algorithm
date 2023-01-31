@@ -131,8 +131,8 @@ namespace NTests
             {
                 var aa = new ArraySegment<byte>(a, 0, i);
                 var bb = new ArraySegment<byte>(b, 0, i);
-                Assert.IsTrue(cmp.Equals(aa, bb));
-                Assert.AreEqual(cmp.GetHashCode(aa), cmp.GetHashCode(bb));
+                Assert.IsTrue(cmp.Equals(aa, bb), message: i.ToString());
+                Assert.AreEqual(cmp.GetHashCode(aa), cmp.GetHashCode(bb), message: i.ToString());
             }
         }
 
