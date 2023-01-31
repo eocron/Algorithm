@@ -3,6 +3,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace NTests
 {
@@ -12,70 +13,27 @@ namespace NTests
         private static Random _rnd = new Random(42);
 
         [Test]
-        public void GetHashSelfCollisionsRnd()
-        {            
-            var cmp = ByteArrayEqualityComparer.Default;
-            var data = new byte[16];
-            _rnd.NextBytes(data);
-
-            var hs = new List<Tuple<int, int>>();
-            for (int i = 0; i < 16; i++)
-            {
-                for (int j = 0; j < 8; j++)
-                {
-                    data[i] = (byte)(data[i] | (1 << j));
-                    hs.Add(Tuple.Create(cmp.GetHashCode(data), i*8 + j));
-                    data[i] = 0;
-                }
-            }
-
-            var collisions = hs.GroupBy(x => x.Item1).Where(x => x.Count() > 1).SelectMany(x=> x).OrderBy(x=> x.Item2).ToList();
-            Assert.LessOrEqual(collisions.Count, 2, string.Join(","+Environment.NewLine, collisions.Select(x=> x.Item2 + "->" + x.Item1)));
-        }
-        
-        [Test]
-        public void GetHashSelfCollisions()
+        [TestCase(16),
+         TestCase(63),
+         TestCase(512),
+         TestCase(8511)]
+        public void GetHashSelfCollisionsRnd(int size)
         {
-            var cmp = ByteArrayEqualityComparer.Default;
-            var data = new byte[16];
-            //_rnd.NextBytes(data);
-
-            var hs = new List<Tuple<int, int>>();
-            for (int i = 0; i < 16; i++)
-            {
-                for (int j = 0; j < 8; j++)
-                {
-                    data[i] = (byte)(data[i] | (1 << j));
-                    hs.Add(Tuple.Create(cmp.GetHashCode(data), i*8 + j));
-                    data[i] = 0;
-                }
-            }
-
-            var collisions = hs.GroupBy(x => x.Item1).Where(x => x.Count() > 1).SelectMany(x=> x).OrderBy(x=> x.Item2).ToList();
-            Assert.LessOrEqual(collisions.Count, 2, string.Join(","+Environment.NewLine, collisions.Select(x=> x.Item2 + "->" + x.Item1)));
+            var cmp = new ByteArrayEqualityComparer(false);
+            Assert.LessOrEqual(CalculateCollisions(GetRndArrays(size), cmp), 0.1d);
         }
-        
+
         [Test]
-        public void GetHashSelfCollisionsBig()
-        {            
-            var cmp = ByteArrayEqualityComparer.Default;
-            var data = new byte[256];
-            //_rnd.NextBytes(data);
-
-            var hs = new List<Tuple<int, int>>();
-            for (int i = 0; i < 16; i++)
-            {
-                for (int j = 0; j < 8; j++)
-                {
-                    data[i] = (byte)(data[i] | (1 << j));
-                    hs.Add(Tuple.Create(cmp.GetHashCode(data), i*8 + j));
-                    data[i] = 0;
-                }
-            }
-
-            var collisions = hs.GroupBy(x => x.Item1).Where(x => x.Count() > 1).SelectMany(x=> x).OrderBy(x=> x.Item2).ToList();
-            Assert.LessOrEqual(collisions.Count, 2, string.Join(","+Environment.NewLine, collisions.Select(x=> x.Item2 + "->" + x.Item1)));
+        [TestCase(16),
+         TestCase(63),
+         TestCase(512),
+         TestCase(8511)]
+        public void GetHashSelfCollisionsSparse(int size)
+        {
+            var cmp = new ByteArrayEqualityComparer(false);
+            Assert.LessOrEqual(CalculateCollisions(GetSparseArrays(size), cmp), 0.1d);
         }
+
         [Test]
         [TestCaseSource(nameof(GetAreEqualTests))]
         public void AreEqual(byte[] a, byte[] b)
@@ -134,6 +92,64 @@ namespace NTests
                 Assert.IsTrue(cmp.Equals(aa, bb), message: i.ToString());
                 Assert.AreEqual(cmp.GetHashCode(aa), cmp.GetHashCode(bb), message: i.ToString());
             }
+        }
+        
+        
+        private static IEnumerable<byte[]> GetRndArrays(int size)
+        {
+            var rnd = new Random(size);
+            var data = new byte[size];
+            rnd.NextBytes(data);
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    var tmp = data[i];
+                    data[i] = (byte)rnd.Next();
+                    yield return data;
+                    data[i] = tmp;
+                }
+            }
+        }
+        
+        private static IEnumerable<byte[]> GetSparseArrays(int size)
+        {
+            var data = new byte[size];
+            for (int i = 0; i < size; i++)
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    data[i] = (byte)(data[i] | (1 << j));
+                    yield return data;
+                    data[i] = 0;
+                }
+            }
+        }
+        private static float CalculateCollisions(IEnumerable<byte[]> datas, IEqualityComparer<byte[]> cmp)
+        {
+            int size = 0;
+            var results = new List<Tuple<int, int>>();
+            foreach (var data in datas)
+            {
+                results.Add(Tuple.Create(cmp.GetHashCode(data), size));
+                size++;
+            }
+
+            var collisions = results
+                .GroupBy(x => x.Item1)
+                .Where(x => x.Count() > 1)
+                .SelectMany(x => x)
+                .ToList();
+            var sb = new StringBuilder();
+            var collisionPercent = collisions.Count / (float)(size);
+            sb.AppendFormat("Collision percent: {0:F1}%"+Environment.NewLine, 100f * collisionPercent);
+            sb.AppendLine(string.Join("," + Environment.NewLine,
+                collisions
+                    .OrderBy(x => x.Item1)
+                    .ThenBy(x => x.Item2)
+                    .Select(x => x.Item2 + "->" + x.Item1)));
+            Console.WriteLine(sb);
+            return collisionPercent;
         }
 
         private static IEnumerable<TestCaseData> GetAreEqualTests()

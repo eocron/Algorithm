@@ -11,12 +11,15 @@ namespace Eocron.Algorithms
     /// </summary>
     public sealed class ByteArrayEqualityComparer : IEqualityComparer<ArraySegment<byte>>, IEqualityComparer<byte[]>
     {
-        public static readonly ByteArrayEqualityComparer Default = new ByteArrayEqualityComparer();
-
+        private const ulong HashSeed = 17;
+        private static readonly UInt128[] UInt128Masks = Enumerable.Range(0, 2 * sizeof(ulong)).Select(x => CreateMask(x * sizeof(ulong))).ToArray();
         private readonly bool _hashWithLoss;
         private const int _hashLossPow = 10;
         private const int _hashLoss = (1 << _hashLossPow) * sizeof(long);
-        public ByteArrayEqualityComparer(bool hashWithLoss = true)
+        
+        public static readonly ByteArrayEqualityComparer Default = new ByteArrayEqualityComparer();
+        
+        public ByteArrayEqualityComparer(bool hashWithLoss = false)
         {
             _hashWithLoss = hashWithLoss;
         }
@@ -25,6 +28,8 @@ namespace Eocron.Algorithms
         {
             if (obj == null)
                 return 0;
+            if (obj.Count == 0)
+                return 1;
             if (_hashWithLoss && obj.Count > _hashLoss)
                 return Squash(GetHashCodeLoss(obj));
             const int sizeBorder = sizeof(ulong) * 8;
@@ -82,26 +87,15 @@ namespace Eocron.Algorithms
                     b2 += step;
                 }
 
-                return tail == 0 || Equals128BitTail(*b1, *(b1+1), *b2, *(b2+1), tail << 3);
+                return Equals128BitTail(*b1, *(b1+1), *b2, *(b2+1), tail);
             }
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool Equals128BitTail(ulong a1, ulong a2, ulong b1, ulong b2, int nBits)
+        private static bool Equals128BitTail(ulong a1, ulong a2, ulong b1, ulong b2, int byteCount)
         {
-            var mask1 = nBits >= 64 ? ulong.MaxValue : ulong.MaxValue >> (64 - nBits);
-            var mask2 = nBits > 64 ? ulong.MaxValue >> (128 - nBits) : 0;
-            return (a1 & mask1) == (b1 & mask1)  && (a2 & mask2) == (b2 & mask2) ;
-        }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ulong GetHashCode128BitTail(ulong hash, ulong a1, ulong a2, int nBits)
-        {
-            var mask1 = nBits >= 64 ? ulong.MaxValue : ulong.MaxValue >> (64 - nBits);
-            var mask2 = nBits > 64 ? ulong.MaxValue >> (128 - nBits) : 0;
-            hash = MultiplyBy2147483647AndAdd(hash, a1 & mask1);
-            hash = MultiplyBy2147483647AndAdd(hash, a2 & mask2);
-            return hash;
+            return (a1 & UInt128Masks[byteCount].Low) == (b1 & UInt128Masks[byteCount].Low) &&
+                   (a2 & UInt128Masks[byteCount].High) == (b2 & UInt128Masks[byteCount].High);
         }
 
         private static unsafe bool Equal512Bit(ArraySegment<byte> data1, ArraySegment<byte> data2)
@@ -136,8 +130,8 @@ namespace Eocron.Algorithms
 
         private static unsafe ulong GetHashCode128Bit(ArraySegment<byte> source)
         {
-            ulong hash1 = 31 + (ulong)source.Count;
-            ulong hash2 = 37;
+            var hash1 = HashSeed;
+            var hash2 = HashSeed;
             const int step = 2;
             const int stepSize = sizeof(ulong) * step;
             fixed (byte* pSource = source.Array)
@@ -149,27 +143,28 @@ namespace Eocron.Algorithms
 
                     while (b < e)
                     {
-                        hash1 = MultiplyBy2147483647AndAdd(hash1, *b);
-                        hash2 = MultiplyBy2147483647AndAdd(hash2, *(b + 1));
+                        hash1 = Rehash128Bit(hash1, *b);
+                        hash2 = Rehash128Bit(hash2, *(b + 1));
                         b += step;
                     }
 
-                    hash1 = tail == 0 ? hash1 : GetHashCode128BitTail(hash1, *b, *(b + 1), tail << 3);
+                    hash1 = Rehash128Bit(hash1, *b & UInt128Masks[tail].Low);
+                    hash2 = Rehash128Bit(hash2, *(b + 1) & UInt128Masks[tail].High);
                 }
 
-            return MultiplyBy31AndAdd(hash1, hash2);
+            return Rehash128Bit(hash1, hash2);
         }
 
         private static unsafe ulong GetHashCode512Bit(ArraySegment<byte> source)
         {
-            ulong hash1 = 17 + (ulong)source.Count;
-            ulong hash2 = 3;
-            ulong hash3 = 5;
-            ulong hash4 = 7;
-            ulong hash5 = 11;
-            ulong hash6 = 13;
-            ulong hash7 = 17;
-            ulong hash8 = 19;
+            ulong hash1 = Rehash128Bit(HashSeed, (ulong)source.Count);
+            ulong hash2 = HashSeed;
+            ulong hash3 = HashSeed;
+            ulong hash4 = HashSeed;
+            ulong hash5 = HashSeed;
+            ulong hash6 = HashSeed;
+            ulong hash7 = HashSeed;
+            ulong hash8 = HashSeed;
             const int step = 8;
             const int stepSize = sizeof(ulong) * step;
             fixed (byte* pSource = source.Array)
@@ -181,27 +176,33 @@ namespace Eocron.Algorithms
 
                     while (b < e)
                     {
-                        hash1 = MultiplyBy2147483647AndAdd(hash1, *b);
-                        hash2 = MultiplyBy2147483647AndAdd(hash2, *(b + 1));
-                        hash3 = MultiplyBy2147483647AndAdd(hash3, *(b + 2));
-                        hash4 = MultiplyBy2147483647AndAdd(hash4, *(b + 3));
-                        hash5 = MultiplyBy2147483647AndAdd(hash5, *(b + 4));
-                        hash6 = MultiplyBy2147483647AndAdd(hash6, *(b + 5));
-                        hash7 = MultiplyBy2147483647AndAdd(hash7, *(b + 6));
-                        hash8 = MultiplyBy2147483647AndAdd(hash8, *(b + 7));
+                        hash1 = Rehash128Bit(hash1, *b);
+                        hash2 = Rehash128Bit(hash2, *(b + 1));
+                        hash3 = Rehash128Bit(hash3, *(b + 2));
+                        hash4 = Rehash128Bit(hash4, *(b + 3));
+                        hash5 = Rehash128Bit(hash5, *(b + 4));
+                        hash6 = Rehash128Bit(hash6, *(b + 5));
+                        hash7 = Rehash128Bit(hash7, *(b + 6));
+                        hash8 = Rehash128Bit(hash8, *(b + 7));
                         b += step;
                     }
 
-                    hash1 = tail == 0 ? hash1 : MultiplyBy2147483647AndAdd(hash1,
-                        GetHashCode128Bit(source.Slice(source.Count - tail, tail)));
+                    hash1 = tail == 0
+                        ? hash1
+                        : Rehash128Bit(
+                            hash1,
+                            GetHashCode128Bit(
+                                source.Slice(
+                                    source.Count - tail,
+                                    tail)));
                 }
 
-            return FinalRehash512Bit(hash1, hash2, hash3, hash4, hash5, hash6, hash7, hash8);
+            return Rehash512Bit(hash1, hash2, hash3, hash4, hash5, hash6, hash7, hash8);
         }
 
         private static unsafe ulong GetHashCodeLoss(ArraySegment<byte> source)
         {
-            ulong hash = 17L;
+            var hash = HashSeed;
             var step = (source.Count >> _hashLossPow);
             var stepSize = sizeof(ulong) * step;
             fixed (byte* pSource = source.Array)
@@ -213,37 +214,53 @@ namespace Eocron.Algorithms
                     ulong* e2 = (ulong*)(pSource + source.Offset + source.Count - sizeof(ulong));
                     while (b < e)
                     {
-                        hash = MultiplyBy2147483647AndAdd(hash, *b);
+                        hash = Rehash128Bit(hash, *b);
                         b += step;
                     }
-                    return MultiplyBy31AndAdd(hash, *e2);
+                    return Rehash128Bit(hash, *e2);
                 }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ulong MultiplyBy2147483647AndAdd(ulong hash, ulong n)
+        private static ulong Rehash128Bit(ulong z, ulong n)
         {
-            //2147483647 is a Mercen prime 2^31-1
-            return  (hash << 31) - hash + n;//hash * (2^31-1) + n
+            //Splitmix64 with drugs...
+            z += 0x9e3779b97f4a7c15UL;
+            z = (z ^ (z >> 30)) + n;  
+            z = (z ^ (z >> 27)) * 0x94d049bb133111ebUL;
+            return z ^ (z >> 31);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ulong MultiplyBy31AndAdd(ulong hash, ulong n)
+        private static ulong Rehash512Bit(ulong h1, ulong h2,ulong h3, ulong h4, ulong h5, ulong h6,ulong h7, ulong h8)
         {
-            //std java implementation
-            return (hash << 5) - hash + n;//hash * 31 + n
-        }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ulong FinalRehash512Bit(ulong h1, ulong h2,ulong h3, ulong h4, ulong h5, ulong h6,ulong h7, ulong h8)
-        {
-            return 19 * h1 + 17 * h2 + 13 * h3 + 11 * h4 + 7 * h5 + 5 * h6 + 3 * h7 + h8;
+            return Rehash128Bit(Rehash128Bit(Rehash128Bit(h1, h2), Rehash128Bit(h3, h4)), Rehash128Bit(Rehash128Bit(h5, h6), Rehash128Bit(h7, h8)));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int Squash(ulong x)
         {
             return (int)((x >> 1) - (x >> 32) + x);//Higher bits * (2^31-1) + Lower bits
+        }
+        
+        private readonly struct UInt128
+        {
+            public readonly ulong High;
+            public readonly ulong Low;
+            public UInt128(ulong high, ulong low)
+            {
+                High = high;
+                Low = low;
+            }
+        }
+        
+        private static UInt128 CreateMask(int byteCount)
+        {
+            if (byteCount == 0)
+                return new UInt128();
+            return new UInt128(
+                byteCount > sizeof(ulong) ? ulong.MaxValue >> (8 * 2 * sizeof(ulong) - byteCount) : 0,
+                byteCount >= sizeof(ulong) ? ulong.MaxValue : ulong.MaxValue >> (8 * (sizeof(ulong) - byteCount)));
         }
     }
 }
