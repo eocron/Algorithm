@@ -109,6 +109,14 @@ namespace NTests
                 Assert.IsTrue(cmp.Equals(aa, bb));
                 Assert.AreEqual(cmp.GetHashCode(aa), cmp.GetHashCode(bb));
             }
+            
+            for (int i = 1; i < 40000; i+=149)
+            {
+                var aa = new ArraySegment<byte>(a, i, 31);
+                var bb = new ArraySegment<byte>(b, i, 31);
+                Assert.IsTrue(cmp.Equals(aa, bb));
+                Assert.AreEqual(cmp.GetHashCode(aa), cmp.GetHashCode(bb));
+            }
         }
 
         [Test]

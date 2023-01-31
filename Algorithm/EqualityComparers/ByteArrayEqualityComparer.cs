@@ -89,14 +89,18 @@ namespace Eocron.Algorithms
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool Equals128BitTail(ulong a1, ulong a2, ulong b1, ulong b2, int nBits)
         {
-            return a1 >> nBits == b1 >> nBits && ((a2 >> nBits) | (a1 << (64 - nBits))) == ((b2 >> nBits) | (b1 << (64 - nBits)));
+            var mask1 = nBits >= 64 ? ulong.MaxValue : ulong.MaxValue >> (64 - nBits);
+            var mask2 = nBits > 64 ? ulong.MaxValue >> (nBits - 64) : 0;
+            return (a1 & mask1) == (b1 & mask2)  && (a2 & mask1) == (b2 & mask2) ;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static ulong GetHashCode128BitTail(ulong hash, ulong a1, ulong a2, int nBits)
         {
-            hash = MultiplyBy2147483647AndAdd(hash, a1 >> nBits);
-            hash = MultiplyBy2147483647AndAdd(hash, (a2 >> nBits) | (a1 << (64 - nBits)));
+            var mask1 = nBits >= 64 ? ulong.MaxValue : ulong.MaxValue >> (64 - nBits);
+            var mask2 = nBits > 64 ? ulong.MaxValue >> (nBits - 64) : 0;
+            hash = MultiplyBy2147483647AndAdd(hash, a1 & mask1);
+            hash = MultiplyBy2147483647AndAdd(hash, a2 & mask2);
             return hash;
         }
 
