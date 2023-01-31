@@ -140,7 +140,10 @@ namespace NTests
         }
         private static IEnumerable<TestCaseData> GetAreNotEqualTests()
         {
-            yield return new TestCaseData(new byte[] { 1 }, new byte[] { 2 }).SetName("-1b");
+            for (int i = 1; i < 66; i++)
+            {
+                yield return NEq(i).SetName($"-{i:00}b");
+            }
             yield return new TestCaseData(GetBytes(20000), GetBytes(20000)).SetName("-20000b");
             yield return new TestCaseData(GetBytes(20 * 1024 * 1024), GetBytes(20 * 1024 * 1024)).SetName("-20mb");
             yield return new TestCaseData(Array.Empty<byte>(), null).SetName("-rnull");
@@ -152,6 +155,15 @@ namespace NTests
             var a = GetBytes(size);
             var b = new byte[size];
             Array.Copy(a, b, size);
+            return new TestCaseData(a, b);
+        }
+        
+        private static TestCaseData NEq(int size)
+        {
+            var a = GetBytes(size);
+            var b = new byte[size];
+            Array.Copy(a, b, size);
+            b[size - 1] = (byte)~b[size - 1];
             return new TestCaseData(a, b);
         }
         private static byte[] GetBytes(int size)

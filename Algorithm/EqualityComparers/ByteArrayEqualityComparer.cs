@@ -57,7 +57,7 @@ namespace Eocron.Algorithms
                 return false;
             if (ReferenceEquals(y.Array, null))
                 return false;
-            if (x.Count != x.Count)
+            if (x.Count != y.Count)
                 return false;
             return Equal512Bit(x, y);
         }
@@ -70,7 +70,7 @@ namespace Eocron.Algorithms
             {
                 int tail = data1.Count % stepSize;
                 ulong* b1 = (ulong*)(bytes1 + data1.Offset);
-                ulong* b2 = (ulong*)(bytes2 + data1.Offset);
+                ulong* b2 = (ulong*)(bytes2 + data2.Offset);
                 ulong* e1 = (ulong*)(bytes1 + data1.Offset + data1.Count - tail);
 
                 while (b1 < e1)
@@ -108,7 +108,7 @@ namespace Eocron.Algorithms
             {
                 int tail = data1.Count % stepSize;
                 ulong* b1 = (ulong*)(bytes1 + data1.Offset);
-                ulong* b2 = (ulong*)(bytes2 + data1.Offset);
+                ulong* b2 = (ulong*)(bytes2 + data2.Offset);
                 ulong* e1 = (ulong*)(bytes1 + data1.Offset + data1.Count - tail);
 
                 while (b1 < e1)
