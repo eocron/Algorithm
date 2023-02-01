@@ -11,7 +11,7 @@ namespace Eocron.Algorithms
     /// </summary>
     public sealed class ByteArrayEqualityComparer : IEqualityComparer<ArraySegment<byte>>, IEqualityComparer<byte[]>
     {
-        private const ulong HashSeed = 17;
+        private const ulong HashSeed = 0x9e3779b97f4a7c15UL;
         private static readonly UInt128[] UInt128Masks = Enumerable.Range(0, 2 * sizeof(ulong)).Select(x => CreateMask(x * sizeof(ulong))).ToArray();
         private readonly bool _hashWithLoss;
         private const int _hashLossPow = 10;
@@ -224,13 +224,18 @@ namespace Eocron.Algorithms
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static ulong Rehash128Bit(ulong z, ulong n)
         {
-            //Splitmix64 with drugs...
-            z += 0x9e3779b97f4a7c15UL;
-            z = (z ^ (z >> 30)) + n;  
-            z = (z ^ (z >> 27)) * 0x94d049bb133111ebUL;
-            return z ^ (z >> 31);
+            return (z << 5) - z + n;
+            //return XorShift(XorShift(XorShift(z + 0x9e3779b97f4a7c15UL, 30) + n + 0xbf58476d1ce4e5b9UL, 27) * 0x94d049bb133111ebUL, 31);
+            //return XorShift(XorShiftL(z, 7) ^ n, 13);
+            //return XorShift(XorShift(z, 13) ^ n, 13) * 0x94d049bb133111ebUL;
         }
-
+        
+        /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ulong XorShift(ulong z, int n)
+        {
+            return z ^ (z >> n);
+        }*/
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static ulong Rehash512Bit(ulong h1, ulong h2,ulong h3, ulong h4, ulong h5, ulong h6,ulong h7, ulong h8)
         {
@@ -240,7 +245,7 @@ namespace Eocron.Algorithms
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int Squash(ulong x)
         {
-            return (int)((x >> 1) - (x >> 32) + x);//Higher bits * (2^31-1) + Lower bits
+            return x.GetHashCode();
         }
         
         private readonly struct UInt128

@@ -108,7 +108,6 @@ namespace NTests
                 _sets = new[]
                 {                    
                     new BenchmarkTestData(15, rnd),
-                    new BenchmarkTestData(16, rnd),
                     new BenchmarkTestData(16 * 1024, rnd),
                 };
                 _fastComparer = new ByteArrayEqualityComparer(false);

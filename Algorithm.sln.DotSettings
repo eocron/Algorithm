@@ -1,0 +1,29 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/PatternsAndTemplates/LiveTemplates/Template/=4E74D5B3909029439D9863EAC32D7F36/Text/@EntryValue">public static unsafe $TYPE$ $NAME$(ArraySegment&lt;$TYPE$&gt; source)
+{     
+    const int step = $STEP$
+    fixed ($TYPE$* pSource = source.Array)
+    unchecked
+    {
+        int tail = source.Count % step;
+        $TYPE$* b = ($TYPE$*)(pSource + source.Offset);
+        $TYPE$* e = ($TYPE$*)(pSource + source.Offset + source.Count - tail);
+
+        while (b &lt; e)
+        {
+            //use *(b)
+            //use *(b+1)
+            //...
+            b += $STEP$;
+        }
+        b = e;
+        e = ($TYPE$*)(pSource + source.Offset + source.Count);
+        while (b &lt; e)
+        {
+            //use *(b)
+            b += 1;
+        }
+    }
+            
+    return result;
+}</s:String></wpf:ResourceDictionary>

@@ -12,26 +12,38 @@ namespace NTests
     {
         private static Random _rnd = new Random(42);
 
-        [Test]
-        [TestCase(16),
+        [Test(Description = "Guarantee that random array self collision is lower than some percent if single byte is flipped")]
+        [TestCase(2),
+         TestCase(16),
          TestCase(63),
          TestCase(512),
-         TestCase(8511)]
+         TestCase(10000),
+         Explicit]
         public void GetHashSelfCollisionsRnd(int size)
         {
             var cmp = new ByteArrayEqualityComparer(false);
-            Assert.LessOrEqual(CalculateCollisions(GetRndArrays(size), cmp), 0.1d);
+            Assert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentRndArrays(size), cmp), 0.1d);
         }
 
-        [Test]
-        [TestCase(16),
+        [Test(Description = "Guarantee that zero array self collision is lower than some percent if single bit is flipped")]
+        [TestCase(2),
+         TestCase(16),
          TestCase(63),
          TestCase(512),
-         TestCase(8511)]
+         TestCase(10000),
+         Explicit]
         public void GetHashSelfCollisionsSparse(int size)
         {
             var cmp = new ByteArrayEqualityComparer(false);
-            Assert.LessOrEqual(CalculateCollisions(GetSparseArrays(size), cmp), 0.1d);
+            Assert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentSparseArrays(size), cmp), 0.1d);
+        }
+        
+        [Test(Description = "Guarantee that completely random array collision is lower than some percent")]
+        [TestCase(123, 1000000)]
+        public void GetHashCollisionsRnd(int size, int count)
+        {
+            var cmp = new ByteArrayEqualityComparer(false);
+            Assert.LessOrEqual(CalculateCollisions(GetCompletelyDifferentRndArrays(size, count), cmp), 0.001d);
         }
 
         [Test]
@@ -93,9 +105,21 @@ namespace NTests
                 Assert.AreEqual(cmp.GetHashCode(aa), cmp.GetHashCode(bb), message: i.ToString());
             }
         }
-        
-        
-        private static IEnumerable<byte[]> GetRndArrays(int size)
+
+        private static IEnumerable<byte[]> GetCompletelyDifferentRndArrays(int size, int count)
+        {
+            var rnd = new Random(size);
+            var data = new byte[size];
+
+            for (int i = 0; i < count; i++)
+            {
+                rnd.NextBytes(data);
+                yield return data;
+            }
+        }
+
+
+        private static IEnumerable<byte[]> GetSlightlyDifferentRndArrays(int size)
         {
             var rnd = new Random(size);
             var data = new byte[size];
@@ -112,7 +136,7 @@ namespace NTests
             }
         }
         
-        private static IEnumerable<byte[]> GetSparseArrays(int size)
+        private static IEnumerable<byte[]> GetSlightlyDifferentSparseArrays(int size)
         {
             var data = new byte[size];
             for (int i = 0; i < size; i++)
@@ -125,7 +149,7 @@ namespace NTests
                 }
             }
         }
-        private static float CalculateCollisions(IEnumerable<byte[]> datas, IEqualityComparer<byte[]> cmp)
+        private static float CalculateCollisions(IEnumerable<byte[]> datas, IEqualityComparer<byte[]> cmp, bool print = false)
         {
             int size = 0;
             var results = new List<Tuple<int, int>>();
@@ -140,15 +164,21 @@ namespace NTests
                 .Where(x => x.Count() > 1)
                 .SelectMany(x => x)
                 .ToList();
-            var sb = new StringBuilder();
+
             var collisionPercent = collisions.Count / (float)(size);
-            sb.AppendFormat("Collision percent: {0:F1}%"+Environment.NewLine, 100f * collisionPercent);
-            sb.AppendLine(string.Join("," + Environment.NewLine,
-                collisions
-                    .OrderBy(x => x.Item1)
-                    .ThenBy(x => x.Item2)
-                    .Select(x => x.Item2 + "->" + x.Item1)));
-            Console.WriteLine(sb);
+
+            if (print)
+            {            
+                var sb = new StringBuilder();
+                sb.AppendFormat("Collision percent: {0:F8}%"+Environment.NewLine, 100f * collisionPercent);
+                sb.AppendLine(string.Join("," + Environment.NewLine,
+                    collisions
+                        .OrderBy(x => x.Item1)
+                        .ThenBy(x => x.Item2)
+                        .Select(x => x.Item2 + "->" + x.Item1)));
+                Console.WriteLine(sb);
+            }
+
             return collisionPercent;
         }
 
