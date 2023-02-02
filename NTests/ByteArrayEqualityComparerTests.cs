@@ -18,8 +18,7 @@ namespace NTests
          TestCase(16),
          TestCase(63),
          TestCase(512),
-         TestCase(10000),
-         Explicit]
+         TestCase(10000)]
         public void GetHashSelfCollisionsRnd(int size)
         {
             Assert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentRndArrays(size), _cmp), 0.1d);
@@ -30,8 +29,7 @@ namespace NTests
          TestCase(16),
          TestCase(63),
          TestCase(512),
-         TestCase(10000),
-         Explicit]
+         TestCase(10000)]
         public void GetHashSelfCollisionsSparse(int size)
         {
             Assert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentSparseArrays(size), _cmp, print: true), 0.1d);
