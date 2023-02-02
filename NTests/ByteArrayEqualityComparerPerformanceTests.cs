@@ -114,7 +114,7 @@ namespace NTests
                 _fastComparer = new ByteArrayEqualityComparer(false);
             }
 
-            [Params(0,1,2)]
+            [Params(0,1)]
             public int TestDataId;
             public class BenchmarkTestData
             {

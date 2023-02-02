@@ -79,27 +79,34 @@ PS:
 ### Byte Array Comparer
 
 As silly as it sounds, byte array comparer is widely used, but it's very slow,
-and it is not present in common libraries. 
+and it is not present in common libraries. This one competes with its base64 variant of string.
 
-  - Has fast but not precise hash code. By default, invoked when byte array is greater than certain bound.
-    This makes hashing of same size arrays more efficient than just by length comparison.
+  - Has even faster but not precise hash code (tails + count + some inside is analysed). Disabled by default. Good for large files/blobs with random content.
   - Performance similar to memcmp.
   - No intrinsics involved (.netstandard 2.0 support)
+  - Due to usage of xxHash64 algorithm hash distribution is almost perfect which lead to more speed in dictionaries. https://en.wikipedia.org/wiki/List_of_hash_functions#Non-cryptographic_hash_functions
 
-#### Benchmark vs base64 string of same byte array of size 12 mb
+#### Benchmark vs base64 string of same byte array of size 16 kb and 15 bytes
 
-| Method                     |  Categories |                 Mean |             Error |            StdDev | Ratio | RatioSD |
-|----------------------------|------------ |---------------------:|------------------:|------------------:|------:|--------:|
-| Equals_SequenceEquals      |      Equals |    97,738,583.333 ns | 1,865,298.6873 ns | 1,995,848.6973 ns | 25.76 |    1.57 |
-| Equals_Base64String        |      Equals |     3,694,088.954 ns |    73,389.0375 ns |   154,802.3886 ns |  1.00 |    0.00 |
-| **Equals_fast**            |      Equals | **1,449,748.465 ns** |    22,448.8073 ns |    19,900.2830 ns |  0.38 |    0.02 |
-|                            |             |                      |                   |                   |       |         |
-| GetHashCode_Base64String   | GetHashCode |    15,833,649.178 ns |   305,151.1762 ns |   339,174.7238 ns |  1.00 |    0.00 |
-| **GetHashCode_fast**       | GetHashCode |   **978,634.923 ns** |     5,682.2306 ns |     4,744.9199 ns |  0.06 |    0.00 |
-|                            |             |                      |                   |                   |       |         |
-| NotEquals_SequenceEquals   |   NotEquals |            40.200 ns |         0.2521 ns |         0.2105 ns | 13.53 |    0.19 |
-| NotEquals_fast             |   NotEquals |             9.930 ns |         0.1783 ns |         0.1831 ns |  3.34 |    0.06 |
-| **NotEquals_Base64String** |   NotEquals |         **2.971 ns** |         0.0401 ns |         0.0335 ns |  1.00 |    0.00 |
+|                   Method |  Categories | TestDataId |          Mean |       Error |      StdDev | Ratio | RatioSD |
+|------------------------- |------------ |----------- |--------------:|------------:|------------:|------:|--------:|
+|              Equals_fast |      Equals |          0 |     22.749 ns |   0.2878 ns |   0.2692 ns |  6.83 |    0.13 |
+|      Equals_Base64String |      Equals |          0 |      3.333 ns |   0.0473 ns |   0.0442 ns |  1.00 |    0.00 |
+|                          |             |            |               |             |             |       |         |
+|      Equals_Base64String |      Equals |          1 |    708.847 ns |   7.3631 ns |   6.5272 ns |  1.00 |    0.00 |
+|              Equals_fast |      Equals |          1 |    538.450 ns |   5.9964 ns |   5.6090 ns |  0.76 |    0.01 |
+|                          |             |            |               |             |             |       |         |
+|         GetHashCode_fast | GetHashCode |          0 |     20.533 ns |   0.1867 ns |   0.1746 ns |  1.37 |    0.02 |
+| GetHashCode_Base64String | GetHashCode |          0 |     15.006 ns |   0.1682 ns |   0.1573 ns |  1.00 |    0.00 |
+|                          |             |            |               |             |             |       |         |
+| GetHashCode_Base64String | GetHashCode |          1 | 15,029.590 ns | 159.9461 ns | 149.6137 ns |  1.00 |    0.00 |
+|         GetHashCode_fast | GetHashCode |          1 |  1,031.287 ns |   1.0731 ns |   0.8378 ns |  0.07 |    0.00 |
+|                          |             |            |               |             |             |       |         |
+|           NotEquals_fast |   NotEquals |          0 |     23.158 ns |   0.2980 ns |   0.2787 ns |  7.20 |    0.15 |
+|   NotEquals_Base64String |   NotEquals |          0 |      3.219 ns |   0.0438 ns |   0.0410 ns |  1.00 |    0.00 |
+|                          |             |            |               |             |             |       |         |
+|           NotEquals_fast |   NotEquals |          1 |      9.602 ns |   0.0867 ns |   0.0768 ns |  2.94 |    0.03 |
+|   NotEquals_Base64String |   NotEquals |          1 |      3.265 ns |   0.0338 ns |   0.0282 ns |  1.00 |    0.00 |
 
 ### Hex format parsing
 
