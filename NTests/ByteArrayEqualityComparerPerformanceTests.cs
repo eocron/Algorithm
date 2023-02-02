@@ -3,6 +3,7 @@ using Eocron.Algorithms;
 using NTests.Core;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -137,7 +138,7 @@ namespace NTests
                     DataNotEqualAsString = Convert.ToBase64String(DataNotEqual);
                 }
             }
-            private ByteArrayEqualityComparer _fastComparer;
+            private IEqualityComparer<byte[]> _fastComparer;
             private BenchmarkTestData[] _sets;
             
             #endregion

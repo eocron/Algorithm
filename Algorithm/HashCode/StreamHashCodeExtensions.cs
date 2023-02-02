@@ -3,6 +3,7 @@ using System.Buffers;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Eocron.Algorithms.EqualityComparers.xxHash;
 
 namespace Eocron.Algorithms
 {
@@ -15,60 +16,9 @@ namespace Eocron.Algorithms
         /// <param name="cancellationToken"></param>
         /// <param name="pool"></param>
         /// <returns></returns>
-        public static int GetHashCode(this Stream stream, CancellationToken cancellationToken= default, ArrayPool<byte> pool = null)
+        public static int GetHashCode(this Stream stream, CancellationToken cancellationToken = default, ArrayPool<byte> pool = null)
         {
-            pool = pool ?? ArrayPool<byte>.Shared;
-            var cmp = ByteArrayEqualityComparer.Default;
-            const int seekCount = 16;
-            const int hashPartSize = 8 * 1024;
-
-            var hash = 17L;
-
-            var buffer = pool.Rent(hashPartSize);
-            try
-            {
-                int read;
-                var len = stream.Length;
-                if (len < seekCount * hashPartSize)
-                {
-                    unchecked
-                    {
-                        while ((read = stream.Read(buffer, 0, buffer.Length)) != 0)
-                        {
-                            cancellationToken.ThrowIfCancellationRequested();
-                            hash = hash * 31 + cmp.GetHashCode(new ArraySegment<byte>(buffer, 0, read));
-                        }
-                    }
-                }
-                else
-                {
-                    var step = len / seekCount;
-                    unchecked
-                    {
-                        for (var i = 0; i < seekCount; i++)
-                        {
-                            cancellationToken.ThrowIfCancellationRequested();
-                            stream.Seek(i * step, SeekOrigin.Begin);
-
-                            read = stream.Read(buffer, 0, buffer.Length);
-                            hash = hash * 31 + cmp.GetHashCode(new ArraySegment<byte>(buffer, 0, read));
-                        }
-
-                        if (len > buffer.Length)
-                        {
-                            stream.Seek(-buffer.Length, SeekOrigin.End);
-                            read = stream.Read(buffer, 0, buffer.Length);
-                            hash = hash * 31 + cmp.GetHashCode(new ArraySegment<byte>(buffer, 0, read));
-                        }
-                    }
-
-                }
-                return (int)hash;
-            }
-            finally
-            {
-                pool.Return(buffer);
-            }
+            return xxHash64.ComputeHashAsync(stream, 8192, 0, cancellationToken, pool ?? ArrayPool<byte>.Shared).Result.GetHashCode();
         }
 
         /// <summary>
@@ -78,58 +28,9 @@ namespace Eocron.Algorithms
         /// <param name="cancellationToken"></param>
         /// <param name="pool"></param>
         /// <returns></returns>
-        public static async Task<long> GetHashCodeAsync(this Stream stream, CancellationToken cancellationToken = default, ArrayPool<byte> pool = null)
+        public static async ValueTask<long> GetHashCodeAsync(this Stream stream, CancellationToken cancellationToken = default, ArrayPool<byte> pool = null)
         {
-            pool = pool ?? ArrayPool<byte>.Shared;
-            var cmp = ByteArrayEqualityComparer.Default;
-            const int seekCount = 16;
-            const int hashPartSize = 8 * 1024;
-
-            var hash = 17L;
-
-            var buffer = pool.Rent(hashPartSize);
-            try
-            {
-                int read;
-                var len = stream.Length;
-                if (len < seekCount * hashPartSize)
-                {
-                    unchecked
-                    {
-                        while ((read = await stream.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false)) != 0)
-                        {
-                            hash = hash * 31 + cmp.GetHashCode(new ArraySegment<byte>(buffer, 0, read));
-                        }
-                    }
-                }
-                else
-                {
-                    var step = len / seekCount;
-                    unchecked
-                    {
-                        for (var i = 0; i < seekCount; i++)
-                        {
-                            stream.Seek(i * step, SeekOrigin.Begin);
-
-                            read = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false);
-                            hash = hash * 31 + cmp.GetHashCode(new ArraySegment<byte>(buffer, 0, read));
-                        }
-
-                        if (len > buffer.Length)
-                        {
-                            stream.Seek(-buffer.Length, SeekOrigin.End);
-                            read = await stream.ReadAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false);
-                            hash = hash * 31 + cmp.GetHashCode(new ArraySegment<byte>(buffer, 0, read));
-                        }
-                    }
-
-                }
-                return hash;
-            }
-            finally
-            {
-                pool.Return(buffer);
-            }
+            return (await xxHash64.ComputeHashAsync(stream, 8192, 0, cancellationToken, pool ?? ArrayPool<byte>.Shared)).GetHashCode();
         }
     }
 }

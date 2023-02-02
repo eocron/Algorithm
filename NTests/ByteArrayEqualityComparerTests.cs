@@ -11,6 +11,7 @@ namespace NTests
     public class ByteArrayEqualityComparerTests
     {
         private static Random _rnd = new Random(42);
+        private readonly ByteArrayEqualityComparer _cmp = new ByteArrayEqualityComparer(false);
 
         [Test(Description = "Guarantee that random array self collision is lower than some percent if single byte is flipped")]
         [TestCase(2),
@@ -21,8 +22,7 @@ namespace NTests
          Explicit]
         public void GetHashSelfCollisionsRnd(int size)
         {
-            var cmp = new ByteArrayEqualityComparer(false);
-            Assert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentRndArrays(size), cmp), 0.1d);
+            Assert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentRndArrays(size), _cmp), 0.1d);
         }
 
         [Test(Description = "Guarantee that zero array self collision is lower than some percent if single bit is flipped")]
@@ -34,34 +34,30 @@ namespace NTests
          Explicit]
         public void GetHashSelfCollisionsSparse(int size)
         {
-            var cmp = new ByteArrayEqualityComparer(false);
-            Assert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentSparseArrays(size), cmp), 0.1d);
+            Assert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentSparseArrays(size), _cmp, print: true), 0.1d);
         }
         
         [Test(Description = "Guarantee that completely random array collision is lower than some percent")]
         [TestCase(123, 1000000)]
         public void GetHashCollisionsRnd(int size, int count)
         {
-            var cmp = new ByteArrayEqualityComparer(false);
-            Assert.LessOrEqual(CalculateCollisions(GetCompletelyDifferentRndArrays(size, count), cmp), 0.001d);
+            Assert.LessOrEqual(CalculateCollisions(GetCompletelyDifferentRndArrays(size, count), _cmp, print: true), 0.001d);
         }
 
         [Test]
         [TestCaseSource(nameof(GetAreEqualTests))]
         public void AreEqual(byte[] a, byte[] b)
         {
-            var cmp = ByteArrayEqualityComparer.Default;
-            Assert.IsTrue(cmp.Equals(a, b));
-            Assert.AreEqual(cmp.GetHashCode(a), cmp.GetHashCode(b));
+            Assert.IsTrue(_cmp.Equals(a, b));
+            Assert.AreEqual(_cmp.GetHashCode(a), _cmp.GetHashCode(b));
         }
 
         [Test]
         [TestCaseSource(nameof(GetAreNotEqualTests))]
         public void AreNotEqual(byte[] a, byte[] b)
         {
-            var cmp = ByteArrayEqualityComparer.Default;
-            Assert.IsFalse(cmp.Equals(a, b));
-            Assert.AreNotEqual(cmp.GetHashCode(a), cmp.GetHashCode(b));
+            Assert.IsFalse(_cmp.Equals(a, b));
+            Assert.AreNotEqual(_cmp.GetHashCode(a), _cmp.GetHashCode(b));
         }
 
         [Test]
@@ -71,21 +67,20 @@ namespace NTests
             var b = new byte[40000];
             _rnd.NextBytes(a);
             Array.Copy(a, b, a.Length);
-            var cmp = ByteArrayEqualityComparer.Default;
             for (int i = 1; i < 40000; i+=149)
             {
                 var aa = new ArraySegment<byte>(a, 0, i);
                 var bb = new ArraySegment<byte>(b, 0, i);
-                Assert.IsTrue(cmp.Equals(aa, bb));
-                Assert.AreEqual(cmp.GetHashCode(aa), cmp.GetHashCode(bb));
+                Assert.IsTrue(_cmp.Equals(aa, bb));
+                Assert.AreEqual(_cmp.GetHashCode(aa), _cmp.GetHashCode(bb));
             }
             
             for (int i = 1; i < 40000; i+=149)
             {
                 var aa = new ArraySegment<byte>(a, i, 31);
                 var bb = new ArraySegment<byte>(b, i, 31);
-                Assert.IsTrue(cmp.Equals(aa, bb));
-                Assert.AreEqual(cmp.GetHashCode(aa), cmp.GetHashCode(bb));
+                Assert.IsTrue(_cmp.Equals(aa, bb));
+                Assert.AreEqual(_cmp.GetHashCode(aa), _cmp.GetHashCode(bb));
             }
         }
 
@@ -96,13 +91,12 @@ namespace NTests
             var b = new byte[8 * 1024];
             _rnd.NextBytes(a);
             Array.Copy(a, b, a.Length);
-            var cmp = ByteArrayEqualityComparer.Default;
             for (int i = 1; i < 8 * 1024; i += 149)
             {
                 var aa = new ArraySegment<byte>(a, 0, i);
                 var bb = new ArraySegment<byte>(b, 0, i);
-                Assert.IsTrue(cmp.Equals(aa, bb), message: i.ToString());
-                Assert.AreEqual(cmp.GetHashCode(aa), cmp.GetHashCode(bb), message: i.ToString());
+                Assert.IsTrue(_cmp.Equals(aa, bb), message: i.ToString());
+                Assert.AreEqual(_cmp.GetHashCode(aa), _cmp.GetHashCode(bb), message: i.ToString());
             }
         }
 
