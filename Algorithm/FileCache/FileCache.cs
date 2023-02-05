@@ -1,4 +1,5 @@
-﻿using Eocron.Algorithms.Disposing;
+﻿using AsyncKeyedLock;
+using Eocron.Algorithms.Disposing;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -13,79 +14,6 @@ namespace Eocron.Algorithms.FileCache
     {
         #region Private helper classes
         private delegate void CancellableAction(CancellationToken token);
-
-        private sealed class PerKeySemaphoreSlim : IDisposable
-        {
-            private sealed class RefCounted<T>
-            {
-                public RefCounted(T value)
-                {
-                    RefCount = 1;
-                    Value = value;
-                }
-
-                public int RefCount { get; set; }
-                public T Value { get; private set; }
-            }
-
-            private readonly SemaphoreSlim _lock = new SemaphoreSlim(1);
-            private readonly Dictionary<object, RefCounted<SemaphoreSlim>> _dict = new Dictionary<object, RefCounted<SemaphoreSlim>>();
-
-            private RefCounted<SemaphoreSlim> GetOrCreate(object key, CancellationToken token)
-            {
-                RefCounted<SemaphoreSlim> item;
-                _lock.Wait(token);
-                try
-                {
-                    if (_dict.TryGetValue(key, out item))
-                    {
-                        ++item.RefCount;
-                    }
-                    else
-                    {
-                        item = new RefCounted<SemaphoreSlim>(new SemaphoreSlim(1, 1));
-                        _dict[key] = item;
-                    }
-                }
-                finally
-                {
-                    _lock.Release();
-                }
-
-                return item;
-            }
-
-            public IDisposable Lock(object key, CancellationToken token)
-            {
-                var item = GetOrCreate(key, token);
-                item.Value.Wait(CancellationToken.None);
-                return new Disposable(() =>
-                {
-                    _lock.Wait(CancellationToken.None);
-                    try
-                    {
-                        --item.RefCount;
-                        if (item.RefCount == 0)
-                            _dict.Remove(key);
-                    }
-                    finally
-                    {
-                        _lock.Release();
-                    }
-
-                    item.Value.Release();
-                });
-            }
-
-            public void Dispose()
-            {
-                _lock.Dispose();
-                foreach (var v in _dict.Values)
-                {
-                    v.Value.Dispose();
-                }
-            }
-        }
 
         private sealed class CFileCacheEntry : AnyExpirationPolicy
         {
@@ -168,7 +96,7 @@ namespace Eocron.Algorithms.FileCache
 
         private readonly int _gcIntervalMs = 5 * 1000;
         private readonly int _gcFailRetryIntervalMs = 10 * 1000;
-        private readonly PerKeySemaphoreSlim _perKeyLock;
+        private readonly AsyncKeyedLocker<TKey> _perKeyLock;
         private readonly IFileSystem _fs;
         private readonly string _baseFolder;
         private readonly ReaderWriterLockSlim _cacheLock;
@@ -203,7 +131,11 @@ namespace Eocron.Algorithms.FileCache
         {
             if (baseFolder == null)
                 throw new ArgumentNullException(nameof(baseFolder));
-            _perKeyLock = new PerKeySemaphoreSlim();
+            _perKeyLock = new AsyncKeyedLocker<TKey>(o =>
+            {
+                o.PoolSize = 20;
+                o.PoolInitialFill = 1;
+            });
             _cacheLock = new ReaderWriterLockSlim();
             _fs = fileSystem ?? FileSystem.Instance;
             _baseFolder = baseFolder;
@@ -750,7 +682,6 @@ namespace Eocron.Algorithms.FileCache
         {
             _cts?.Dispose();
             _gc?.Join();
-            _perKeyLock.Dispose();
             //_cacheLock.Dispose();
         }
     }
