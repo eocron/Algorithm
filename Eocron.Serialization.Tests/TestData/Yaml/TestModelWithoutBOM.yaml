@@ -4,23 +4,23 @@ Dictionary:
 TimeSpan: 00:00:03
 Guid: 1a4c5b27-3881-4330-a13b-f709c004bbc4
 Enum: Three
-Nullable:
+Nullable: 
 Integer: 123
 Double: 1.4
 Struct:
   Value: 234
 List:
-  - 1
-  - 2
-  - 3
+- 1
+- 2
+- 3
 Array:
-  - 2
-  - 3
-  - 4
-EmptyList: [ ]
-EmptyArray: [ ]
+- 2
+- 3
+- 4
+EmptyList: []
+EmptyArray: []
 FooBarString: foobar
 DateTime: 2022-01-01T01:01:01.0000000Z
-NullReference:
+NullReference: 
 Boolean: true
 Long: 456
