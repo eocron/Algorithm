@@ -9,32 +9,29 @@ namespace Eocron.Algorithms.Tests.Core
     public static class Benchmark
     {
         /// <summary>
-        /// Performs infinite measure of method execution with warmup, until cancellation is requested.
+        ///     Performs infinite measure of method execution with warmup, until cancellation is requested.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="token">Cancellation token to cancel infinite measure</param>
         /// <param name="warmup"></param>
-        public static void InfiniteMeasure(Action<BenchmarkContext> subject, CancellationToken token, bool warmup = true)
+        public static void InfiniteMeasure(Action<BenchmarkContext> subject, CancellationToken token,
+            bool warmup = true)
         {
             if (token == CancellationToken.None)
                 throw new ArgumentOutOfRangeException(nameof(token));
 
 
             if (warmup)
-            {
-                for (int i = 0; i < 3; i++)
-                {
-                    subject(new BenchmarkContext());     // warm up
-                }
-            }
+                for (var i = 0; i < 3; i++)
+                    subject(new BenchmarkContext()); // warm up
             var results = new List<double>(10000);
             var memoryResults = new List<long>(10000);
             var watch = new BenchmarkContext();
 
-            GC.Collect();  // compact Heap
+            GC.Collect(); // compact Heap
             GC.WaitForPendingFinalizers(); // and wait for the finalizer queue to empty
             GC.Collect();
-            while(!token.IsCancellationRequested)
+            while (!token.IsCancellationRequested)
             {
                 var prev = GC.GetTotalMemory(false);
                 watch.Start();
@@ -44,16 +41,18 @@ namespace Eocron.Algorithms.Tests.Core
                 }
                 catch (OperationCanceledException)
                 {
-                    break;//ignoring measurement
+                    break; //ignoring measurement
                 }
                 finally
                 {
                     watch.Stop();
                 }
+
                 var next = GC.GetTotalMemory(false);
                 results.Add(watch.TotalCount / watch.Stopwatch.Elapsed.TotalSeconds);
                 memoryResults.Add(prev - next);
             }
+
             results.Sort();
             memoryResults.Sort();
 
@@ -61,7 +60,7 @@ namespace Eocron.Algorithms.Tests.Core
             Console.WriteLine("Max:\t{0:F0} rps", results.Last());
             Console.WriteLine("Min:\t{0:F0} rps", results.First());
             Console.WriteLine("Avg:\t{0:F0} rps", results.Sum() / results.Count);
-            Console.WriteLine("Med:\t{0:F0} rps", results[results.Count/2]);
+            Console.WriteLine("Med:\t{0:F0} rps", results[results.Count / 2]);
 
             Console.WriteLine("Memory:");
             Console.WriteLine("Max:\t{0:F0} bps", memoryResults.Last());
@@ -72,28 +71,25 @@ namespace Eocron.Algorithms.Tests.Core
 
 
         /// <summary>
-        /// Performs infinite measure of method execution with warmup, until cancellation is requested.
+        ///     Performs infinite measure of method execution with warmup, until cancellation is requested.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="token">Cancellation token to cancel infinite measure</param>
         /// <param name="warmup"></param>
-        public static async Task InfiniteMeasureAsync(Func<BenchmarkContext, Task> subject, CancellationToken token, bool warmup = true)
+        public static async Task InfiniteMeasureAsync(Func<BenchmarkContext, Task> subject, CancellationToken token,
+            bool warmup = true)
         {
             if (token == CancellationToken.None)
                 throw new ArgumentOutOfRangeException(nameof(token));
 
 
             if (warmup)
-            {
-                for (int i = 0; i < 3; i++)
-                {
-                    await subject(new BenchmarkContext()).ConfigureAwait(false);     // warm up
-                }
-            }
+                for (var i = 0; i < 3; i++)
+                    await subject(new BenchmarkContext()).ConfigureAwait(false); // warm up
             var results = new List<double>(10000);
             var watch = new BenchmarkContext();
 
-            GC.Collect();  // compact Heap
+            GC.Collect(); // compact Heap
             GC.WaitForPendingFinalizers(); // and wait for the finalizer queue to empty
             GC.Collect();
             while (!token.IsCancellationRequested)
@@ -105,14 +101,16 @@ namespace Eocron.Algorithms.Tests.Core
                 }
                 catch (OperationCanceledException)
                 {
-                    break;//ignoring measurement
+                    break; //ignoring measurement
                 }
                 finally
                 {
                     watch.Stop();
                 }
+
                 results.Add(watch.TotalCount / watch.Stopwatch.Elapsed.TotalSeconds);
             }
+
             results.Sort();
             Console.WriteLine("Max:\t{0:F0} op/sec", results.Last());
             Console.WriteLine("Min:\t{0:F0} op/sec", results.First());

@@ -4,6 +4,6 @@ namespace Eocron.Serialization.Tests.Models.Yaml
     {
         One,
         Two,
-        Three,
+        Three
     }
 }

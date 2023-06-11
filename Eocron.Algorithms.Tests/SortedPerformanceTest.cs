@@ -15,7 +15,8 @@ namespace Eocron.Algorithms.Tests
     [TestFixture]
     public class SortedPerformanceTest
     {
-        [Test, Explicit]
+        [Test]
+        [Explicit]
         public void Run()
         {
             var config = new ManualConfig()
@@ -39,13 +40,13 @@ namespace Eocron.Algorithms.Tests
             {
                 return _array.BinarySearchIndexOf(_array[TestDataId]);
             }
-            
+
             [Benchmark]
             public int SearchLower()
             {
                 return _array.LowerBoundIndexOf(_array[TestDataId]);
             }
-            
+
             [Benchmark]
             public int SearchUpper()
             {

@@ -6,13 +6,16 @@ using Eocron.Algorithms.Disposing;
 namespace Eocron.Algorithms.FileCache.Async
 {
     /// <summary>
-    /// Read-preffered ReaderWriterLockSlim implementation.
+    ///     Read-preffered ReaderWriterLockSlim implementation.
     /// </summary>
     public sealed class AsyncReaderWriterLock : IDisposable
     {
-        private readonly SemaphoreSlim _r = new SemaphoreSlim(1);
-        private readonly SemaphoreSlim _g = new SemaphoreSlim(1);
-        private int _b = 0;
+        public void Dispose()
+        {
+            _r.Dispose();
+            _g.Dispose();
+            _b = 0;
+        }
 
         public async Task<IDisposable> ReaderLockAsync(CancellationToken token)
         {
@@ -20,10 +23,7 @@ namespace Eocron.Algorithms.FileCache.Async
             try
             {
                 _b++;
-                if (_b == 1)
-                {
-                    await _g.WaitAsync(token);//cancellation exception here
-                }
+                if (_b == 1) await _g.WaitAsync(token); //cancellation exception here
                 return new Disposable(() => ReleaseRead());
             }
             catch (OperationCanceledException)
@@ -35,6 +35,12 @@ namespace Eocron.Algorithms.FileCache.Async
             {
                 _r.Release();
             }
+        }
+
+        public async Task<IDisposable> WriterLockAsync(CancellationToken token)
+        {
+            await _g.WaitAsync(token);
+            return new Disposable(() => ReleaseWrite());
         }
 
         private void ReleaseRead()
@@ -52,22 +58,13 @@ namespace Eocron.Algorithms.FileCache.Async
             }
         }
 
-        public async Task<IDisposable> WriterLockAsync(CancellationToken token)
-        {
-            await _g.WaitAsync(token);
-            return new Disposable(() => ReleaseWrite());
-        }
-
         private void ReleaseWrite()
         {
             _g.Release();
         }
 
-        public void Dispose()
-        {
-            _r.Dispose();
-            _g.Dispose();
-            _b = 0;
-        }
+        private readonly SemaphoreSlim _g = new SemaphoreSlim(1);
+        private readonly SemaphoreSlim _r = new SemaphoreSlim(1);
+        private int _b;
     }
 }

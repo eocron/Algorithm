@@ -8,26 +8,17 @@ namespace Eocron.Algorithms.Sorted
 {
     public abstract class TempFileEnumerableStorageBase<T> : IEnumerableStorage<T>, IDisposable
     {
-        private readonly bool _useCompress;
-        private readonly string _tempFolder;
-        private readonly ConcurrentBag<string> _files = new ConcurrentBag<string>();
-
-        public string TempFolder => _tempFolder;
-
         public TempFileEnumerableStorageBase(string tempFolder, bool useCompress)
         {
             _useCompress = useCompress;
-            _tempFolder = tempFolder ?? Path.Combine(Path.GetTempPath(), "merge_sort");
+            TempFolder = tempFolder ?? Path.Combine(Path.GetTempPath(), "merge_sort");
         }
 
         public void Add(IReadOnlyCollection<T> data)
         {
             var filePath = GetTempFilePath();
             Stream tmp = File.OpenWrite(filePath);
-            if (_useCompress)
-            {
-                tmp = new DeflateStream(tmp, CompressionMode.Compress, leaveOpen: false);
-            }
+            if (_useCompress) tmp = new DeflateStream(tmp, CompressionMode.Compress, false);
             try
             {
                 SerializeToStream(data, tmp);
@@ -40,49 +31,36 @@ namespace Eocron.Algorithms.Sorted
             _files.Add(filePath);
         }
 
-        protected abstract void SerializeToStream(IReadOnlyCollection<T> data, Stream outputStream);
-
-        protected abstract IEnumerable<T> DeserializeFromStream(Stream inputStream);
-
-        private string GetTempFilePath()
+        public void Clear()
         {
-            if (!Directory.Exists(_tempFolder))
-                Directory.CreateDirectory(_tempFolder);
+            while (_files.TryTake(out var tmp)) File.Delete(tmp);
+        }
 
-            string filePath;
-            do
-            {
-                filePath = Path.Combine(_tempFolder, Guid.NewGuid() + ".bin");
-            } while (File.Exists(filePath));
-
-            return filePath;
+        public void Dispose()
+        {
+            Clear();
         }
 
         public IEnumerable<T> Take()
         {
-            if (_files.TryTake(out var path))
-            {
-                return EnumeratePopped(path);
-            }
+            if (_files.TryTake(out var path)) return EnumeratePopped(path);
             throw new InvalidOperationException("Storage is empty.");
         }
+
+        protected abstract IEnumerable<T> DeserializeFromStream(Stream inputStream);
+
+        protected abstract void SerializeToStream(IReadOnlyCollection<T> data, Stream outputStream);
 
         private IEnumerable<T> EnumeratePopped(string path)
         {
             try
             {
                 Stream tmp = File.OpenRead(path);
-                if (_useCompress)
-                {
-                    tmp = new DeflateStream(tmp, CompressionMode.Decompress, false);
-                }
+                if (_useCompress) tmp = new DeflateStream(tmp, CompressionMode.Decompress, false);
                 try
                 {
                     //making enumerable lazy
-                    foreach (var e in DeserializeFromStream(tmp))
-                    {
-                        yield return e;
-                    }
+                    foreach (var e in DeserializeFromStream(tmp)) yield return e;
                 }
                 finally
                 {
@@ -95,18 +73,25 @@ namespace Eocron.Algorithms.Sorted
             }
         }
 
-        public int Count => _files.Count;
-        public void Clear()
+        private string GetTempFilePath()
         {
-            while (_files.TryTake(out var tmp))
+            if (!Directory.Exists(TempFolder))
+                Directory.CreateDirectory(TempFolder);
+
+            string filePath;
+            do
             {
-                File.Delete(tmp);
-            }
+                filePath = Path.Combine(TempFolder, Guid.NewGuid() + ".bin");
+            } while (File.Exists(filePath));
+
+            return filePath;
         }
 
-        public void Dispose()
-        {
-            Clear();
-        }
+        public int Count => _files.Count;
+
+        public string TempFolder { get; }
+
+        private readonly bool _useCompress;
+        private readonly ConcurrentBag<string> _files = new ConcurrentBag<string>();
     }
 }

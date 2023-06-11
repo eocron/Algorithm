@@ -6,45 +6,6 @@ namespace Eocron.Algorithms.Graphs
 {
     public abstract class DijkstraAlgorithmBase<TVertex, TWeight> : IDijkstraAlgorithm<TVertex, TWeight>
     {
-        /// <summary>
-        ///     Returns all possible target verticies.
-        /// </summary>
-        /// <param name="vertex">Source vertex.</param>
-        /// <returns></returns>
-        public delegate IEnumerable<TVertex> GetAllEdges(TVertex vertex);
-
-        /// <summary>
-        ///     Calculates edge weight.
-        ///     So for example (x,y)=> (x.Weight + 1) means that traveling from X to Y costs 1 plus some calculated weight.
-        ///     This particular example can be used to calculate shortest path where all edges are costed 1
-        /// </summary>
-        /// <param name="vertexAndItsCurrentWeight">Source vertex and its current calculated weight.</param>
-        /// <param name="nextVertex">Target vertex.</param>
-        /// <returns></returns>
-        public delegate TWeight GetEdgeWeight(VertexWeight vertexAndItsCurrentWeight, TVertex nextVertex);
-
-        /// <summary>
-        ///     Calculates vertex weight.
-        /// </summary>
-        /// <param name="vertex">Some vertex.</param>
-        /// <returns></returns>
-        public delegate TWeight GetVertexWeight(TVertex vertex);
-
-        /// <summary>
-        ///     Checks if vertex is final and algorithm can stop traveling infinite/finite graph.
-        ///     Basically searching behavior limiter.
-        /// </summary>
-        /// <returns></returns>
-        public delegate bool IsTargetVertex(VertexWeight vertexAndItsCurrentWeight);
-
-        private readonly IComparer<TWeight> _comparer;
-        private readonly GetAllEdges _getEdges;
-        private readonly GetEdgeWeight _getEdgeWeight;
-        private readonly GetVertexWeight _getVertexWeight;
-        private readonly IsTargetVertex _isTargetVertex;
-
-        private bool _searched;
-
         protected DijkstraAlgorithmBase(
             GetAllEdges getEdges,
             GetVertexWeight getVertexWeight,
@@ -59,9 +20,41 @@ namespace Eocron.Algorithms.Graphs
             _comparer = comparer ?? Comparer<TWeight>.Default;
         }
 
-        public TVertex Source { get; private set; }
-        public TVertex Target { get; private set; }
-        public bool IsTargetFound { get; private set; }
+        public IEnumerable<TVertex> GetPath(
+            TVertex source,
+            TVertex target)
+        {
+            ThrowIfNotSearched();
+            var u = target;
+            var isReachable = ContainsPath(u) || source.Equals(u);
+            if (!isReachable)
+                return Enumerable.Empty<TVertex>();
+
+            var stack = new Stack<TVertex>();
+            while (ContainsWeight(u))
+            {
+                stack.Push(u);
+                if (!TryGetPath(u, out u)) break;
+            }
+
+            return stack;
+        }
+
+        public IEnumerable<TVertex> GetPathFromSourceToTarget()
+        {
+            ThrowIfNotSearched();
+            return IsTargetFound
+                ? GetPath(Source, Target)
+                : Enumerable.Empty<TVertex>();
+        }
+
+        public TWeight GetWeight(TVertex vertex)
+        {
+            ThrowIfNotSearched();
+            if (TryGetWeight(vertex, out var tmp))
+                return tmp;
+            throw new KeyNotFoundException(vertex.ToString());
+        }
 
         public void Search(TVertex source)
         {
@@ -103,7 +96,7 @@ namespace Eocron.Algorithms.Graphs
                         }
                     }
                 }
-                
+
                 _searched = true;
             }
             catch
@@ -113,49 +106,7 @@ namespace Eocron.Algorithms.Graphs
             }
         }
 
-        public IEnumerable<TVertex> GetPathFromSourceToTarget()
-        {
-            ThrowIfNotSearched();
-            return IsTargetFound
-                ? GetPath(Source, Target)
-                : Enumerable.Empty<TVertex>();
-        }
-
-        public IEnumerable<TVertex> GetPath(
-            TVertex source,
-            TVertex target)
-        {
-            ThrowIfNotSearched();
-            var u = target;
-            var isReachable = ContainsPath(u) || source.Equals(u);
-            if (!isReachable)
-                return Enumerable.Empty<TVertex>();
-
-            var stack = new Stack<TVertex>();
-            while (ContainsWeight(u))
-            {
-                stack.Push(u);
-                if (!TryGetPath(u, out u)) break;
-            }
-
-            return stack;
-        }
-
         public abstract bool TryGetWeight(TVertex vertex, out TWeight weight);
-
-        public TWeight GetWeight(TVertex vertex)
-        {
-            ThrowIfNotSearched();
-            if (TryGetWeight(vertex, out var tmp))
-                return tmp;
-            throw new KeyNotFoundException(vertex.ToString());
-        }
-
-        protected abstract void SetWeight(TVertex vertex, TWeight weight);
-
-        protected abstract void SetPath(TVertex vertex, TVertex other);
-
-        protected abstract bool ContainsPath(TVertex vertex);
 
         protected virtual void Clear()
         {
@@ -165,24 +116,42 @@ namespace Eocron.Algorithms.Graphs
             _searched = false;
         }
 
+        protected abstract bool ContainsPath(TVertex vertex);
+
+        protected abstract bool ContainsWeight(TVertex vertex);
+
+        protected abstract KeyValuePair<TWeight, TVertex> Dequeue();
+
         protected abstract void Enqueue(KeyValuePair<TWeight, TVertex> item);
 
         protected abstract void EnqueueOrUpdate(KeyValuePair<TWeight, TVertex> item,
             Func<KeyValuePair<TWeight, TVertex>, KeyValuePair<TWeight, TVertex>> onUpdate);
 
-        protected abstract KeyValuePair<TWeight, TVertex> Dequeue();
-
         protected abstract bool IsQueueEmpty();
 
-        protected abstract bool TryGetPath(TVertex source, out TVertex target);
+        protected abstract void SetPath(TVertex vertex, TVertex other);
 
-        protected abstract bool ContainsWeight(TVertex vertex);
+        protected abstract void SetWeight(TVertex vertex, TWeight weight);
 
         protected void ThrowIfNotSearched()
         {
             if (!_searched)
                 throw new InvalidOperationException("Perform search.");
         }
+
+        protected abstract bool TryGetPath(TVertex source, out TVertex target);
+        public bool IsTargetFound { get; private set; }
+
+        public TVertex Source { get; private set; }
+        public TVertex Target { get; private set; }
+        private readonly GetAllEdges _getEdges;
+        private readonly GetEdgeWeight _getEdgeWeight;
+        private readonly GetVertexWeight _getVertexWeight;
+        private readonly IsTargetVertex _isTargetVertex;
+
+        private readonly IComparer<TWeight> _comparer;
+
+        private bool _searched;
 
         public class VertexWeight
         {
@@ -195,5 +164,36 @@ namespace Eocron.Algorithms.Graphs
             public TVertex Vertex { get; }
             public TWeight Weight { get; }
         }
+
+        /// <summary>
+        ///     Returns all possible target verticies.
+        /// </summary>
+        /// <param name="vertex">Source vertex.</param>
+        /// <returns></returns>
+        public delegate IEnumerable<TVertex> GetAllEdges(TVertex vertex);
+
+        /// <summary>
+        ///     Calculates edge weight.
+        ///     So for example (x,y)=> (x.Weight + 1) means that traveling from X to Y costs 1 plus some calculated weight.
+        ///     This particular example can be used to calculate shortest path where all edges are costed 1
+        /// </summary>
+        /// <param name="vertexAndItsCurrentWeight">Source vertex and its current calculated weight.</param>
+        /// <param name="nextVertex">Target vertex.</param>
+        /// <returns></returns>
+        public delegate TWeight GetEdgeWeight(VertexWeight vertexAndItsCurrentWeight, TVertex nextVertex);
+
+        /// <summary>
+        ///     Calculates vertex weight.
+        /// </summary>
+        /// <param name="vertex">Some vertex.</param>
+        /// <returns></returns>
+        public delegate TWeight GetVertexWeight(TVertex vertex);
+
+        /// <summary>
+        ///     Checks if vertex is final and algorithm can stop traveling infinite/finite graph.
+        ///     Basically searching behavior limiter.
+        /// </summary>
+        /// <returns></returns>
+        public delegate bool IsTargetVertex(VertexWeight vertexAndItsCurrentWeight);
     }
 }

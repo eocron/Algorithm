@@ -8,35 +8,8 @@ namespace Eocron.Algorithms.Intervals
     [Obsolete("IN DEVELOPMENT")]
     internal class IntervalTree<TPoint, TValue> : IIntervalTree<TPoint, TValue>
     {
-        private IntervalNode _root;
-        private ulong _modifications;
-        private readonly IComparer<IntervalPoint<TPoint>> _comparer;
-
-        public IntervalPoint<TPoint> MaxEndPoint
-        {
-            get
-            {
-                if (_root == null)
-                    throw new InvalidOperationException("Cannot determine max end point for empty interval tree");
-                return _root.MaxEndPoint;
-            }
-        }
-
-        public IntervalPoint<TPoint> MinEndPoint
-        {
-            get
-            {
-                if (_root == null)
-                    throw new InvalidOperationException("Cannot determine min end point for empty interval tree");
-                return _root.MinEndPoint;
-            }
-        }
-        public bool IsSynchronized => false;
-        public bool IsReadOnly => false;
-        public Object SyncRoot { get; }
-        public int Count { get; private set; }
-
-        public IntervalTree(IEnumerable<KeyValuePair<Interval<TPoint>, TValue>> intervals, IComparer<IntervalPoint<TPoint>> comparer = null) : this(comparer)
+        public IntervalTree(IEnumerable<KeyValuePair<Interval<TPoint>, TValue>> intervals,
+            IComparer<IntervalPoint<TPoint>> comparer = null) : this(comparer)
         {
             this.AddRange(intervals);
         }
@@ -45,55 +18,6 @@ namespace Eocron.Algorithms.Intervals
         {
             _comparer = comparer ?? IntervalPointComparer<TPoint>.Default;
             SyncRoot = new object();
-        }
-
-
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return new IntervalTreeEnumerator(this);
-        }
-
-        public IEnumerator<KeyValuePair<Interval<TPoint>, TValue>> GetEnumerator()
-        {
-            return new IntervalTreeEnumerator(this);
-        }
-
-        public void CopyTo(
-            Array array,
-            int arrayIndex)
-        {
-            if (array == null)
-                throw new ArgumentNullException(nameof(array));
-            PerformCopy(arrayIndex, array.Length, (i, v) => array.SetValue(v, i));
-        }
-
-        public bool Remove(KeyValuePair<Interval<TPoint>, TValue> item)
-        {
-            return Remove(item.Key);
-        }
-
-
-
-        public void CopyTo(
-            KeyValuePair<Interval<TPoint>, TValue>[] array,
-            int arrayIndex)
-        {
-            if (array == null)
-                throw new ArgumentNullException(nameof(array));
-            PerformCopy(arrayIndex, array.Length, (i, v) => array[i] = v);
-        }
-
-        public bool Contains(KeyValuePair<Interval<TPoint>, TValue> item)
-        {
-            return FindMatchingNodes(item.Key).Any();
-        }
-
-        public void Clear()
-        {
-            SetRoot(null);
-            Count = 0;
-            _modifications++;
         }
 
         public void Add(KeyValuePair<Interval<TPoint>, TValue> item)
@@ -108,20 +32,22 @@ namespace Eocron.Algorithms.Intervals
                 return;
             }
 
-            IntervalNode node = _root;
+            var node = _root;
             while (true)
             {
                 var startCmp = _comparer.Compare(newNode.Start, node.Start);
                 if (startCmp <= 0)
                 {
                     if (startCmp == 0)
-                        throw new InvalidOperationException("Cannot add the same item twice (object reference already exists in db)");
+                        throw new InvalidOperationException(
+                            "Cannot add the same item twice (object reference already exists in db)");
 
                     if (node.Left == null)
                     {
                         node.Left = newNode;
                         break;
                     }
+
                     node = node.Left;
                 }
                 else
@@ -131,6 +57,7 @@ namespace Eocron.Algorithms.Intervals
                         node.Right = newNode;
                         break;
                     }
+
                     node = node.Right;
                 }
             }
@@ -149,17 +76,77 @@ namespace Eocron.Algorithms.Intervals
             }
         }
 
+        public void Clear()
+        {
+            SetRoot(null);
+            Count = 0;
+            _modifications++;
+        }
+
+        public bool Contains(KeyValuePair<Interval<TPoint>, TValue> item)
+        {
+            return FindMatchingNodes(item.Key).Any();
+        }
+
+        public bool Contains(IntervalPoint<TPoint> point)
+        {
+            return FindAt(point).Any();
+        }
+
+        public void CopyTo(
+            Array array,
+            int arrayIndex)
+        {
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
+            PerformCopy(arrayIndex, array.Length, (i, v) => array.SetValue(v, i));
+        }
+
+
+        public void CopyTo(
+            KeyValuePair<Interval<TPoint>, TValue>[] array,
+            int arrayIndex)
+        {
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
+            PerformCopy(arrayIndex, array.Length, (i, v) => array[i] = v);
+        }
+
+        public IEnumerable<KeyValuePair<Interval<TPoint>, TValue>> FindAt(IntervalPoint<TPoint> point)
+        {
+            return PerformStabbingQuery(_root, point).Select(node => node.Data);
+        }
+
+        public IEnumerable<KeyValuePair<Interval<TPoint>, TValue>> FindOverlaps(Interval<TPoint> interval)
+        {
+            return PerformStabbingQuery(_root, interval).Select(node => node.Data);
+        }
+
+        public IEnumerator<KeyValuePair<Interval<TPoint>, TValue>> GetEnumerator()
+        {
+            return new IntervalTreeEnumerator(this);
+        }
+
+        public bool Overlaps(Interval<TPoint> interval)
+        {
+            return PerformStabbingQuery(_root, interval).Any();
+        }
+
+        public bool Remove(KeyValuePair<Interval<TPoint>, TValue> item)
+        {
+            return Remove(item.Key);
+        }
+
         /// <summary>
-        /// Removes an item.
+        ///     Removes an item.
         /// </summary>
         /// <param name="item">The item to remove</param>
         /// <returns>True if an item was removed</returns>
         /// <remarks>
-        /// This method uses the collection’s objects’ Equals and CompareTo methods on item to retrieve the existing item.
+        ///     This method uses the collection’s objects’ Equals and CompareTo methods on item to retrieve the existing item.
         /// </remarks>
         public bool Remove(Interval<TPoint> item)
         {
-
             if (_root == null)
                 return false;
 
@@ -168,7 +155,7 @@ namespace Eocron.Algorithms.Intervals
             if (candidates.Count == 0)
                 return false;
 
-            IntervalNode toBeRemoved = candidates[0];
+            var toBeRemoved = candidates[0];
 
             var parent = toBeRemoved.Parent;
             var isLeftChild = toBeRemoved.IsLeftChild;
@@ -236,10 +223,7 @@ namespace Eocron.Algorithms.Intervals
                     else
                     {
                         replacement = toBeRemoved.Left.Right;
-                        while (replacement.Right != null)
-                        {
-                            replacement = replacement.Right;
-                        }
+                        while (replacement.Right != null) replacement = replacement.Right;
                         replacementParent = replacement.Parent;
                         replacementParent.Right = replacement.Left;
 
@@ -260,10 +244,7 @@ namespace Eocron.Algorithms.Intervals
                     else
                     {
                         replacement = toBeRemoved.Right.Left;
-                        while (replacement.Left != null)
-                        {
-                            replacement = replacement.Left;
-                        }
+                        while (replacement.Left != null) replacement = replacement.Left;
                         replacementParent = replacement.Parent;
                         replacementParent.Left = replacement.Right;
 
@@ -294,52 +275,33 @@ namespace Eocron.Algorithms.Intervals
             _modifications++;
             return true;
         }
-        
-        public IEnumerable<KeyValuePair<Interval<TPoint>, TValue>> FindAt(IntervalPoint<TPoint> point)
-        {
-            return PerformStabbingQuery(_root, point).Select(node => node.Data);
-        }
-
-        public bool Contains(IntervalPoint<TPoint> point)
-        {
-            return FindAt(point).Any();
-        }
-
-        public bool Overlaps(Interval<TPoint> interval)
-        {
-            return PerformStabbingQuery(_root, interval).Any();
-        }
-
-        public IEnumerable<KeyValuePair<Interval<TPoint>, TValue>> FindOverlaps(Interval<TPoint> interval)
-        {
-            return PerformStabbingQuery(_root, interval).Select(node => node.Data);
-        }
-        
-        private void PerformCopy(int arrayIndex, int arrayLength, Action<int, KeyValuePair<Interval<TPoint>, TValue>> setAtIndexDelegate)
-        {
-            if (arrayIndex < 0)
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex));
-            int i = arrayIndex;
-            using IEnumerator<KeyValuePair<Interval<TPoint>, TValue>> enumerator = GetEnumerator();
-            while (enumerator.MoveNext())
-            {
-                if (i >= arrayLength)
-                    throw new ArgumentOutOfRangeException(nameof(arrayIndex), "Not enough elements in array to copy content into");
-                setAtIndexDelegate(i, enumerator.Current);
-                i++;
-            }
-        }
 
         private IEnumerable<IntervalNode> FindMatchingNodes(Interval<TPoint> interval)
         {
             return PerformStabbingQuery(_root, interval).Where(node => node.Data.Key.Equals(interval));
         }
 
-        private void SetRoot(IntervalNode node)
+
+        IEnumerator IEnumerable.GetEnumerator()
         {
-            _root = node;
-            if (_root != null)
-                _root.Parent = null;
+            return new IntervalTreeEnumerator(this);
+        }
+
+        private void PerformCopy(int arrayIndex, int arrayLength,
+            Action<int, KeyValuePair<Interval<TPoint>, TValue>> setAtIndexDelegate)
+        {
+            if (arrayIndex < 0)
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+            var i = arrayIndex;
+            using var enumerator = GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                if (i >= arrayLength)
+                    throw new ArgumentOutOfRangeException(nameof(arrayIndex),
+                        "Not enough elements in array to copy content into");
+                setAtIndexDelegate(i, enumerator.Current);
+                i++;
+            }
         }
 
         private IEnumerable<IntervalNode> PerformStabbingQuery(IntervalNode node, IntervalPoint<TPoint> point)
@@ -369,7 +331,8 @@ namespace Eocron.Algorithms.Intervals
             if (node == null)
                 yield break;
 
-            if (new IntervalGougedPointComparer<TPoint>(_comparer, true).Compare(interval.StartPoint, node.MaxEndPoint) > 0)
+            if (new IntervalGougedPointComparer<TPoint>(_comparer, true).Compare(interval.StartPoint,
+                    node.MaxEndPoint) > 0)
                 yield break;
 
             if (node.Left != null)
@@ -448,22 +411,48 @@ namespace Eocron.Algorithms.Intervals
                 SetRoot(pivotNode);
             }
         }
-        
+
+        private void SetRoot(IntervalNode node)
+        {
+            _root = node;
+            if (_root != null)
+                _root.Parent = null;
+        }
+
+        public bool IsReadOnly => false;
+        public bool IsSynchronized => false;
+        public int Count { get; private set; }
+
+        public IntervalPoint<TPoint> MaxEndPoint
+        {
+            get
+            {
+                if (_root == null)
+                    throw new InvalidOperationException("Cannot determine max end point for empty interval tree");
+                return _root.MaxEndPoint;
+            }
+        }
+
+        public IntervalPoint<TPoint> MinEndPoint
+        {
+            get
+            {
+                if (_root == null)
+                    throw new InvalidOperationException("Cannot determine min end point for empty interval tree");
+                return _root.MinEndPoint;
+            }
+        }
+
+        public object SyncRoot { get; }
+        private readonly IComparer<IntervalPoint<TPoint>> _comparer;
+        private IntervalNode _root;
+        private ulong _modifications;
+
 
         #region Inner classes
 
         private sealed class IntervalNode
         {
-            private readonly IComparer<IntervalPoint<TPoint>> _comparer;
-            private IntervalNode _left;
-            private IntervalNode _right;
-            public IntervalNode Parent { get; set; }
-            public IntervalPoint<TPoint> Start => Data.Key.StartPoint;
-            private IntervalPoint<TPoint> End => Data.Key.EndPoint;
-            public KeyValuePair<Interval<TPoint>, TValue> Data { get; private set; }
-            private int Height { get; set; }
-            public IntervalPoint<TPoint> MaxEndPoint { get; private set; }
-            public IntervalPoint<TPoint> MinEndPoint { get; private set; }
             public IntervalNode(KeyValuePair<Interval<TPoint>, TValue> data, IComparer<IntervalPoint<TPoint>> comparer)
             {
                 _comparer = comparer;
@@ -471,60 +460,9 @@ namespace Eocron.Algorithms.Intervals
                 UpdateCachedPoints();
             }
 
-            public IntervalNode Left
+            public override string ToString()
             {
-                get => _left;
-                set
-                {
-                    _left = value;
-                    if (_left != null)
-                        _left.Parent = this;
-                    UpdateHeight();
-                    UpdateCachedPoints();
-                }
-            }
-
-            public IntervalNode Right
-            {
-                get => _right;
-                set
-                {
-                    _right = value;
-                    if (_right != null)
-                        _right.Parent = this;
-                    UpdateHeight();
-                    UpdateCachedPoints();
-                }
-            }
-
-            public int Balance
-            {
-                get
-                {
-                    if (Left != null && Right != null)
-                        return Left.Height - Right.Height;
-                    if (Left != null)
-                        return Left.Height + 1;
-                    if (Right != null)
-                        return -(Right.Height + 1);
-                    return 0;
-                }
-            }
-
-            public bool IsLeftChild => Parent != null && Parent.Left == this;
-
-
-
-            public void UpdateHeight()
-            {
-                if (Left != null && Right != null)
-                    Height = Math.Max(Left.Height, Right.Height) + 1;
-                else if (Left != null)
-                    Height = Left.Height + 1;
-                else if (Right != null)
-                    Height = Right.Height + 1;
-                else
-                    Height = 0;
+                return string.Format("[{0},{1}], maxEnd={2}, minEnd={3}", Start, End, MaxEndPoint, MinEndPoint);
             }
 
             public void UpdateCachedPoints()
@@ -544,52 +482,87 @@ namespace Eocron.Algorithms.Intervals
                 MinEndPoint = min;
             }
 
-            public override string ToString()
+
+            public void UpdateHeight()
             {
-                return string.Format("[{0},{1}], maxEnd={2}, minEnd={3}", Start, End, MaxEndPoint, MinEndPoint);
+                if (Left != null && Right != null)
+                    Height = Math.Max(Left.Height, Right.Height) + 1;
+                else if (Left != null)
+                    Height = Left.Height + 1;
+                else if (Right != null)
+                    Height = Right.Height + 1;
+                else
+                    Height = 0;
             }
+
+            public bool IsLeftChild => Parent != null && Parent.Left == this;
+
+            public int Balance
+            {
+                get
+                {
+                    if (Left != null && Right != null)
+                        return Left.Height - Right.Height;
+                    if (Left != null)
+                        return Left.Height + 1;
+                    if (Right != null)
+                        return -(Right.Height + 1);
+                    return 0;
+                }
+            }
+
+            public IntervalPoint<TPoint> MaxEndPoint { get; private set; }
+            public IntervalPoint<TPoint> MinEndPoint { get; private set; }
+            public IntervalPoint<TPoint> Start => Data.Key.StartPoint;
+
+            public IntervalNode Left
+            {
+                get => _left;
+                set
+                {
+                    _left = value;
+                    if (_left != null)
+                        _left.Parent = this;
+                    UpdateHeight();
+                    UpdateCachedPoints();
+                }
+            }
+
+            public IntervalNode Parent { get; set; }
+
+            public IntervalNode Right
+            {
+                get => _right;
+                set
+                {
+                    _right = value;
+                    if (_right != null)
+                        _right.Parent = this;
+                    UpdateHeight();
+                    UpdateCachedPoints();
+                }
+            }
+
+            public KeyValuePair<Interval<TPoint>, TValue> Data { get; }
+            private int Height { get; set; }
+            private IntervalPoint<TPoint> End => Data.Key.EndPoint;
+            private readonly IComparer<IntervalPoint<TPoint>> _comparer;
+            private IntervalNode _left;
+            private IntervalNode _right;
         }
 
         private sealed class IntervalTreeEnumerator : IEnumerator<KeyValuePair<Interval<TPoint>, TValue>>
         {
-            private readonly ulong _modificationsAtCreation;
-            private readonly IntervalTree<TPoint, TValue> _tree;
-            private readonly IntervalNode _startNode;
-            private IntervalNode _current;
-            private bool _hasVisitedCurrent;
-            private bool _hasVisitedRight;
-
             public IntervalTreeEnumerator(IntervalTree<TPoint, TValue> tree)
             {
-                this._tree = tree;
+                _tree = tree;
                 _modificationsAtCreation = tree._modifications;
                 _startNode = GetLeftMostDescendantOrSelf(tree._root);
                 Reset();
             }
 
-            public KeyValuePair<Interval<TPoint>, TValue> Current
+            public void Dispose()
             {
-                get
-                {
-                    if (_current == null)
-                        throw new InvalidOperationException("Enumeration has finished.");
-
-                    if (ReferenceEquals(_current, _startNode) && !_hasVisitedCurrent)
-                        throw new InvalidOperationException("Enumeration has not started.");
-
-                    return _current.Data;
-                }
-            }
-
-            object IEnumerator.Current => Current;
-
-            public void Reset()
-            {
-                if (_modificationsAtCreation != _tree._modifications)
-                    throw new InvalidOperationException("Collection was modified.");
-                _current = _startNode;
-                _hasVisitedCurrent = false;
-                _hasVisitedRight = false;
             }
 
             public bool MoveNext()
@@ -633,25 +606,49 @@ namespace Eocron.Algorithms.Intervals
                 return false;
             }
 
-            private void MoveToLeftMostDescendant()
+            public void Reset()
             {
-                _current = GetLeftMostDescendantOrSelf(_current);
+                if (_modificationsAtCreation != _tree._modifications)
+                    throw new InvalidOperationException("Collection was modified.");
+                _current = _startNode;
+                _hasVisitedCurrent = false;
+                _hasVisitedRight = false;
             }
 
             private IntervalNode GetLeftMostDescendantOrSelf(IntervalNode node)
             {
                 if (node == null)
                     return null;
-                while (node.Left != null)
-                {
-                    node = node.Left;
-                }
+                while (node.Left != null) node = node.Left;
                 return node;
             }
 
-            public void Dispose()
+            private void MoveToLeftMostDescendant()
             {
+                _current = GetLeftMostDescendantOrSelf(_current);
             }
+
+            public KeyValuePair<Interval<TPoint>, TValue> Current
+            {
+                get
+                {
+                    if (_current == null)
+                        throw new InvalidOperationException("Enumeration has finished.");
+
+                    if (ReferenceEquals(_current, _startNode) && !_hasVisitedCurrent)
+                        throw new InvalidOperationException("Enumeration has not started.");
+
+                    return _current.Data;
+                }
+            }
+
+            object IEnumerator.Current => Current;
+            private readonly IntervalTree<TPoint, TValue> _tree;
+            private readonly IntervalNode _startNode;
+            private readonly ulong _modificationsAtCreation;
+            private bool _hasVisitedCurrent;
+            private bool _hasVisitedRight;
+            private IntervalNode _current;
         }
 
         #endregion

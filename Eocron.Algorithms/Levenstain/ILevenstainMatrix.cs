@@ -2,9 +2,8 @@
 {
     public interface ILevenstainMatrix
     {
-        int N { get; }
-        int M { get; }
-
         float this[int i, int j] { get; set; }
+        int M { get; }
+        int N { get; }
     }
 }

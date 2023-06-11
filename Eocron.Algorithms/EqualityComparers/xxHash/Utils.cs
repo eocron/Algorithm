@@ -15,13 +15,13 @@ namespace Eocron.Algorithms.EqualityComparers.xxHash
             Debug.Assert(count >= 0);
             Debug.Assert(count + srcOffset <= src.Length);
             Debug.Assert(count + dstOffset <= dst.Length);
-                      
+
             fixed (byte* pSrc = &src[srcOffset])
             fixed (byte* pDst = &dst[dstOffset])
             {
-                byte* ptrSrc = pSrc;
-                byte* ptrDst = pDst;
-                
+                var ptrSrc = pSrc;
+                var ptrDst = pDst;
+
                 SMALLTABLE:
                 switch (count)
                 {
@@ -114,7 +114,7 @@ namespace Eocron.Algorithms.EqualityComparers.xxHash
                         *(long*)(ptrDst + 8) = *(long*)(ptrSrc + 8);
                         *(int*)(ptrDst + 16) = *(int*)(ptrSrc + 16);
                         return;
-    
+
                     case 21:
                         *(long*)ptrDst = *(long*)ptrSrc;
                         *(long*)(ptrDst + 8) = *(long*)(ptrSrc + 8);
@@ -193,9 +193,9 @@ namespace Eocron.Algorithms.EqualityComparers.xxHash
                         *(long*)(ptrDst + 24) = *(long*)(ptrSrc + 24);
                         return;
                 }
-    
-                long* lpSrc = (long*)ptrSrc;
-                long* ldSrc = (long*)ptrDst;
+
+                var lpSrc = (long*)ptrSrc;
+                var ldSrc = (long*)ptrDst;
                 while (count >= 64)
                 {
                     *(ldSrc + 0) = *(lpSrc + 0);
@@ -212,6 +212,7 @@ namespace Eocron.Algorithms.EqualityComparers.xxHash
                     lpSrc += 8;
                     ldSrc += 8;
                 }
+
                 if (count > 32)
                 {
                     *(ldSrc + 0) = *(lpSrc + 0);
@@ -222,7 +223,7 @@ namespace Eocron.Algorithms.EqualityComparers.xxHash
                     lpSrc += 4;
                     ldSrc += 4;
                 }
-                
+
                 ptrSrc = (byte*)lpSrc;
                 ptrDst = (byte*)ldSrc;
                 goto SMALLTABLE;

@@ -18,7 +18,7 @@ namespace Eocron.Serialization.Tests
         {
             return new XmlTestModelFooBar
             {
-                Dictionary = new Dictionary<string, string>()
+                Dictionary = new Dictionary<string, string>
                 {
                     { "key1", "value1" },
                     { "key2", "value2" }

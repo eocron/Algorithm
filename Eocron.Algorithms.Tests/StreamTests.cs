@@ -15,9 +15,6 @@ namespace Eocron.Algorithms.Tests
     [TestFixture]
     public class StreamTests
     {
-        private byte[] TestData { get; set; }
-        private string TestDataString { get; set; }
-
         [OneTimeSetUp]
         public void Setup()
         {
@@ -31,6 +28,9 @@ namespace Eocron.Algorithms.Tests
             TestDataString = rnd.NextString(rnd.Next(100, 500));
         }
 
+        private byte[] TestData { get; set; }
+        private string TestDataString { get; set; }
+
         [Test]
         public void Catch()
         {
@@ -42,7 +42,7 @@ namespace Eocron.Algorithms.Tests
                     .GZip(CompressionMode.Decompress)
                     .ToByteArray();
             });
-            
+
             Assert.AreEqual(1, testStream.CloseCallCount);
             Assert.AreEqual(0, testStream.DisposeAsyncCallCount);
             Assert.AreEqual(1, testStream.DisposeCallCount);
@@ -125,7 +125,7 @@ namespace Eocron.Algorithms.Tests
         {
             using var testStream = GetTestStream();
             var actual = testStream
-                .AsEnumerable(leaveOpen:true)
+                .AsEnumerable(leaveOpen: true)
                 .GZip(CompressionMode.Compress)
                 .GZip(CompressionMode.Decompress)
                 .GZip(CompressionMode.Compress)
@@ -163,7 +163,7 @@ namespace Eocron.Algorithms.Tests
         {
             await using var testStream = GetTestStream();
             var actual = await testStream
-                .AsAsyncEnumerable(leaveOpen:true)
+                .AsAsyncEnumerable(leaveOpen: true)
                 .GZip(CompressionMode.Compress)
                 .GZip(CompressionMode.Decompress)
                 .GZip(CompressionMode.Compress)
@@ -212,16 +212,9 @@ namespace Eocron.Algorithms.Tests
 
         private class TestMemoryPool<T> : MemoryPool<T>
         {
-            private readonly int _bufferSize;
-
             public TestMemoryPool(int bufferSize)
             {
                 _bufferSize = bufferSize;
-            }
-
-            protected override void Dispose(bool disposing)
-            {
-                
             }
 
             public override IMemoryOwner<T> Rent(int minBufferSize = -1)
@@ -229,7 +222,12 @@ namespace Eocron.Algorithms.Tests
                 return new TestMemoryOwner(new Memory<T>(new T[_bufferSize]));
             }
 
+            protected override void Dispose(bool disposing)
+            {
+            }
+
             public override int MaxBufferSize => _bufferSize;
+            private readonly int _bufferSize;
 
             private class TestMemoryOwner : IMemoryOwner<T>
             {
@@ -237,6 +235,7 @@ namespace Eocron.Algorithms.Tests
                 {
                     Memory = inner;
                 }
+
                 public void Dispose()
                 {
                 }
@@ -244,19 +243,26 @@ namespace Eocron.Algorithms.Tests
                 public Memory<T> Memory { get; }
             }
         }
+
         private class TestReadStream : Stream
         {
-            public int DisposeCallCount;
-
-            public int DisposeAsyncCallCount;
-
-            public int CloseCallCount;
-
-            private readonly Stream _streamImplementation;
-
             public TestReadStream(Stream streamImplementation)
             {
                 _streamImplementation = streamImplementation;
+            }
+
+            public override void Close()
+            {
+                CloseCallCount++;
+                _streamImplementation.Close();
+                base.Close();
+            }
+
+            public override async ValueTask DisposeAsync()
+            {
+                DisposeAsyncCallCount++;
+                await _streamImplementation.DisposeAsync();
+                await base.DisposeAsync();
             }
 
             public override void Flush()
@@ -285,20 +291,6 @@ namespace Eocron.Algorithms.Tests
                 Assert.Fail(nameof(Write));
             }
 
-            public override void Close()
-            {
-                CloseCallCount++;
-                _streamImplementation.Close();
-                base.Close();
-            }
-
-            public override async ValueTask DisposeAsync()
-            {
-                DisposeAsyncCallCount++;
-                await _streamImplementation.DisposeAsync();
-                await base.DisposeAsync();
-            }
-
             protected override void Dispose(bool disposing)
             {
                 DisposeCallCount++;
@@ -319,6 +311,13 @@ namespace Eocron.Algorithms.Tests
                 get => _streamImplementation.Position;
                 set => Assert.Fail(nameof(Position));
             }
+
+            private readonly Stream _streamImplementation;
+
+            public int CloseCallCount;
+
+            public int DisposeAsyncCallCount;
+            public int DisposeCallCount;
         }
     }
 }

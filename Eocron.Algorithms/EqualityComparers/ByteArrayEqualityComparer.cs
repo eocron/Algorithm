@@ -8,33 +8,14 @@ using Eocron.Algorithms.EqualityComparers.xxHash;
 namespace Eocron.Algorithms.EqualityComparers
 {
     /// <summary>
-    /// Extreme version of byte array equality comparer for x64 environments. 
-    /// Perfromance is just like memcpm.
+    ///     Extreme version of byte array equality comparer for x64 environments.
+    ///     Perfromance is just like memcpm.
     /// </summary>
     public sealed class ByteArrayEqualityComparer : IEqualityComparer<ArraySegment<byte>>, IEqualityComparer<byte[]>
     {
-        private const ulong HashSeed = 0x9e3779b97f4a7c15UL;
-        private static readonly UInt128[] UInt128Masks = Enumerable.Range(0, 2 * sizeof(ulong)).Select(CreateMask).ToArray();
-        private readonly bool _hashWithLoss;
-        private const int _hashLossPow = 10;
-        private const int _hashLoss = (1 << _hashLossPow) * sizeof(long);
-        
-        public static readonly ByteArrayEqualityComparer Default = new ByteArrayEqualityComparer();
-        
         public ByteArrayEqualityComparer(bool hashWithLoss = false)
         {
             _hashWithLoss = hashWithLoss;
-        }
-
-        public int GetHashCode(ArraySegment<byte> obj)
-        {
-            if (obj == null)
-                return 0;
-            if (obj.Count == 0)
-                return 1;
-            if (_hashWithLoss && obj.Count > _hashLoss)
-                return Squash(GetHashCodeLoss(obj));
-            return Squash(xxHash64.ComputeHash(obj, HashSeed));
         }
 
         public bool Equals(byte[] x, byte[] y)
@@ -46,13 +27,6 @@ namespace Eocron.Algorithms.EqualityComparers
             if (ReferenceEquals(y, null))
                 return false;
             return Equals(new ArraySegment<byte>(x), new ArraySegment<byte>(y));
-        }
-
-        public int GetHashCode(byte[] obj)
-        {
-            if (obj == null)
-                return 0;
-            return GetHashCode(new ArraySegment<byte>(obj));
         }
 
         public bool Equals(ArraySegment<byte> x, ArraySegment<byte> y)
@@ -68,16 +42,43 @@ namespace Eocron.Algorithms.EqualityComparers
             return Equal512Bit(x, y);
         }
 
+        public int GetHashCode(ArraySegment<byte> obj)
+        {
+            if (obj == null)
+                return 0;
+            if (obj.Count == 0)
+                return 1;
+            if (_hashWithLoss && obj.Count > _hashLoss)
+                return Squash(GetHashCodeLoss(obj));
+            return Squash(xxHash64.ComputeHash(obj, HashSeed));
+        }
+
+        public int GetHashCode(byte[] obj)
+        {
+            if (obj == null)
+                return 0;
+            return GetHashCode(new ArraySegment<byte>(obj));
+        }
+
+        private static UInt128 CreateMask(int byteCount)
+        {
+            if (byteCount == 0)
+                return new UInt128();
+            return new UInt128(
+                byteCount > sizeof(ulong) ? ulong.MaxValue >> (8 * (2 * sizeof(ulong) - byteCount)) : 0,
+                byteCount >= sizeof(ulong) ? ulong.MaxValue : ulong.MaxValue >> (8 * (sizeof(ulong) - byteCount)));
+        }
+
         private static unsafe bool Equal128Bit(ArraySegment<byte> data1, ArraySegment<byte> data2)
         {
             const int step = 2;
             const int stepSize = sizeof(ulong) * step;
             fixed (byte* bytes1 = data1.Array, bytes2 = data2.Array)
             {
-                int tail = data1.Count % stepSize;
-                ulong* b1 = (ulong*)(bytes1 + data1.Offset);
-                ulong* b2 = (ulong*)(bytes2 + data2.Offset);
-                ulong* e1 = (ulong*)(bytes1 + data1.Offset + data1.Count - tail);
+                var tail = data1.Count % stepSize;
+                var b1 = (ulong*)(bytes1 + data1.Offset);
+                var b2 = (ulong*)(bytes2 + data2.Offset);
+                var e1 = (ulong*)(bytes1 + data1.Offset + data1.Count - tail);
 
                 while (b1 < e1)
                 {
@@ -88,15 +89,8 @@ namespace Eocron.Algorithms.EqualityComparers
                     b2 += step;
                 }
 
-                return Equals128BitTail(*b1, *(b1+1), *b2, *(b2+1), tail);
+                return Equals128BitTail(*b1, *(b1 + 1), *b2, *(b2 + 1), tail);
             }
-        }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool Equals128BitTail(ulong a1, ulong a2, ulong b1, ulong b2, int byteCount)
-        {
-            var mask = UInt128Masks[byteCount];
-            return (a1 & mask.Low) == (b1 & mask.Low) && (a2 & mask.High) == (b2 & mask.High);
         }
 
         private static unsafe bool Equal512Bit(ArraySegment<byte> data1, ArraySegment<byte> data2)
@@ -105,10 +99,10 @@ namespace Eocron.Algorithms.EqualityComparers
             const int stepSize = sizeof(ulong) * step;
             fixed (byte* bytes1 = data1.Array, bytes2 = data2.Array)
             {
-                int tail = data1.Count % stepSize;
-                ulong* b1 = (ulong*)(bytes1 + data1.Offset);
-                ulong* b2 = (ulong*)(bytes2 + data2.Offset);
-                ulong* e1 = (ulong*)(bytes1 + data1.Offset + data1.Count - tail);
+                var tail = data1.Count % stepSize;
+                var b1 = (ulong*)(bytes1 + data1.Offset);
+                var b2 = (ulong*)(bytes2 + data2.Offset);
+                var e1 = (ulong*)(bytes1 + data1.Offset + data1.Count - tail);
 
                 while (b1 < e1)
                 {
@@ -125,29 +119,40 @@ namespace Eocron.Algorithms.EqualityComparers
                     b2 += step;
                 }
 
-                return tail == 0 || Equal128Bit(data1.Slice(data1.Count - tail, tail), data2.Slice(data2.Count - tail, tail));
+                return tail == 0 || Equal128Bit(data1.Slice(data1.Count - tail, tail),
+                    data2.Slice(data2.Count - tail, tail));
             }
         }
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool Equals128BitTail(ulong a1, ulong a2, ulong b1, ulong b2, int byteCount)
+        {
+            var mask = UInt128Masks[byteCount];
+            return (a1 & mask.Low) == (b1 & mask.Low) && (a2 & mask.High) == (b2 & mask.High);
+        }
+
         private static unsafe ulong GetHashCodeLoss(ArraySegment<byte> source)
         {
             var hash = HashSeed;
-            var step = (source.Count >> _hashLossPow);
+            var step = source.Count >> _hashLossPow;
             var stepSize = sizeof(ulong) * step;
             fixed (byte* pSource = source.Array)
+            {
                 unchecked
                 {
-                    int tail = source.Count % stepSize;
-                    ulong* b = (ulong*)(pSource + source.Offset);
-                    ulong* e = (ulong*)(pSource + source.Offset + source.Count - tail);
-                    ulong* e2 = (ulong*)(pSource + source.Offset + source.Count - sizeof(ulong));
+                    var tail = source.Count % stepSize;
+                    var b = (ulong*)(pSource + source.Offset);
+                    var e = (ulong*)(pSource + source.Offset + source.Count - tail);
+                    var e2 = (ulong*)(pSource + source.Offset + source.Count - sizeof(ulong));
                     while (b < e)
                     {
                         hash = Rehash128Bit(hash, *b);
                         b += step;
                     }
+
                     return Rehash128Bit(hash, *e2);
                 }
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -161,12 +166,24 @@ namespace Eocron.Algorithms.EqualityComparers
         {
             return x.GetHashCode();
         }
-        
+
+        private const int _hashLossPow = 10;
+        private const int _hashLoss = (1 << _hashLossPow) * sizeof(long);
+        private const ulong HashSeed = 0x9e3779b97f4a7c15UL;
+
+        private static readonly UInt128[] UInt128Masks =
+            Enumerable.Range(0, 2 * sizeof(ulong)).Select(CreateMask).ToArray();
+
+        public static readonly ByteArrayEqualityComparer Default = new ByteArrayEqualityComparer();
+
+        private readonly bool _hashWithLoss;
+
         [StructLayout(LayoutKind.Sequential)]
         private readonly struct UInt128
         {
             public readonly ulong High;
             public readonly ulong Low;
+
             public UInt128(ulong high, ulong low)
             {
                 High = high;
@@ -177,15 +194,6 @@ namespace Eocron.Algorithms.EqualityComparers
             {
                 return High.ToString("X") + " " + Low.ToString("X");
             }
-        }
-        
-        private static UInt128 CreateMask(int byteCount)
-        {
-            if (byteCount == 0)
-                return new UInt128();
-            return new UInt128(
-                byteCount > sizeof(ulong) ? ulong.MaxValue >> (8 * (2 * sizeof(ulong) - byteCount)) : 0,
-                byteCount >= sizeof(ulong) ? ulong.MaxValue : ulong.MaxValue >> (8 * (sizeof(ulong) - byteCount)));
         }
     }
 }

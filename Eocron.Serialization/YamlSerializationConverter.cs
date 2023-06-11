@@ -6,9 +6,6 @@ namespace Eocron.Serialization
 {
     public sealed class YamlSerializationConverter : ISerializationConverter
     {
-        public ISerializer Serializer { get; set; } = new SerializerBuilder().Build();
-        public IDeserializer Deserializer { get; set; } = new DeserializerBuilder().Build();
-
         public object DeserializeFrom(Type type, StreamReader sourceStream)
         {
             if (type == null)
@@ -30,5 +27,8 @@ namespace Eocron.Serialization
 
             Serializer.Serialize(targetStream, obj, type);
         }
+
+        public IDeserializer Deserializer { get; set; } = new DeserializerBuilder().Build();
+        public ISerializer Serializer { get; set; } = new SerializerBuilder().Build();
     }
 }

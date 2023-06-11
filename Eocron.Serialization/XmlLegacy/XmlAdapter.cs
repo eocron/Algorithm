@@ -7,33 +7,16 @@ using Eocron.Serialization.XmlLegacy.Serializer;
 namespace Eocron.Serialization.XmlLegacy
 {
     /// <summary>
-    /// Adapter for different type of legacy xml document formats (XmlDocument, XDocument)
-    /// and different legacy xml serializers (XmlSerializer, DataContractSerializer, XmlObjectSerializer)
+    ///     Adapter for different type of legacy xml document formats (XmlDocument, XDocument)
+    ///     and different legacy xml serializers (XmlSerializer, DataContractSerializer, XmlObjectSerializer)
     /// </summary>
     /// <typeparam name="TDocument"></typeparam>
     public sealed class XmlAdapter<TDocument> : IXmlAdapter<TDocument>
     {
-        private readonly IXmlSerializerAdapter _serializer;
-        private readonly IXmlDocumentAdapter<TDocument> _documentAdapter;
-
-        public XmlReaderSettings ReaderSettings { get; set; } = new XmlReaderSettings(){ IgnoreComments = true, IgnoreWhitespace = true };
-        public XmlWriterSettings WriterSettings { get; set; } = new XmlWriterSettings() { Encoding = SerializationConverter.DefaultEncoding, Indent = SerializationConverter.DefaultIndent };
-
         public XmlAdapter(IXmlSerializerAdapter serializer, IXmlDocumentAdapter<TDocument> documentAdapter)
         {
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             _documentAdapter = documentAdapter ?? throw new ArgumentNullException(nameof(documentAdapter));
-        }
-
-        public TDocument SerializeToDocument(Type type, object content)
-        {
-            var writer = _documentAdapter.CreateNewDocumentAndWriter(out var document);
-            using (var w = writer)
-            {
-                _serializer.WriteObject(w, type, content);
-            }
-            _documentAdapter.AfterCreation(document);
-            return document;
         }
 
         public object DeserializeFromDocument(Type type, TDocument document)
@@ -50,11 +33,32 @@ namespace Eocron.Serialization.XmlLegacy
             return document;
         }
 
+        public TDocument SerializeToDocument(Type type, object content)
+        {
+            var writer = _documentAdapter.CreateNewDocumentAndWriter(out var document);
+            using (var w = writer)
+            {
+                _serializer.WriteObject(w, type, content);
+            }
+
+            _documentAdapter.AfterCreation(document);
+            return document;
+        }
+
         public void WriteDocumentTo(StreamWriter targetStream, TDocument document)
         {
             var xmlTextWriter = XmlWriter.Create(targetStream, WriterSettings);
             _documentAdapter.WriteTo(document, xmlTextWriter);
             xmlTextWriter.Flush();
         }
+
+        public XmlReaderSettings ReaderSettings { get; set; } =
+            new() { IgnoreComments = true, IgnoreWhitespace = true };
+
+        public XmlWriterSettings WriterSettings { get; set; } = new()
+            { Encoding = SerializationConverter.DefaultEncoding, Indent = SerializationConverter.DefaultIndent };
+
+        private readonly IXmlDocumentAdapter<TDocument> _documentAdapter;
+        private readonly IXmlSerializerAdapter _serializer;
     }
 }

@@ -5,11 +5,10 @@ namespace Eocron.Serialization.XmlLegacy
 {
     public interface IXmlAdapter<TDocument>
     {
-        TDocument SerializeToDocument(Type type, object content);
-
         object DeserializeFromDocument(Type type, TDocument document);
 
         TDocument ReadDocumentFrom(StreamReader sourceStream);
+        TDocument SerializeToDocument(Type type, object content);
 
         void WriteDocumentTo(StreamWriter targetStream, TDocument document);
     }

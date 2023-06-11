@@ -16,19 +16,14 @@ namespace Eocron.Algorithms.Tests
                 .Select(x => new KeyValuePair<int, string>(x, Guid.NewGuid().ToString()))
                 .ToList();
         }
+
         [Test]
         public void Add()
         {
             var items = GetTestItems();
             var dict = new RedBlackTree<int, string>();
-            foreach (var keyValuePair in items)
-            {
-                dict.Add(keyValuePair);
-            }
-            foreach (var keyValuePair in items)
-            {
-                AssertExist(dict, keyValuePair);
-            }
+            foreach (var keyValuePair in items) dict.Add(keyValuePair);
+            foreach (var keyValuePair in items) AssertExist(dict, keyValuePair);
             Assert.AreEqual(items.Count, dict.Count);
             Assert.AreEqual(items.First(), dict.GetMinKeyValuePair());
             Assert.AreEqual(items.Last(), dict.GetMaxKeyValuePair());
@@ -40,10 +35,7 @@ namespace Eocron.Algorithms.Tests
         {
             var items = GetTestItems();
             var dict = new RedBlackTree<int, string>();
-            foreach (var keyValuePair in items)
-            {
-                dict.Add(keyValuePair);
-            }
+            foreach (var keyValuePair in items) dict.Add(keyValuePair);
             dict.Clear();
 
             Assert.IsEmpty(dict);
@@ -57,10 +49,7 @@ namespace Eocron.Algorithms.Tests
         {
             var items = GetTestItems();
             var dict = new RedBlackTree<int, string>();
-            foreach (var keyValuePair in items)
-            {
-                dict[keyValuePair.Key] = keyValuePair.Value;
-            }
+            foreach (var keyValuePair in items) dict[keyValuePair.Key] = keyValuePair.Value;
             Assert.AreEqual(items.Count, dict.Count);
             Assert.AreEqual(items.First(), dict.GetMinKeyValuePair());
             Assert.AreEqual(items.Last(), dict.GetMaxKeyValuePair());
@@ -74,22 +63,13 @@ namespace Eocron.Algorithms.Tests
             var items = GetTestItems();
             var dict = new RedBlackTree<int, string>(items);
 
-            var toDelete = Enumerable.Range(0, 200).Select(x=> items[rnd.Next(items.Count)]).ToList();
+            var toDelete = Enumerable.Range(0, 200).Select(x => items[rnd.Next(items.Count)]).ToList();
             items.RemoveAll(x => toDelete.Contains(x));
-            foreach (var keyValuePair in toDelete)
-            {
-                dict.Remove(keyValuePair.Key);
-            }
+            foreach (var keyValuePair in toDelete) dict.Remove(keyValuePair.Key);
 
-            foreach (var keyValuePair in items)
-            {
-                AssertExist(dict, keyValuePair);
-            }
+            foreach (var keyValuePair in items) AssertExist(dict, keyValuePair);
 
-            foreach (var keyValuePair in toDelete)
-            {
-                AssertNotExist(dict, keyValuePair);
-            }
+            foreach (var keyValuePair in toDelete) AssertNotExist(dict, keyValuePair);
             Assert.AreEqual(items.Count, dict.Count);
             Assert.AreEqual(items.First(), dict.GetMinKeyValuePair());
             Assert.AreEqual(items.Last(), dict.GetMaxKeyValuePair());
@@ -99,7 +79,7 @@ namespace Eocron.Algorithms.Tests
         private void AssertNotExist<TKey, TValue>(RedBlackTree<TKey, TValue> dict, KeyValuePair<TKey, TValue> item)
         {
             Assert.IsFalse(dict.ContainsKey(item.Key));
-            Assert.Throws<KeyNotFoundException>(()=>
+            Assert.Throws<KeyNotFoundException>(() =>
             {
                 var t = dict[item.Key];
             });
@@ -118,10 +98,7 @@ namespace Eocron.Algorithms.Tests
             Assert.IsTrue(dict.TryGetValue(item.Key, out tmp));
             Assert.AreEqual(item.Value, tmp);
             Assert.IsTrue(dict.Contains(item));
-            Assert.Throws<ArgumentException>(() =>
-            {
-                dict.Add(item);
-            });
+            Assert.Throws<ArgumentException>(() => { dict.Add(item); });
         }
     }
 }

@@ -34,7 +34,7 @@ namespace Eocron.Serialization.Tests
                 EmptyArray = null,
                 EmptyList = null,
                 FooBarString = "foobar",
-                Struct = new ProtobufTestStruct()
+                Struct = new ProtobufTestStruct
                 {
                     Value = 234
                 },

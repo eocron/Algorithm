@@ -5,19 +5,19 @@ namespace Eocron.Algorithms.Sorted
     public interface IEnumerableStorage<TElement>
     {
         /// <summary>
-        /// Add collection
+        ///     Add collection
         /// </summary>
         /// <param name="data"></param>
         void Add(IReadOnlyCollection<TElement> data);
-        
+
+        void Clear();
+
         /// <summary>
-        /// Take any available collection
+        ///     Take any available collection
         /// </summary>
         /// <returns></returns>
         IEnumerable<TElement> Take();
-        
-        int Count { get; }
 
-        void Clear();
+        int Count { get; }
     }
 }

@@ -9,34 +9,11 @@ namespace Eocron.Serialization.XmlLegacy.Xslt
     public class XslCompiledTransformAdapter<TDocument> : IXmlAdapter<TDocument>
         where TDocument : new()
     {
-        private readonly IXmlAdapter<TDocument> _inner;
-        private readonly bool _xmlDocumentMode;
-
-        public XslCompiledTransform OnSerialize { get; set; }
-        public XsltArgumentList OnSerializeArgumentList { get; set; }
-        public ReaderOptions OnSerializeReaderOptions { get; set; }
-
-        public XslCompiledTransform OnDeserialize { get; set; }
-        public XsltArgumentList OnDeserializeArgumentList { get; set; }
-        public ReaderOptions OnDeserializeReaderOptions { get; set; }
-
         public XslCompiledTransformAdapter(IXmlAdapter<TDocument> inner)
         {
             ValidateDocumentType();
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
             _xmlDocumentMode = typeof(TDocument) == typeof(XmlDocument);
-        }
-
-        private void ValidateDocumentType()
-        {
-            var correct = typeof(TDocument) == typeof(XmlDocument) || typeof(TDocument) == typeof(XDocument);
-            if (!correct)
-                throw new NotSupportedException(typeof(TDocument).Name);
-        }
-
-        public TDocument SerializeToDocument(Type type, object content)
-        {
-            return Transform(_inner.SerializeToDocument(type, content), OnSerialize, OnSerializeArgumentList, OnSerializeReaderOptions);
         }
 
         public object DeserializeFromDocument(Type type, TDocument document)
@@ -46,30 +23,23 @@ namespace Eocron.Serialization.XmlLegacy.Xslt
 
         public TDocument ReadDocumentFrom(StreamReader sourceStream)
         {
-            return Transform(_inner.ReadDocumentFrom(sourceStream), OnDeserialize, OnDeserializeArgumentList, OnDeserializeReaderOptions);
+            return Transform(_inner.ReadDocumentFrom(sourceStream), OnDeserialize, OnDeserializeArgumentList,
+                OnDeserializeReaderOptions);
         }
 
-        private TDocument Transform(
-            TDocument sourceDocument,
-            XslCompiledTransform transform,
-            XsltArgumentList arguments,
-            ReaderOptions readerOptions)
+        public TDocument SerializeToDocument(Type type, object content)
         {
-            if (transform == null)
-                return sourceDocument;
+            return Transform(_inner.SerializeToDocument(type, content), OnSerialize, OnSerializeArgumentList,
+                OnSerializeReaderOptions);
+        }
 
-            if (_xmlDocumentMode)
-            {
-                return (TDocument)(object)OnTransform((XmlDocument)(object)sourceDocument, transform, arguments,
-                    readerOptions);
-            }
-
-            return (TDocument)(object)OnTransform((XDocument)(object)sourceDocument, transform, arguments,
-                readerOptions);
+        public void WriteDocumentTo(StreamWriter targetStream, TDocument document)
+        {
+            _inner.WriteDocumentTo(targetStream, document);
         }
 
         protected virtual XmlDocument OnTransform(
-            XmlDocument source, 
+            XmlDocument source,
             XslCompiledTransform transform,
             XsltArgumentList arguments,
             ReaderOptions readerOptions)
@@ -95,9 +65,39 @@ namespace Eocron.Serialization.XmlLegacy.Xslt
             return target;
         }
 
-        public void WriteDocumentTo(StreamWriter targetStream, TDocument document)
+        private TDocument Transform(
+            TDocument sourceDocument,
+            XslCompiledTransform transform,
+            XsltArgumentList arguments,
+            ReaderOptions readerOptions)
         {
-            _inner.WriteDocumentTo(targetStream, document);
+            if (transform == null)
+                return sourceDocument;
+
+            if (_xmlDocumentMode)
+                return (TDocument)(object)OnTransform((XmlDocument)(object)sourceDocument, transform, arguments,
+                    readerOptions);
+
+            return (TDocument)(object)OnTransform((XDocument)(object)sourceDocument, transform, arguments,
+                readerOptions);
         }
+
+        private void ValidateDocumentType()
+        {
+            var correct = typeof(TDocument) == typeof(XmlDocument) || typeof(TDocument) == typeof(XDocument);
+            if (!correct)
+                throw new NotSupportedException(typeof(TDocument).Name);
+        }
+
+        public ReaderOptions OnDeserializeReaderOptions { get; set; }
+        public ReaderOptions OnSerializeReaderOptions { get; set; }
+
+        public XslCompiledTransform OnDeserialize { get; set; }
+
+        public XslCompiledTransform OnSerialize { get; set; }
+        public XsltArgumentList OnDeserializeArgumentList { get; set; }
+        public XsltArgumentList OnSerializeArgumentList { get; set; }
+        private readonly bool _xmlDocumentMode;
+        private readonly IXmlAdapter<TDocument> _inner;
     }
 }

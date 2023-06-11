@@ -8,17 +8,19 @@ using QuikGraph;
 
 namespace Eocron.Algorithms.Tests
 {
-    [TestFixture, Category("Performance"), Explicit]
+    [TestFixture]
+    [Category("Performance")]
+    [Explicit]
     public sealed class DijkstraPerformanceTests
     {
-        private AdjacencyGraph<int, Edge<int>> _graph;
-
         [SetUp]
         public void SetUp()
         {
             var rnd = new Random(42);
             _graph = DijkstraTests.ParsePathToRome(Enumerable.Range(0, 100).Select(x => rnd.Next(0, 10)).ToList());
         }
+
+        private AdjacencyGraph<int, Edge<int>> _graph;
 
         [Test]
         public void Infinite()

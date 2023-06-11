@@ -6,35 +6,13 @@ namespace Eocron.Serialization.Tests.Helpers
 {
     public abstract class SerializationTestSuit<T>
     {
-        public abstract ISerializationConverter GetConverter();
-        public abstract T CreateTestModel(string path);
-        
-        public void AssertSerializeAndDeserializeByText(string path)
+        public void AssertDeserializedFromBytesModelEqualTo(string path)
         {
+            var expectedBytes = TestDataHelper.ReadAllBytes(path);
             var expected = CreateTestModel(path);
-            var converter = GetConverter();
-            var serialized = converter.SerializeToString(expected);
-            var actual = converter.Deserialize<T>(serialized);
 
-            try
-            {
-                actual.Should().BeEquivalentTo(expected);
-            }
-            catch
-            {
-                TryPrint(converter, "EXPECTED:", expected);
-                TryPrint(converter, "ACTUAL:", actual);
-                throw;
-            }
-        }
-
-        public void AssertSerializeAndDeserializeByBytes(string path)
-        {
-            var model = CreateTestModel(path);
-            var converter = GetConverter();
-            var serialized = converter.SerializeToBytes(model);
-            var deserialized = converter.Deserialize<T>(serialized);
-            deserialized.Should().BeEquivalentTo(model);
+            var actual = GetConverter().Deserialize<T>(expectedBytes);
+            actual.Should().BeEquivalentTo(expected);
         }
 
         public void AssertDeserializedFromTextModelEqualTo(string path)
@@ -57,37 +35,32 @@ namespace Eocron.Serialization.Tests.Helpers
             }
         }
 
-        private void TryPrint(ISerializationConverter converter, string header, T obj)
+        public void AssertSerializeAndDeserializeByBytes(string path)
         {
+            var model = CreateTestModel(path);
+            var converter = GetConverter();
+            var serialized = converter.SerializeToBytes(model);
+            var deserialized = converter.Deserialize<T>(serialized);
+            deserialized.Should().BeEquivalentTo(model);
+        }
+
+        public void AssertSerializeAndDeserializeByText(string path)
+        {
+            var expected = CreateTestModel(path);
+            var converter = GetConverter();
+            var serialized = converter.SerializeToString(expected);
+            var actual = converter.Deserialize<T>(serialized);
+
             try
             {
-                var text = converter.SerializeToString(obj);
-                Console.WriteLine(header);
-                Console.WriteLine(text);
+                actual.Should().BeEquivalentTo(expected);
             }
-            catch(Exception ex)
+            catch
             {
-                Console.WriteLine(header);
-                Console.WriteLine(ex.Message);
+                TryPrint(converter, "EXPECTED:", expected);
+                TryPrint(converter, "ACTUAL:", actual);
+                throw;
             }
-        }
-
-        public void AssertDeserializedFromBytesModelEqualTo(string path)
-        {
-            var expectedBytes = TestDataHelper.ReadAllBytes(path);
-            var expected = CreateTestModel(path);
-
-            var actual = GetConverter().Deserialize<T>(expectedBytes);
-            actual.Should().BeEquivalentTo(expected);
-        }
-
-        public void AssertSerializedTextEqualTo(string path)
-        {
-            var expectedText = TestDataHelper.ReadAllText(path);
-            var expected = CreateTestModel(path);
-
-            var actualXml = GetConverter().SerializeToString(expected);
-            AssertEqualSerializedText(expectedText, actualXml);
         }
 
         public void AssertSerializedBytesEqualTo(string path, bool base64Print)
@@ -117,9 +90,22 @@ namespace Eocron.Serialization.Tests.Helpers
                     Console.WriteLine("ACTUAL:");
                     Console.WriteLine(Convert.ToBase64String(actualBytes));
                 }
+
                 throw;
             }
         }
+
+        public void AssertSerializedTextEqualTo(string path)
+        {
+            var expectedText = TestDataHelper.ReadAllText(path);
+            var expected = CreateTestModel(path);
+
+            var actualXml = GetConverter().SerializeToString(expected);
+            AssertEqualSerializedText(expectedText, actualXml);
+        }
+
+        public abstract T CreateTestModel(string path);
+        public abstract ISerializationConverter GetConverter();
 
         private static void AssertEqualSerializedText(string expected, string actual)
         {
@@ -134,6 +120,21 @@ namespace Eocron.Serialization.Tests.Helpers
                 Console.WriteLine("ACTUAL:");
                 Console.WriteLine(actual);
                 throw;
+            }
+        }
+
+        private void TryPrint(ISerializationConverter converter, string header, T obj)
+        {
+            try
+            {
+                var text = converter.SerializeToString(obj);
+                Console.WriteLine(header);
+                Console.WriteLine(text);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(header);
+                Console.WriteLine(ex.Message);
             }
         }
     }

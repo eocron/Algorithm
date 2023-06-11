@@ -10,7 +10,8 @@ using NUnit.Framework;
 
 namespace Eocron.Algorithms.Tests
 {
-    [TestFixture, Explicit]
+    [TestFixture]
+    [Explicit]
     public class MergeSortBenchmarkTests
     {
         [Test]
@@ -24,6 +25,7 @@ namespace Eocron.Algorithms.Tests
             BenchmarkRunner.Run<BenchmarkSuit128MbInBinary>(config);
             Console.WriteLine(logger.GetLog());
         }
+
         [Test]
         public void MeasureInJson()
         {
@@ -52,10 +54,20 @@ namespace Eocron.Algorithms.Tests
         [MemoryDiagnoser(false)]
         public class BenchmarkSuitInMemory
         {
-            private int[] _data;
-            private Comparer<int> _cmp;
-            private IEnumerableStorage<int> _storage;
-            private int _chunkSize;
+            [GlobalCleanup]
+            public void Cleanup()
+            {
+                _storage.Clear();
+            }
+
+            [Benchmark]
+            public void MergeSortOnDisk()
+            {
+                foreach (var _ in _data.MergeOrderBy(x => x, _storage, _cmp, _chunkSize))
+                {
+                }
+            }
+
             [GlobalSetup]
             public void Setup()
             {
@@ -66,6 +78,16 @@ namespace Eocron.Algorithms.Tests
                 _chunkSize = 100000;
             }
 
+            private Comparer<int> _cmp;
+            private IEnumerableStorage<int> _storage;
+            private int _chunkSize;
+            private int[] _data;
+        }
+
+        [ThreadingDiagnoser]
+        [MemoryDiagnoser(false)]
+        public class BenchmarkSuitInJson
+        {
             [GlobalCleanup]
             public void Cleanup()
             {
@@ -79,16 +101,7 @@ namespace Eocron.Algorithms.Tests
                 {
                 }
             }
-        }
 
-        [ThreadingDiagnoser]
-        [MemoryDiagnoser(false)]
-        public class BenchmarkSuitInJson
-        {
-            private int[] _data;
-            private Comparer<int> _cmp;
-            private IEnumerableStorage<int> _storage;
-            private int _chunkSize;
             [GlobalSetup]
             public void Setup()
             {
@@ -99,47 +112,25 @@ namespace Eocron.Algorithms.Tests
                 _chunkSize = 100000;
             }
 
-            [GlobalCleanup]
-            public void Cleanup()
-            {
-                _storage.Clear();
-            }
-
-            [Benchmark]
-            public void MergeSortOnDisk()
-            {
-                foreach (var _ in _data.MergeOrderBy(x => x, _storage, _cmp, _chunkSize))
-                {
-                }
-            }
+            private Comparer<int> _cmp;
+            private IEnumerableStorage<int> _storage;
+            private int _chunkSize;
+            private int[] _data;
         }
 
         [ThreadingDiagnoser]
         [MemoryDiagnoser(false)]
         public class BenchmarkSuit128MbInBinary
         {
-            private Comparer<int> _cmp;
-            private IEnumerableStorage<int> _storage;
-            private int _chunkSize;
-            private long _fileSize;
-            private long _sequenceSize;
-            private Random _rnd;
-
-            [GlobalSetup]
-            public void Setup()
-            {
-                _rnd = new Random(42);
-                _fileSize = 128L * 1024 * 1024;
-                _sequenceSize = _fileSize / sizeof(int);
-                _cmp = Comparer<int>.Default;
-                _storage = new BinaryIntEnumerableStorage();
-                _chunkSize = 16*1024*1024;
-            }
-
             [GlobalCleanup]
             public void Cleanup()
             {
                 _storage.Clear();
+            }
+
+            public IEnumerable<int> GetSequence()
+            {
+                for (long i = 0; i < _sequenceSize; i++) yield return _rnd.Next();
             }
 
             [Benchmark]
@@ -150,13 +141,23 @@ namespace Eocron.Algorithms.Tests
                 }
             }
 
-            public IEnumerable<int> GetSequence()
+            [GlobalSetup]
+            public void Setup()
             {
-                for (long i = 0; i < _sequenceSize; i++)
-                {
-                    yield return _rnd.Next();
-                }
+                _rnd = new Random(42);
+                _fileSize = 128L * 1024 * 1024;
+                _sequenceSize = _fileSize / sizeof(int);
+                _cmp = Comparer<int>.Default;
+                _storage = new BinaryIntEnumerableStorage();
+                _chunkSize = 16 * 1024 * 1024;
             }
+
+            private Comparer<int> _cmp;
+            private IEnumerableStorage<int> _storage;
+            private int _chunkSize;
+            private long _fileSize;
+            private long _sequenceSize;
+            private Random _rnd;
         }
     }
 }

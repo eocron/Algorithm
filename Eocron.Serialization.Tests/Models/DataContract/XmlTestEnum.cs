@@ -4,6 +4,6 @@ namespace Eocron.Serialization.Tests.Models.DataContract
     {
         One,
         Two,
-        Three,
+        Three
     }
 }

@@ -6,35 +6,20 @@ namespace Eocron.Serialization.Tests.Performance
 {
     public interface ISerializationPerformanceTests
     {
-        void Serialize();
-
         void Deserialize();
+        void Serialize();
     }
+
     public abstract class SerializationPerformanceTestsBase<TTests, TModel>
     {
-        protected readonly string _serializedText;
-        protected readonly byte[] _serializedBytes;
-
-        protected readonly ISerializationConverter _converter;
-        protected readonly TModel _model;
-
         protected SerializationPerformanceTestsBase(bool prepareText = true, bool prepareBinary = true)
         {
             _converter = GetConverter();
             _model = GetTestModel();
-            if(prepareText)
+            if (prepareText)
                 _serializedText = _converter.SerializeToString(_model);
-            if(prepareBinary)
+            if (prepareBinary)
                 _serializedBytes = _converter.SerializeToBytes(_model);
-        }
-
-        public abstract ISerializationConverter GetConverter();
-
-        public abstract TModel GetTestModel();
-
-        public void SerializeBinary()
-        {
-            _converter.SerializeToBytes(_model);
         }
 
         public void DeserializeBinary()
@@ -47,10 +32,9 @@ namespace Eocron.Serialization.Tests.Performance
             _converter.Deserialize<TModel>(_serializedText);
         }
 
-        public void SerializeText()
-        {
-            _converter.SerializeToString(_model);
-        }
+        public abstract ISerializationConverter GetConverter();
+
+        public abstract TModel GetTestModel();
 
         [Test]
         [Explicit]
@@ -58,5 +42,21 @@ namespace Eocron.Serialization.Tests.Performance
         {
             BenchmarkRunner.Run<TTests>(new DebugInProcessConfig());
         }
+
+        public void SerializeBinary()
+        {
+            _converter.SerializeToBytes(_model);
+        }
+
+        public void SerializeText()
+        {
+            _converter.SerializeToString(_model);
+        }
+
+        protected readonly byte[] _serializedBytes;
+
+        protected readonly ISerializationConverter _converter;
+        protected readonly string _serializedText;
+        protected readonly TModel _model;
     }
 }

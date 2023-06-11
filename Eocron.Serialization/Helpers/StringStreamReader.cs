@@ -5,9 +5,6 @@ namespace Eocron.Serialization.Helpers
 {
     internal sealed class StringStreamReader : StreamReader
     {
-        private readonly string _input;
-        private int _position;
-
         public StringStreamReader(string input) : base(new ErrorStubStream())
         {
             _input = input;
@@ -23,11 +20,11 @@ namespace Eocron.Serialization.Helpers
                 return 0;
 
             var endIndex = len + index;
-            for (var i = index; i < endIndex; i++, _position++)
-            {
-                buffer[i] = _input[_position];
-            }
+            for (var i = index; i < endIndex; i++, _position++) buffer[i] = _input[_position];
             return len;
         }
+
+        private readonly string _input;
+        private int _position;
     }
 }

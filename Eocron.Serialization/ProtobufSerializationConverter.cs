@@ -7,17 +7,10 @@ namespace Eocron.Serialization
 {
     public sealed class ProtobufSerializationConverter : ISerializationConverter
     {
-        private readonly bool _addLengthPrefix;
-        private readonly PrefixStyle _prefixStyle;
-        private readonly int _fieldNumber;
-        private readonly RuntimeTypeModel _model;
-
-        public static RuntimeTypeModel DefaultRuntimeTypeModel = RuntimeTypeModel.Default;
-
         public ProtobufSerializationConverter(
-            RuntimeTypeModel model = null, 
+            RuntimeTypeModel model = null,
             bool addLengthPrefix = true,
-            PrefixStyle prefixStyle = PrefixStyle.Fixed32, 
+            PrefixStyle prefixStyle = PrefixStyle.Fixed32,
             int fieldNumber = -1)
         {
             _addLengthPrefix = addLengthPrefix;
@@ -36,9 +29,8 @@ namespace Eocron.Serialization
                 throw new ArgumentNullException(nameof(sourceStream.BaseStream));
 
             if (_addLengthPrefix)
-            {
-                return _model.DeserializeWithLengthPrefix(sourceStream.BaseStream, null, type, _prefixStyle, _fieldNumber);
-            }
+                return _model.DeserializeWithLengthPrefix(sourceStream.BaseStream, null, type, _prefixStyle,
+                    _fieldNumber);
             return _model.Deserialize(type, sourceStream.BaseStream);
         }
 
@@ -54,13 +46,15 @@ namespace Eocron.Serialization
                 throw new ArgumentNullException(nameof(targetStream.BaseStream));
 
             if (_addLengthPrefix)
-            {
                 _model.SerializeWithLengthPrefix(targetStream.BaseStream, obj, type, _prefixStyle, -1);
-            }
             else
-            {
                 _model.Serialize(targetStream.BaseStream, obj);
-            }
         }
+
+        public static RuntimeTypeModel DefaultRuntimeTypeModel = RuntimeTypeModel.Default;
+        private readonly bool _addLengthPrefix;
+        private readonly int _fieldNumber;
+        private readonly PrefixStyle _prefixStyle;
+        private readonly RuntimeTypeModel _model;
     }
 }

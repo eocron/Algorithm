@@ -4,6 +4,6 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
     {
         One,
         Two,
-        Three,
+        Three
     }
 }

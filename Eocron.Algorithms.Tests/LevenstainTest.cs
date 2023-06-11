@@ -28,6 +28,7 @@ namespace Eocron.Algorithms.Tests
                                 return o + "->" + n;
                             return "*" + n;
                         }
+
                         if (o != 0)
                             return "-" + o;
                         if (n != 0)

@@ -5,11 +5,10 @@ namespace Eocron.Serialization.Helpers
 {
     internal sealed class ErrorStubStream : Stream
     {
-        private readonly Exception _exception;
-
         public ErrorStubStream(Exception exception = null)
         {
-            _exception = exception ?? new NotSupportedException("Stream write/read is not supported in this serialization mode.");
+            _exception = exception ??
+                         new NotSupportedException("Stream write/read is not supported in this serialization mode.");
         }
 
         public override void Flush()
@@ -41,5 +40,6 @@ namespace Eocron.Serialization.Helpers
         public override bool CanWrite => true;
         public override long Length => 0;
         public override long Position { get; set; }
+        private readonly Exception _exception;
     }
 }

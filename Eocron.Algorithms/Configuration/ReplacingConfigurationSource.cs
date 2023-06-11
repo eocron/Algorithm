@@ -6,10 +6,6 @@ namespace Eocron.Algorithms.Configuration
 {
     public sealed class ReplacingConfigurationSource : IConfigurationSource
     {
-        private readonly IConfigurationSource _inner;
-        private readonly Regex _pattern;
-        private readonly MatchEvaluator _evaluator;
-
         public ReplacingConfigurationSource(IConfigurationSource inner, Regex pattern, MatchEvaluator evaluator)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
@@ -21,5 +17,9 @@ namespace Eocron.Algorithms.Configuration
         {
             return new ReplacingConfigurationProvider(_inner.Build(builder), _pattern, _evaluator);
         }
+
+        private readonly IConfigurationSource _inner;
+        private readonly MatchEvaluator _evaluator;
+        private readonly Regex _pattern;
     }
 }

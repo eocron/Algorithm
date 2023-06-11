@@ -1,17 +1,18 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 
 namespace Eocron.Serialization.XmlLegacy.Document
 {
     /// <summary>
-    /// Adapting XDocument to common interface
+    ///     Adapting XDocument to common interface
     /// </summary>
     public sealed class XDocumentAdapter : IXmlDocumentAdapter<XDocument>
     {
-        public ReaderOptions ReaderOptions { get; set; }
-        public bool EnableCompatibilityWithPreNetCore { get; set; } = true;
+        public void AfterCreation(XDocument document)
+        {
+            if (EnableCompatibilityWithPreNetCore) ReorderNamespaceAttributes(document);
+        }
 
         public XmlWriter CreateNewDocumentAndWriter(out XDocument newDocument)
         {
@@ -25,22 +26,14 @@ namespace Eocron.Serialization.XmlLegacy.Document
             return document.CreateReader(ReaderOptions);
         }
 
-        public void WriteTo(XDocument document, XmlWriter writer)
-        {
-            document.WriteTo(writer);
-        }
-
         public XDocument ReadFrom(XmlReader reader)
         {
             return XDocument.Load(reader);
         }
 
-        public void AfterCreation(XDocument document)
+        public void WriteTo(XDocument document, XmlWriter writer)
         {
-            if (EnableCompatibilityWithPreNetCore)
-            {
-                ReorderNamespaceAttributes(document);
-            }
+            document.WriteTo(writer);
         }
 
         //For regress only < netcore version
@@ -57,5 +50,8 @@ namespace Eocron.Serialization.XmlLegacy.Document
                 node.ReplaceAttributes(all);
             }
         }
+
+        public bool EnableCompatibilityWithPreNetCore { get; set; } = true;
+        public ReaderOptions ReaderOptions { get; set; }
     }
 }

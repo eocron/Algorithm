@@ -4,9 +4,10 @@ using System.Collections.Generic;
 namespace Eocron.Algorithms.Disposing
 {
     /// <summary>
-    /// Disposable struct. You can specify dispose action/other disposables and return this object for later dispose.
-    /// Usefull for writing resource allocation where you need to perform some release action.
-    /// For example: aquire/release lock, open/close stream, open connection then transaction then user scope and return, etc.
+    ///     Disposable struct. You can specify dispose action/other disposables and return this object for later dispose.
+    ///     Usefull for writing resource allocation where you need to perform some release action.
+    ///     For example: aquire/release lock, open/close stream, open connection then transaction then user scope and return,
+    ///     etc.
     /// </summary>
     public struct Disposable : IDisposable
     {
@@ -15,7 +16,7 @@ namespace Eocron.Algorithms.Disposing
         private bool _disposed;
 
         /// <summary>
-        /// Takes dispose action.
+        ///     Takes dispose action.
         /// </summary>
         /// <param name="onDispose"></param>
         public Disposable(Action onDispose)
@@ -28,9 +29,10 @@ namespace Eocron.Algorithms.Disposing
         }
 
         /// <summary>
-        /// Takes other disposables to dispose.
-        /// They will be disposed in exact same order they were passed in constructor.
-        /// Disposing will be performed regardles if exception risen in one of them. All exceptions will be thrown as AggregateException.
+        ///     Takes other disposables to dispose.
+        ///     They will be disposed in exact same order they were passed in constructor.
+        ///     Disposing will be performed regardles if exception risen in one of them. All exceptions will be thrown as
+        ///     AggregateException.
         /// </summary>
         /// <param name="other">Disposables to dispose in order.</param>
         public Disposable(params IDisposable[] other)
@@ -44,30 +46,31 @@ namespace Eocron.Algorithms.Disposing
         {
             if (_disposed)
                 return;
-            try{ }//this way dispose will not be interrupted by Thread.Abort() if called not in finally;
+            try
+            {
+            } //this way dispose will not be interrupted by Thread.Abort() if called not in finally;
             finally
             {
-                if(_other != null)
+                if (_other != null)
                 {
                     var exceptions = new List<Exception>();
-                    foreach(var o in _other)
-                    {
+                    foreach (var o in _other)
                         try
                         {
                             o?.Dispose();
                         }
-                        catch(Exception e)
+                        catch (Exception e)
                         {
                             exceptions.Add(e);
                         }
-                    }
+
                     if (exceptions.Count > 0)
                         throw new AggregateException(exceptions);
                 }
+
                 _onDispose?.Invoke();
                 _disposed = true;
             }
-
         }
     }
 }

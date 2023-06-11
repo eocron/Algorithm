@@ -20,7 +20,7 @@ namespace Eocron.Algorithms.Tests
                 x => 0,
                 (x, y) => x.Weight + 1);
             result.Search(0);
-            
+
             Assert.AreEqual(0, result.GetWeight(0));
             Assert.AreEqual(0, result.GetPathFromSourceToTarget().Count());
             Assert.IsFalse(result.IsTargetFound);
@@ -30,20 +30,13 @@ namespace Eocron.Algorithms.Tests
         public void Cyclic()
         {
             var graph = new AdjacencyGraph<int, Edge<int>>();
-            int count = 4;
-            for (int i = 0; i < count; i++)
-            {
-                graph.AddVertex(i);
-            }
-            for (int i = 0; i < count; i++)
-            {
-                for (int j = 0; j < count; j++)
-                {
-                    graph.AddEdge(new Edge<int>(i, j));
-                }
-            }
+            var count = 4;
+            for (var i = 0; i < count; i++) graph.AddVertex(i);
+            for (var i = 0; i < count; i++)
+            for (var j = 0; j < count; j++)
+                graph.AddEdge(new Edge<int>(i, j));
             var source = 0;
-            var target = count-1;
+            var target = count - 1;
             var result = new InfiniteDijkstraAlgorithm<int, int>(
                 x => graph.OutEdges(x).Select(y => y.Target),
                 x => 0,
@@ -51,26 +44,26 @@ namespace Eocron.Algorithms.Tests
             result.Search(source);
             var pathToRome = result.GetPath(source, target).ToList();
             Assert.AreEqual(1, result.GetWeight(target));
-            Assert.AreEqual(new[]{source, target}, pathToRome);
+            Assert.AreEqual(new[] { source, target }, pathToRome);
             Print(graph, pathToRome);
         }
 
         [Test]
-        [TestCase(new[] {1, 1, 1, 1}, 3)]
-        [TestCase(new[] {2, 1, 1, 1}, 2)]
-        [TestCase(new[] {1, 2, 3, 4}, 2)]
-        [TestCase(new[] {4, 3, 2, 1}, 1)]
-        [TestCase(new[] {2, 2, 1, 3, 3, 2, 1}, 3)]
-        [TestCase(new[] {2, 0, 1, 1}, 1)]
+        [TestCase(new[] { 1, 1, 1, 1 }, 3)]
+        [TestCase(new[] { 2, 1, 1, 1 }, 2)]
+        [TestCase(new[] { 1, 2, 3, 4 }, 2)]
+        [TestCase(new[] { 4, 3, 2, 1 }, 1)]
+        [TestCase(new[] { 2, 2, 1, 3, 3, 2, 1 }, 3)]
+        [TestCase(new[] { 2, 0, 1, 1 }, 1)]
         public void PathToNearCity(int[] cities, int expectedMinSteps)
         {
             var graph = ParsePathToRome(cities);
             var source = 0;
             var targets = cities
-                .Select((x, i) => new {x, i})
+                .Select((x, i) => new { x, i })
                 .Where(x => x.x == 0)
                 .Select(x => x.i)
-                .Concat(new[] {cities.Length - 1})
+                .Concat(new[] { cities.Length - 1 })
                 .ToList();
             var result = new InfiniteDijkstraAlgorithm<int, int>(
                 x => graph.OutEdges(x).Select(y => y.Target),
@@ -98,7 +91,7 @@ namespace Eocron.Algorithms.Tests
                 x => graph.OutEdges(x).Select(y => y.Target),
                 x => 0,
                 (x, y) => x.Weight + 1,
-                buildShortestPathTree:true);
+                buildShortestPathTree: true);
             result.Search(source);
             var target = cities.Length - 1;
             var pathToRome = result.GetPath(source, target).ToList();
@@ -137,11 +130,9 @@ namespace Eocron.Algorithms.Tests
                     if (x.Item1 < sourceStr.Length
                         && x.Item2 < targetStr.Length
                         && sourceStr[x.Item1] == targetStr[x.Item2]
-                        && (y.Item1 - 1) == x.Item1
-                        && (y.Item2 - 1) == x.Item2)
-                    {
+                        && y.Item1 - 1 == x.Item1
+                        && y.Item2 - 1 == x.Item2)
                         return xw.Weight;
-                    }
 
                     return xw.Weight + 1;
                 },
@@ -152,7 +143,8 @@ namespace Eocron.Algorithms.Tests
             Assert.AreEqual(expectedMinDistance, minDistance);
         }
 
-        [Test, Explicit]
+        [Test]
+        [Explicit]
         public void Debug()
         {
             var rnd = new Random(42);
@@ -169,44 +161,42 @@ namespace Eocron.Algorithms.Tests
                 x => graph.OutEdges(x).Select(y => y.Target),
                 x => 0,
                 (x, y) => x.Weight + 1,
-                buildShortestPathTree:true);
+                buildShortestPathTree: true);
             result.Search(source);
 
-            
+
             //Print(graph, null);
 
-            var target = graph.VertexCount - 1;//targets.OrderBy(x => result.GetWeight(x)).First();
+            var target = graph.VertexCount - 1; //targets.OrderBy(x => result.GetWeight(x)).First();
             var pathToRome = result.GetPath(source, target).ToList();
             Print(graph, pathToRome);
         }
 
         /// <summary>
-        /// Path to rome is a game. Each index represents city, each value represents range of adjacent cities (i.e from i+1 to i+array[i]).
-        /// Last index is Rome. You need to travel from first index to last in least amount of steps.
-        /// Example:
-        /// 1  2  1  3  1  1  1
-        ///  \/
-        /// 
-        /// 1  2  1  3  1  1  1
-        ///    \_/__/
-        /// 
-        /// 1  2  1  3  1  1  1
-        ///          \_/__/__/
-        ///
-        /// Which is 3 steps.
+        ///     Path to rome is a game. Each index represents city, each value represents range of adjacent cities (i.e from i+1 to
+        ///     i+array[i]).
+        ///     Last index is Rome. You need to travel from first index to last in least amount of steps.
+        ///     Example:
+        ///     1  2  1  3  1  1  1
+        ///     \/
+        ///     1  2  1  3  1  1  1
+        ///     \_/__/
+        ///     1  2  1  3  1  1  1
+        ///     \_/__/__/
+        ///     Which is 3 steps.
         /// </summary>
         /// <param name="paths"></param>
         /// <returns></returns>
         public static AdjacencyGraph<int, Edge<int>> ParsePathToRome(IList<int> paths)
         {
             var result = new AdjacencyGraph<int, Edge<int>>();
-            for (int i = 0; i < paths.Count; i++)
+            for (var i = 0; i < paths.Count; i++)
             {
                 result.AddVertex(i);
-                for (int j = i+1; j < paths.Count && j <= i+paths[i]; j++)
+                for (var j = i + 1; j < paths.Count && j <= i + paths[i]; j++)
                 {
                     result.AddVertex(j);
-                    result.AddEdge(new Edge<int>(i,j));
+                    result.AddEdge(new Edge<int>(i, j));
                 }
             }
 
@@ -231,10 +221,7 @@ namespace Eocron.Algorithms.Tests
                         args.VertexFormat.StrokeColor = GraphvizColor.Green;
                     }
 
-                    if (args.Vertex == path.Last())
-                    {
-                        args.VertexFormat.Shape = GraphvizVertexShape.DoubleCircle;
-                    }
+                    if (args.Vertex == path.Last()) args.VertexFormat.Shape = GraphvizVertexShape.DoubleCircle;
                 };
 
                 g.FormatEdge += (_, args) =>

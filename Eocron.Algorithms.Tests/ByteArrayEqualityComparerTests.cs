@@ -10,36 +10,38 @@ namespace Eocron.Algorithms.Tests
     [TestFixture]
     public class ByteArrayEqualityComparerTests
     {
-        private static Random _rnd = new Random(42);
-        private readonly ByteArrayEqualityComparer _cmp = new ByteArrayEqualityComparer(false);
+        private static readonly Random _rnd = new(42);
+        private readonly ByteArrayEqualityComparer _cmp = new();
 
-        [Test(Description = "Guarantee that random array self collision is lower than some percent if single byte is flipped")]
-        [TestCase(2),
-         TestCase(16),
-         TestCase(63),
-         TestCase(512),
-         TestCase(10000)]
+        [Test(Description =
+            "Guarantee that random array self collision is lower than some percent if single byte is flipped")]
+        [TestCase(2)]
+        [TestCase(16)]
+        [TestCase(63)]
+        [TestCase(512)]
+        [TestCase(10000)]
         public void GetHashSelfCollisionsRnd(int size)
         {
             Assert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentRndArrays(size), _cmp), 0.1d);
         }
 
-        [Test(Description = "Guarantee that zero array self collision is lower than some percent if single bit is flipped")]
-        [TestCase(2),
-         TestCase(16),
-         TestCase(63),
-         TestCase(512),
-         TestCase(10000)]
+        [Test(Description =
+            "Guarantee that zero array self collision is lower than some percent if single bit is flipped")]
+        [TestCase(2)]
+        [TestCase(16)]
+        [TestCase(63)]
+        [TestCase(512)]
+        [TestCase(10000)]
         public void GetHashSelfCollisionsSparse(int size)
         {
-            Assert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentSparseArrays(size), _cmp, print: true), 0.1d);
+            Assert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentSparseArrays(size), _cmp, true), 0.1d);
         }
-        
+
         [Test(Description = "Guarantee that completely random array collision is lower than some percent")]
         [TestCase(123, 1000000)]
         public void GetHashCollisionsRnd(int size, int count)
         {
-            Assert.LessOrEqual(CalculateCollisions(GetCompletelyDifferentRndArrays(size, count), _cmp, print: true), 0.001d);
+            Assert.LessOrEqual(CalculateCollisions(GetCompletelyDifferentRndArrays(size, count), _cmp, true), 0.001d);
         }
 
         [Test]
@@ -65,15 +67,15 @@ namespace Eocron.Algorithms.Tests
             var b = new byte[40000];
             _rnd.NextBytes(a);
             Array.Copy(a, b, a.Length);
-            for (int i = 1; i < 40000; i+=149)
+            for (var i = 1; i < 40000; i += 149)
             {
                 var aa = new ArraySegment<byte>(a, 0, i);
                 var bb = new ArraySegment<byte>(b, 0, i);
                 Assert.IsTrue(_cmp.Equals(aa, bb));
                 Assert.AreEqual(_cmp.GetHashCode(aa), _cmp.GetHashCode(bb));
             }
-            
-            for (int i = 1; i < 40000; i+=149)
+
+            for (var i = 1; i < 40000; i += 149)
             {
                 var aa = new ArraySegment<byte>(a, i, 31);
                 var bb = new ArraySegment<byte>(b, i, 31);
@@ -89,12 +91,12 @@ namespace Eocron.Algorithms.Tests
             var b = new byte[8 * 1024];
             _rnd.NextBytes(a);
             Array.Copy(a, b, a.Length);
-            for (int i = 1; i < 8 * 1024; i += 149)
+            for (var i = 1; i < 8 * 1024; i += 149)
             {
                 var aa = new ArraySegment<byte>(a, 0, i);
                 var bb = new ArraySegment<byte>(b, 0, i);
-                Assert.IsTrue(_cmp.Equals(aa, bb), message: i.ToString());
-                Assert.AreEqual(_cmp.GetHashCode(aa), _cmp.GetHashCode(bb), message: i.ToString());
+                Assert.IsTrue(_cmp.Equals(aa, bb), i.ToString());
+                Assert.AreEqual(_cmp.GetHashCode(aa), _cmp.GetHashCode(bb), i.ToString());
             }
         }
 
@@ -103,7 +105,7 @@ namespace Eocron.Algorithms.Tests
             var rnd = new Random(size);
             var data = new byte[size];
 
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 rnd.NextBytes(data);
                 yield return data;
@@ -116,34 +118,32 @@ namespace Eocron.Algorithms.Tests
             var rnd = new Random(size);
             var data = new byte[size];
             rnd.NextBytes(data);
-            for (int i = 0; i < size; i++)
+            for (var i = 0; i < size; i++)
+            for (var j = 0; j < 8; j++)
             {
-                for (int j = 0; j < 8; j++)
-                {
-                    var tmp = data[i];
-                    data[i] = (byte)rnd.Next();
-                    yield return data;
-                    data[i] = tmp;
-                }
+                var tmp = data[i];
+                data[i] = (byte)rnd.Next();
+                yield return data;
+                data[i] = tmp;
             }
         }
-        
+
         private static IEnumerable<byte[]> GetSlightlyDifferentSparseArrays(int size)
         {
             var data = new byte[size];
-            for (int i = 0; i < size; i++)
+            for (var i = 0; i < size; i++)
+            for (var j = 0; j < 8; j++)
             {
-                for (int j = 0; j < 8; j++)
-                {
-                    data[i] = (byte)(data[i] | (1 << j));
-                    yield return data;
-                    data[i] = 0;
-                }
+                data[i] = (byte)(data[i] | (1 << j));
+                yield return data;
+                data[i] = 0;
             }
         }
-        private static float CalculateCollisions(IEnumerable<byte[]> datas, IEqualityComparer<byte[]> cmp, bool print = false)
+
+        private static float CalculateCollisions(IEnumerable<byte[]> datas, IEqualityComparer<byte[]> cmp,
+            bool print = false)
         {
-            int size = 0;
+            var size = 0;
             var results = new List<Tuple<int, int>>();
             foreach (var data in datas)
             {
@@ -157,12 +157,12 @@ namespace Eocron.Algorithms.Tests
                 .SelectMany(x => x)
                 .ToList();
 
-            var collisionPercent = collisions.Count / (float)(size);
+            var collisionPercent = collisions.Count / (float)size;
 
             if (print)
-            {            
+            {
                 var sb = new StringBuilder();
-                sb.AppendFormat("Collision percent: {0:F8}%"+Environment.NewLine, 100f * collisionPercent);
+                sb.AppendFormat("Collision percent: {0:F8}%" + Environment.NewLine, 100f * collisionPercent);
                 sb.AppendLine(string.Join("," + Environment.NewLine,
                     collisions
                         .OrderBy(x => x.Item1)
@@ -176,26 +176,22 @@ namespace Eocron.Algorithms.Tests
 
         private static IEnumerable<TestCaseData> GetAreEqualTests()
         {
-            for (int i = 1; i < 66; i++)
-            {
-                yield return Eq(i).SetName($"+{i:00}b");
-            }
+            for (var i = 1; i < 66; i++) yield return Eq(i).SetName($"+{i:00}b");
             yield return Eq(20 * 1024 * 1024).SetName("+20mb");
             yield return new TestCaseData(Array.Empty<byte>(), Array.Empty<byte>()).SetName("+empty");
             yield return new TestCaseData(null, null).SetName("+null");
         }
+
         private static IEnumerable<TestCaseData> GetAreNotEqualTests()
         {
-            for (int i = 1; i < 66; i++)
-            {
-                yield return NEq(i).SetName($"-{i:00}b");
-            }
+            for (var i = 1; i < 66; i++) yield return NEq(i).SetName($"-{i:00}b");
             yield return new TestCaseData(GetBytes(20000), GetBytes(20000)).SetName("-20000b");
             yield return new TestCaseData(GetBytes(20 * 1024 * 1024), GetBytes(20 * 1024 * 1024)).SetName("-20mb");
             yield return new TestCaseData(Array.Empty<byte>(), null).SetName("-rnull");
             yield return new TestCaseData(null, Array.Empty<byte>()).SetName("-lnull");
             yield return new TestCaseData(new byte[] { 1, 2 }, new byte[] { 2 }).SetName("diff_size");
         }
+
         private static TestCaseData Eq(int size)
         {
             var a = GetBytes(size);
@@ -203,7 +199,7 @@ namespace Eocron.Algorithms.Tests
             Array.Copy(a, b, size);
             return new TestCaseData(a, b);
         }
-        
+
         private static TestCaseData NEq(int size)
         {
             var a = GetBytes(size);
@@ -212,6 +208,7 @@ namespace Eocron.Algorithms.Tests
             b[size - 1] = (byte)~b[size - 1];
             return new TestCaseData(a, b);
         }
+
         private static byte[] GetBytes(int size)
         {
             var res = new byte[size];

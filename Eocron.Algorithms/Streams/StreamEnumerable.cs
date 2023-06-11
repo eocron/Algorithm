@@ -10,10 +10,6 @@ namespace Eocron.Algorithms.Streams
 {
     public sealed class StreamEnumerable : IReadOnlyStream<Memory<byte>>
     {
-        private readonly Func<Stream> _innerFactory;
-        private readonly MemoryPool<byte> _pool;
-        private readonly int _desiredBufferSize;
-
         public StreamEnumerable(Func<Stream> innerFactory, MemoryPool<byte> pool = null, int? desiredBufferSize = null)
         {
             _innerFactory = innerFactory;
@@ -37,37 +33,24 @@ namespace Eocron.Algorithms.Streams
             return GetEnumerator();
         }
 
-        private sealed class BinaryReadOnlyStreamWrapperEnumerator : IAsyncEnumerator<Memory<byte>>, IEnumerator<Memory<byte>>
-        {
-            private readonly Lazy<Stream> _inner;
-            private readonly Lazy<IMemoryOwner<byte>> _buffer;
-            private readonly CancellationToken _ct;
-            private Memory<byte> _current;
+        private readonly Func<Stream> _innerFactory;
+        private readonly int _desiredBufferSize;
+        private readonly MemoryPool<byte> _pool;
 
+        private sealed class BinaryReadOnlyStreamWrapperEnumerator : IAsyncEnumerator<Memory<byte>>,
+            IEnumerator<Memory<byte>>
+        {
             public BinaryReadOnlyStreamWrapperEnumerator(
-                Func<Stream> innerFactory, 
+                Func<Stream> innerFactory,
                 MemoryPool<byte> pool,
                 int desiredBufferSize,
                 CancellationToken ct)
             {
                 _inner = new Lazy<Stream>(innerFactory);
-                _buffer = new Lazy<IMemoryOwner<byte>>(()=> pool.Rent(desiredBufferSize));
+                _buffer = new Lazy<IMemoryOwner<byte>>(() => pool.Rent(desiredBufferSize));
                 _ct = ct;
             }
 
-            public async ValueTask DisposeAsync()
-            {
-                try
-                {
-                }
-                finally
-                {
-                    if (_inner.IsValueCreated)
-                        await _inner.Value.DisposeAsync().ConfigureAwait(false);
-                    if(_buffer.IsValueCreated)
-                        _buffer.Value.Dispose();
-                }
-            }
             public void Dispose()
             {
                 try
@@ -81,41 +64,56 @@ namespace Eocron.Algorithms.Streams
                         _buffer.Value.Dispose();
                 }
             }
-            public async ValueTask<bool> MoveNextAsync()
+
+            public async ValueTask DisposeAsync()
             {
-                if (!_inner.Value.CanRead)
+                try
                 {
-                    _current = null;
-                    return false;
                 }
-
-                var read = await _inner.Value.ReadAsync(_buffer.Value.Memory, _ct).ConfigureAwait(false);
-                if (read <= 0)
+                finally
                 {
-                    _current = null;
-                    return false;
+                    if (_inner.IsValueCreated)
+                        await _inner.Value.DisposeAsync().ConfigureAwait(false);
+                    if (_buffer.IsValueCreated)
+                        _buffer.Value.Dispose();
                 }
-
-                _current = _buffer.Value.Memory.Slice(0, read);
-                return true;
             }
 
             public bool MoveNext()
             {
                 if (!_inner.Value.CanRead)
                 {
-                    _current = null;
+                    Current = null;
                     return false;
                 }
 
                 var read = _inner.Value.Read(_buffer.Value.Memory.Span);
                 if (read <= 0)
                 {
-                    _current = null;
+                    Current = null;
                     return false;
                 }
 
-                _current = _buffer.Value.Memory.Slice(0, read);
+                Current = _buffer.Value.Memory.Slice(0, read);
+                return true;
+            }
+
+            public async ValueTask<bool> MoveNextAsync()
+            {
+                if (!_inner.Value.CanRead)
+                {
+                    Current = null;
+                    return false;
+                }
+
+                var read = await _inner.Value.ReadAsync(_buffer.Value.Memory, _ct).ConfigureAwait(false);
+                if (read <= 0)
+                {
+                    Current = null;
+                    return false;
+                }
+
+                Current = _buffer.Value.Memory.Slice(0, read);
                 return true;
             }
 
@@ -124,10 +122,12 @@ namespace Eocron.Algorithms.Streams
                 throw new NotSupportedException();
             }
 
+            public Memory<byte> Current { get; private set; }
+
             object IEnumerator.Current => Current;
-
-            public Memory<byte> Current => _current;
-
+            private readonly CancellationToken _ct;
+            private readonly Lazy<IMemoryOwner<byte>> _buffer;
+            private readonly Lazy<Stream> _inner;
         }
     }
 }

@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Eocron.Serialization
 {
-    public interface ISerializationConverter 
+    public interface ISerializationConverter
     {
         object DeserializeFrom(Type type, StreamReader sourceStream);
 

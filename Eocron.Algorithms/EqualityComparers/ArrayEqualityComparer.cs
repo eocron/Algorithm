@@ -3,17 +3,13 @@
 namespace Eocron.Algorithms.EqualityComparers
 {
     /// <summary>
-    /// Checks equality for generic enumerables.
+    ///     Checks equality for generic enumerables.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public sealed class ArrayEqualityComparer<T> : IEqualityComparer<IEnumerable<T>>
     {
-        public static readonly ArrayEqualityComparer<T> Default = new ArrayEqualityComparer<T>();
-        
-        private readonly IEqualityComparer<T> _equalityComparer;
-
         /// <summary>
-        /// Checks equality for generic enumerables.
+        ///     Checks equality for generic enumerables.
         /// </summary>
         /// <param name="equalityComparer">Element equality comparer</param>
         public ArrayEqualityComparer(IEqualityComparer<T> equalityComparer = null)
@@ -32,7 +28,7 @@ namespace Eocron.Algorithms.EqualityComparers
 
             using var xx = x.GetEnumerator();
             using var yy = y.GetEnumerator();
-            while(true)
+            while (true)
             {
                 var mx = xx.MoveNext();
                 var my = yy.MoveNext();
@@ -43,6 +39,7 @@ namespace Eocron.Algorithms.EqualityComparers
                 if (!_equalityComparer.Equals(xx.Current, yy.Current))
                     return false;
             }
+
             return true;
         }
 
@@ -55,12 +52,14 @@ namespace Eocron.Algorithms.EqualityComparers
 
             unchecked
             {
-                foreach(var e in obj)
-                {
-                    hash = hash * 31 + _equalityComparer.GetHashCode(e);
-                }
+                foreach (var e in obj) hash = hash * 31 + _equalityComparer.GetHashCode(e);
             }
+
             return hash;
         }
+
+        public static readonly ArrayEqualityComparer<T> Default = new ArrayEqualityComparer<T>();
+
+        private readonly IEqualityComparer<T> _equalityComparer;
     }
 }

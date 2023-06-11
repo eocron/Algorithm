@@ -6,24 +6,15 @@ using System.Xml.Serialization;
 namespace Eocron.Serialization.XmlLegacy.Serializer
 {
     /// <summary>
-    /// Adapting XmlSerializer to common interface
+    ///     Adapting XmlSerializer to common interface
     /// </summary>
     public sealed class XmlSerializerAdapter : IXmlSerializerAdapter
     {
-        private readonly ConcurrentDictionary<Type, XmlSerializer> _serializerProviderCache = new ConcurrentDictionary<Type, XmlSerializer>();
-        private readonly Func<Type, XmlSerializer> _serializerProvider;
-
-        public XmlSerializerNamespaces Namespaces { get; set; }
-
         public XmlSerializerAdapter(Func<Type, XmlSerializer> serializerProvider)
         {
             _serializerProvider = serializerProvider ?? throw new ArgumentNullException(nameof(serializerProvider));
         }
 
-        private XmlSerializer GetXmlSerializer(Type type)
-        {
-            return _serializerProviderCache.GetOrAdd(type, _serializerProvider);
-        }
         public object ReadObject(XmlReader reader, Type type)
         {
             return GetXmlSerializer(type).Deserialize(reader);
@@ -33,5 +24,14 @@ namespace Eocron.Serialization.XmlLegacy.Serializer
         {
             GetXmlSerializer(type).Serialize(writer, content, Namespaces);
         }
+
+        private XmlSerializer GetXmlSerializer(Type type)
+        {
+            return _serializerProviderCache.GetOrAdd(type, _serializerProvider);
+        }
+
+        public XmlSerializerNamespaces Namespaces { get; set; }
+        private readonly ConcurrentDictionary<Type, XmlSerializer> _serializerProviderCache = new();
+        private readonly Func<Type, XmlSerializer> _serializerProvider;
     }
 }

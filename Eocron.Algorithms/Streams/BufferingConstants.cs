@@ -4,7 +4,7 @@ namespace Eocron.Algorithms.Streams
 {
     public class BufferingConstants<T>
     {
-        public static MemoryPool<T> DefaultMemoryPool = MemoryPool<T>.Shared;
         public static int DefaultBufferSize = 8 * 1024;
+        public static MemoryPool<T> DefaultMemoryPool = MemoryPool<T>.Shared;
     }
 }

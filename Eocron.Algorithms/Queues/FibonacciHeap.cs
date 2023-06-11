@@ -6,55 +6,16 @@ namespace Eocron.Algorithms.Queues
 {
     public class FibonacciHeap<TPriority, TValue> : IPriorityQueue<TPriority, TValue>
     {
-        private const double OneOverLogPhi = 2.07808692123503d;//1d / Math.Log((1d + Math.Sqrt(5d)) / 2d);
-        private readonly IComparer<TPriority> _comparer;
-
-        private readonly Dictionary<TPriority, ISet<FibonacciHeapNode>> _nodeIndex = new Dictionary<TPriority, ISet<FibonacciHeapNode>>();
-
-        private FibonacciHeapNode _minNode;
-
         public FibonacciHeap(IComparer<TPriority> comparer = null)
         {
             _comparer = comparer ?? Comparer<TPriority>.Default;
         }
-
-        public int Count { get; private set; }
 
         public void Clear()
         {
             _minNode = null;
             _nodeIndex.Clear();
             Count = 0;
-        }
-
-        public void EnqueueOrUpdate(
-            KeyValuePair<TPriority, TValue> item,
-            Func<KeyValuePair<TPriority, TValue>, KeyValuePair<TPriority, TValue>> onUpdate)
-        {
-            var found = FindAllInIndex(item.Key).Select(x => new
-            {
-                next = onUpdate(new KeyValuePair<TPriority, TValue>(x.Priority, x.Value)),
-                prev = x
-            }).ToList();
-            if (found.Count > 0)
-            {
-                foreach (var f in found)
-                    if (_comparer.Compare(f.next.Key, f.prev.Priority) > 0)
-                        throw new NotSupportedException("Setting larger priority is not implemented.");
-
-                foreach (var f in found)
-                {
-                    RemoveFromIndex(f.prev);
-                    f.prev.Priority = f.next.Key;
-                    f.prev.Value = f.next.Value;
-                    AddInIndex(f.prev);
-                    UpdateLinks(f.prev);
-                }
-            }
-            else
-            {
-                Enqueue(item);
-            }
         }
 
         public KeyValuePair<TPriority, TValue> Dequeue()
@@ -90,6 +51,36 @@ namespace Eocron.Algorithms.Queues
             AddInIndex(node);
         }
 
+        public void EnqueueOrUpdate(
+            KeyValuePair<TPriority, TValue> item,
+            Func<KeyValuePair<TPriority, TValue>, KeyValuePair<TPriority, TValue>> onUpdate)
+        {
+            var found = FindAllInIndex(item.Key).Select(x => new
+            {
+                next = onUpdate(new KeyValuePair<TPriority, TValue>(x.Priority, x.Value)),
+                prev = x
+            }).ToList();
+            if (found.Count > 0)
+            {
+                foreach (var f in found)
+                    if (_comparer.Compare(f.next.Key, f.prev.Priority) > 0)
+                        throw new NotSupportedException("Setting larger priority is not implemented.");
+
+                foreach (var f in found)
+                {
+                    RemoveFromIndex(f.prev);
+                    f.prev.Priority = f.next.Key;
+                    f.prev.Value = f.next.Value;
+                    AddInIndex(f.prev);
+                    UpdateLinks(f.prev);
+                }
+            }
+            else
+            {
+                Enqueue(item);
+            }
+        }
+
         public KeyValuePair<TPriority, TValue> Peek()
         {
             if (Count == 0)
@@ -106,74 +97,6 @@ namespace Eocron.Algorithms.Queues
             }
 
             set.Add(node);
-        }
-
-        private void RemoveFromIndex(FibonacciHeapNode node)
-        {
-            var set = _nodeIndex[node.Priority];
-            set.Remove(node);
-            if (set.Count == 0)
-                _nodeIndex.Remove(node.Priority);
-        }
-
-        private void UpdateLinks(FibonacciHeapNode x)
-        {
-            var y = x.Parent;
-
-            if (y != null && _comparer.Compare(x.Priority, y.Priority) < 0)
-            {
-                Cut(x, y);
-                CascadingCut(y);
-            }
-
-            if (_comparer.Compare(x.Priority, _minNode.Priority) < 0) _minNode = x;
-        }
-
-        private IEnumerable<FibonacciHeapNode> FindAllInIndex(TPriority key)
-        {
-            if (_nodeIndex.TryGetValue(key, out var tmp))
-                return tmp;
-            return Array.Empty<FibonacciHeapNode>();
-        }
-
-        private FibonacciHeapNode RemoveMin()
-        {
-            var minNode = _minNode;
-
-            if (minNode != null)
-            {
-                var numKids = minNode.Degree;
-                var oldMinChild = minNode.Child;
-                while (numKids > 0)
-                {
-                    var tempRight = oldMinChild.Right;
-                    oldMinChild.Left.Right = oldMinChild.Right;
-                    oldMinChild.Right.Left = oldMinChild.Left;
-                    oldMinChild.Left = _minNode;
-                    oldMinChild.Right = _minNode.Right;
-                    _minNode.Right = oldMinChild;
-                    oldMinChild.Right.Left = oldMinChild;
-                    oldMinChild.Parent = null;
-                    oldMinChild = tempRight;
-                    numKids--;
-                }
-
-                minNode.Left.Right = minNode.Right;
-                minNode.Right.Left = minNode.Left;
-
-                if (minNode == minNode.Right)
-                {
-                    _minNode = null;
-                }
-                else
-                {
-                    _minNode = minNode.Right;
-                    Consolidate();
-                }
-                Count--;
-            }
-
-            return minNode;
         }
 
 
@@ -198,7 +121,7 @@ namespace Eocron.Algorithms.Queues
 
         private void Consolidate()
         {
-            var arraySize = (int) Math.Floor(Math.Log(Count) * OneOverLogPhi) + 1;
+            var arraySize = (int)Math.Floor(Math.Log(Count) * OneOverLogPhi) + 1;
 
             var array = new List<FibonacciHeapNode>(arraySize);
             for (var i = 0; i < arraySize; i++) array.Add(null);
@@ -274,9 +197,9 @@ namespace Eocron.Algorithms.Queues
             x.Left.Right = x.Right;
             x.Right.Left = x.Left;
             y.Degree--;
-            if (y.Child == x) 
+            if (y.Child == x)
                 y.Child = x.Right;
-            if (y.Degree == 0) 
+            if (y.Degree == 0)
                 y.Child = null;
             x.Left = _minNode;
             x.Right = _minNode.Right;
@@ -284,6 +207,13 @@ namespace Eocron.Algorithms.Queues
             x.Right.Left = x;
             x.Parent = null;
             x.Mark = false;
+        }
+
+        private IEnumerable<FibonacciHeapNode> FindAllInIndex(TPriority key)
+        {
+            if (_nodeIndex.TryGetValue(key, out var tmp))
+                return tmp;
+            return Array.Empty<FibonacciHeapNode>();
         }
 
 
@@ -306,21 +236,85 @@ namespace Eocron.Algorithms.Queues
                 newParent.Child.Right = newChild;
                 newChild.Right.Left = newChild;
             }
+
             newParent.Degree++;
             newChild.Mark = false;
         }
 
+        private void RemoveFromIndex(FibonacciHeapNode node)
+        {
+            var set = _nodeIndex[node.Priority];
+            set.Remove(node);
+            if (set.Count == 0)
+                _nodeIndex.Remove(node.Priority);
+        }
+
+        private FibonacciHeapNode RemoveMin()
+        {
+            var minNode = _minNode;
+
+            if (minNode != null)
+            {
+                var numKids = minNode.Degree;
+                var oldMinChild = minNode.Child;
+                while (numKids > 0)
+                {
+                    var tempRight = oldMinChild.Right;
+                    oldMinChild.Left.Right = oldMinChild.Right;
+                    oldMinChild.Right.Left = oldMinChild.Left;
+                    oldMinChild.Left = _minNode;
+                    oldMinChild.Right = _minNode.Right;
+                    _minNode.Right = oldMinChild;
+                    oldMinChild.Right.Left = oldMinChild;
+                    oldMinChild.Parent = null;
+                    oldMinChild = tempRight;
+                    numKids--;
+                }
+
+                minNode.Left.Right = minNode.Right;
+                minNode.Right.Left = minNode.Left;
+
+                if (minNode == minNode.Right)
+                {
+                    _minNode = null;
+                }
+                else
+                {
+                    _minNode = minNode.Right;
+                    Consolidate();
+                }
+
+                Count--;
+            }
+
+            return minNode;
+        }
+
+        private void UpdateLinks(FibonacciHeapNode x)
+        {
+            var y = x.Parent;
+
+            if (y != null && _comparer.Compare(x.Priority, y.Priority) < 0)
+            {
+                Cut(x, y);
+                CascadingCut(y);
+            }
+
+            if (_comparer.Compare(x.Priority, _minNode.Priority) < 0) _minNode = x;
+        }
+
+        public int Count { get; private set; }
+        private const double OneOverLogPhi = 2.07808692123503d; //1d / Math.Log((1d + Math.Sqrt(5d)) / 2d);
+
+        private readonly Dictionary<TPriority, ISet<FibonacciHeapNode>> _nodeIndex =
+            new Dictionary<TPriority, ISet<FibonacciHeapNode>>();
+
+        private readonly IComparer<TPriority> _comparer;
+
+        private FibonacciHeapNode _minNode;
+
         private class FibonacciHeapNode
         {
-            public TPriority Priority;
-            public TValue Value;
-            public FibonacciHeapNode Child;
-            public FibonacciHeapNode Left;
-            public FibonacciHeapNode Parent;
-            public FibonacciHeapNode Right;
-            public bool Mark;
-            public int Degree;
-
             public FibonacciHeapNode(TValue data, TPriority key)
             {
                 Right = this;
@@ -328,6 +322,15 @@ namespace Eocron.Algorithms.Queues
                 Value = data;
                 Priority = key;
             }
+
+            public bool Mark;
+            public FibonacciHeapNode Child;
+            public FibonacciHeapNode Left;
+            public FibonacciHeapNode Parent;
+            public FibonacciHeapNode Right;
+            public int Degree;
+            public TPriority Priority;
+            public TValue Value;
         }
     }
 }

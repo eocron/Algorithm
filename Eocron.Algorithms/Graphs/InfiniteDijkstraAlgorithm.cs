@@ -8,7 +8,8 @@ namespace Eocron.Algorithms.Graphs
     ///     https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
     ///     This implementation is infinite one. This means its not necessary to know entire graph at source and you
     ///     can provide more data as you go deeper in graph.
-    ///     It will always find shortest path in VISITED nodes. So to find shortest out of shortest path you actually need to visit ALL nodes.
+    ///     It will always find shortest path in VISITED nodes. So to find shortest out of shortest path you actually need to
+    ///     visit ALL nodes.
     ///     Complexity: O(E + V*log(V))
     ///     Memory: O(V)
     /// </summary>
@@ -16,13 +17,7 @@ namespace Eocron.Algorithms.Graphs
     /// <typeparam name="TWeight">Weight type</typeparam>
     public sealed class InfiniteDijkstraAlgorithm<TVertex, TWeight> : DijkstraAlgorithmBase<TVertex, TWeight>
     {
-        private readonly bool _searchAll;
-        private readonly IDictionary<TVertex, TVertex> _paths;
-        private readonly IDictionary<TVertex, TWeight> _weights;
-        private readonly IPriorityQueue<TWeight, TVertex> _priorityQueue;
-
         /// <summary>
-        /// 
         /// </summary>
         /// <param name="getEdges">Get all outgoing edges.</param>
         /// <param name="getVertexWeight">Get vertex weight.</param>
@@ -46,28 +41,17 @@ namespace Eocron.Algorithms.Graphs
             _searchAll = buildShortestPathTree;
             vertexEqualityComparer ??= EqualityComparer<TVertex>.Default;
             _priorityQueue = new FibonacciHeap<TWeight, TVertex>(weightComparer);
-            _weights = count <= 0 ? new Dictionary<TVertex, TWeight>(vertexEqualityComparer) : new Dictionary<TVertex, TWeight>(count, vertexEqualityComparer);
-            _paths = count <= 0 ? new Dictionary<TVertex, TVertex>(vertexEqualityComparer) : new Dictionary<TVertex, TVertex>(count, vertexEqualityComparer);
+            _weights = count <= 0
+                ? new Dictionary<TVertex, TWeight>(vertexEqualityComparer)
+                : new Dictionary<TVertex, TWeight>(count, vertexEqualityComparer);
+            _paths = count <= 0
+                ? new Dictionary<TVertex, TVertex>(vertexEqualityComparer)
+                : new Dictionary<TVertex, TVertex>(count, vertexEqualityComparer);
         }
 
         public override bool TryGetWeight(TVertex vertex, out TWeight weight)
         {
             return _weights.TryGetValue(vertex, out weight);
-        }
-
-        protected override void SetWeight(TVertex vertex, TWeight weight)
-        {
-            _weights[vertex] = weight;
-        }
-
-        protected override void SetPath(TVertex vertex, TVertex other)
-        {
-            _paths[vertex] = other;
-        }
-
-        protected override bool ContainsPath(TVertex vertex)
-        {
-            return _paths.ContainsKey(vertex);
         }
 
         protected override void Clear()
@@ -78,21 +62,14 @@ namespace Eocron.Algorithms.Graphs
             base.Clear();
         }
 
-        protected override void Enqueue(KeyValuePair<TWeight, TVertex> item)
+        protected override bool ContainsPath(TVertex vertex)
         {
-            _priorityQueue.Enqueue(item);
+            return _paths.ContainsKey(vertex);
         }
 
-        protected override void EnqueueOrUpdate(KeyValuePair<TWeight, TVertex> item, Func<KeyValuePair<TWeight, TVertex>, KeyValuePair<TWeight, TVertex>> onUpdate)
+        protected override bool ContainsWeight(TVertex vertex)
         {
-            if (_searchAll)
-            {
-                _priorityQueue.Enqueue(item);
-            }
-            else
-            {
-                _priorityQueue.EnqueueOrUpdate(item, onUpdate);
-            }
+            return _weights.ContainsKey(vertex);
         }
 
         protected override KeyValuePair<TWeight, TVertex> Dequeue()
@@ -100,9 +77,33 @@ namespace Eocron.Algorithms.Graphs
             return _priorityQueue.Dequeue();
         }
 
+        protected override void Enqueue(KeyValuePair<TWeight, TVertex> item)
+        {
+            _priorityQueue.Enqueue(item);
+        }
+
+        protected override void EnqueueOrUpdate(KeyValuePair<TWeight, TVertex> item,
+            Func<KeyValuePair<TWeight, TVertex>, KeyValuePair<TWeight, TVertex>> onUpdate)
+        {
+            if (_searchAll)
+                _priorityQueue.Enqueue(item);
+            else
+                _priorityQueue.EnqueueOrUpdate(item, onUpdate);
+        }
+
         protected override bool IsQueueEmpty()
         {
             return _priorityQueue.Count == 0;
+        }
+
+        protected override void SetPath(TVertex vertex, TVertex other)
+        {
+            _paths[vertex] = other;
+        }
+
+        protected override void SetWeight(TVertex vertex, TWeight weight)
+        {
+            _weights[vertex] = weight;
         }
 
         protected override bool TryGetPath(TVertex source, out TVertex target)
@@ -110,9 +111,9 @@ namespace Eocron.Algorithms.Graphs
             return _paths.TryGetValue(source, out target);
         }
 
-        protected override bool ContainsWeight(TVertex vertex)
-        {
-            return _weights.ContainsKey(vertex);
-        }
+        private readonly bool _searchAll;
+        private readonly IDictionary<TVertex, TVertex> _paths;
+        private readonly IDictionary<TVertex, TWeight> _weights;
+        private readonly IPriorityQueue<TWeight, TVertex> _priorityQueue;
     }
 }

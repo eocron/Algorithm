@@ -9,10 +9,19 @@ namespace Eocron.Algorithms.Tests.Core
 {
     public abstract class PriorityQueueTestsBase<TPriority, TValue>
     {
-        protected readonly Random Rnd = new Random();
-        protected abstract IPriorityQueue<TPriority, TValue> CreateNewQueue();
-        protected abstract IEnumerable<KeyValuePair<TPriority, TValue>> CreateTestCase();
-        protected abstract bool IsStable { get; }
+        [Test]
+        public void Clear()
+        {
+            var queue = CreateNewQueue();
+            var t = CreateTestCase().ToList();
+
+            foreach (var keyValuePair in t) queue.Enqueue(keyValuePair);
+            queue.Clear();
+
+            Assert.AreEqual(0, queue.Count);
+            Assert.Throws<InvalidOperationException>(() => queue.Peek());
+            Assert.Throws<InvalidOperationException>(() => queue.Dequeue());
+        }
 
         [Test]
         public void EnqueueDequeue()
@@ -27,35 +36,25 @@ namespace Eocron.Algorithms.Tests.Core
             {
                 var testCase = Rnd.Shuffle(t);
                 var orderedTestCase = testCase.OrderBy(x => x.Key).ToList();
-                foreach (var keyValuePair in orderedTestCase)
-                {
-                    queue.Enqueue(keyValuePair);
-                }
+                foreach (var keyValuePair in orderedTestCase) queue.Enqueue(keyValuePair);
 
                 Assert.AreEqual(orderedTestCase.Count, queue.Count);
 
                 if (IsStable)
-                {
                     foreach (var keyValuePair in orderedTestCase)
                     {
                         Assert.AreEqual(keyValuePair, queue.Peek());
                         Assert.AreEqual(keyValuePair, queue.Dequeue());
                     }
-                }
                 else
-                {
                     foreach (var group in orderedTestCase
-                        .GroupBy(x => x.Key)
-                        .Select(x => new HashSet<KeyValuePair<TPriority, TValue>>(x, new KeyValueComparer())))
-                    {
-
-                        for (int j = 0; j < group.Count; j++)
+                                 .GroupBy(x => x.Key)
+                                 .Select(x => new HashSet<KeyValuePair<TPriority, TValue>>(x, new KeyValueComparer())))
+                        for (var j = 0; j < group.Count; j++)
                         {
                             Assert.IsTrue(group.Contains(queue.Peek()));
                             Assert.IsTrue(group.Contains(queue.Dequeue()));
                         }
-                    }
-                }
 
 
                 Assert.AreEqual(0, queue.Count);
@@ -82,9 +81,7 @@ namespace Eocron.Algorithms.Tests.Core
                     .Select(x => x.Last())
                     .ToList();
                 foreach (var keyValuePair in distinctOrderedTestCase)
-                {
                     queue.EnqueueOrUpdate(keyValuePair, x => keyValuePair);
-                }
 
                 Assert.AreEqual(distinctOrderedTestCase.Count, queue.Count);
 
@@ -100,24 +97,10 @@ namespace Eocron.Algorithms.Tests.Core
             }
         }
 
-
-
-        [Test]
-        public void Clear()
-        {
-            var queue = CreateNewQueue();
-            var t = CreateTestCase().ToList();
-
-            foreach (var keyValuePair in t)
-            {
-                queue.Enqueue(keyValuePair);
-            }
-            queue.Clear();
-
-            Assert.AreEqual(0, queue.Count);
-            Assert.Throws<InvalidOperationException>(() => queue.Peek());
-            Assert.Throws<InvalidOperationException>(() => queue.Dequeue());
-        }
+        protected abstract IPriorityQueue<TPriority, TValue> CreateNewQueue();
+        protected abstract IEnumerable<KeyValuePair<TPriority, TValue>> CreateTestCase();
+        protected abstract bool IsStable { get; }
+        protected readonly Random Rnd = new();
 
         public class KeyValueComparer : IEqualityComparer<KeyValuePair<TPriority, TValue>>
         {

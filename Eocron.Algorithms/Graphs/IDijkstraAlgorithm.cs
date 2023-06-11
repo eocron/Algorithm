@@ -4,10 +4,11 @@ namespace Eocron.Algorithms.Graphs
 {
     public interface IDijkstraAlgorithm<TVertex, TWeight>
     {
-        TVertex Source { get; }
-        TVertex Target { get; }
+        IEnumerable<TVertex> GetPath(TVertex source, TVertex target);
 
-        bool IsTargetFound { get; }
+        IEnumerable<TVertex> GetPathFromSourceToTarget();
+
+        public TWeight GetWeight(TVertex vertex);
 
         /// <summary>
         ///     Performs search on this particular algorithm, filling its weight/path matrix.
@@ -15,12 +16,10 @@ namespace Eocron.Algorithms.Graphs
         /// <param name="source">Starting/source vertex.</param>
         void Search(TVertex source);
 
-        IEnumerable<TVertex> GetPathFromSourceToTarget();
-
-        IEnumerable<TVertex> GetPath(TVertex source, TVertex target);
-
         public bool TryGetWeight(TVertex target, out TWeight weight);
 
-        public TWeight GetWeight(TVertex vertex);
+        bool IsTargetFound { get; }
+        TVertex Source { get; }
+        TVertex Target { get; }
     }
 }

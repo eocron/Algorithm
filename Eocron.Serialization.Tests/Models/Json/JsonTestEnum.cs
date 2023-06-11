@@ -4,6 +4,6 @@ namespace Eocron.Serialization.Tests.Models.Json
     {
         One,
         Two,
-        Three,
+        Three
     }
 }

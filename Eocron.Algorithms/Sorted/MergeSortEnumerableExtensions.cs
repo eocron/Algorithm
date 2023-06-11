@@ -6,10 +6,11 @@ namespace Eocron.Algorithms.Sorted
 {
     public static class MergeSortEnumerableExtensions
     {
-        public static IEnumerable<TElement> MergeOrderBy<TElement, TKey>(this IEnumerable<TElement> sourceEnumerable, Func<TElement, TKey> keyProvider,
-            IEnumerableStorage<TElement> storage, IComparer<TKey> comparer = null, int minimalChunkSize = 1024*1024)
+        public static IEnumerable<TElement> MergeOrderBy<TElement, TKey>(this IEnumerable<TElement> sourceEnumerable,
+            Func<TElement, TKey> keyProvider,
+            IEnumerableStorage<TElement> storage, IComparer<TKey> comparer = null, int minimalChunkSize = 1024 * 1024)
         {
-            if(sourceEnumerable == null)
+            if (sourceEnumerable == null)
                 throw new ArgumentNullException(nameof(sourceEnumerable));
             if (storage == null)
                 throw new ArgumentNullException(nameof(storage));
@@ -21,7 +22,7 @@ namespace Eocron.Algorithms.Sorted
             //chunking, sorting, saving
             foreach (var chunk in sourceEnumerable.ChunkInPlace(minimalChunkSize))
             {
-                chunk.Sort((x,y)=> comparer.Compare(keyProvider(x), keyProvider(y)));
+                chunk.Sort((x, y) => comparer.Compare(keyProvider(x), keyProvider(y)));
                 storage.Add(chunk);
             }
 
@@ -30,38 +31,9 @@ namespace Eocron.Algorithms.Sorted
 
             //making a merge tree IEnumerable out of all files, it will cost us O(totalSize/chunkSize) open handles
             var queue = new Queue<IEnumerable<TElement>>(storage.Count);
-            while (storage.Count > 0)
-            {
-                queue.Enqueue(storage.Take());
-            }
-            while (queue.Count > 1)
-            {
-                queue.Enqueue(MergeSorted(queue.Dequeue(), queue.Dequeue(), keyProvider, comparer));
-            }
+            while (storage.Count > 0) queue.Enqueue(storage.Take());
+            while (queue.Count > 1) queue.Enqueue(MergeSorted(queue.Dequeue(), queue.Dequeue(), keyProvider, comparer));
             return queue.Dequeue();
-        }
-
-        private static IEnumerable<TElement> MergeSorted<TElement, TKey>(IEnumerable<TElement> a, IEnumerable<TElement> b, Func<TElement, TKey> keyProvider, IComparer<TKey> comparer)
-        {
-            using var aiter = a.GetEnumerator();
-            using var biter = b.GetEnumerator();
-
-            var amoved = aiter.MoveNext();
-            var bmoved = biter.MoveNext();
-            while (amoved || bmoved)
-            {
-                var cmp = amoved && bmoved ? comparer.Compare(keyProvider(aiter.Current), keyProvider(biter.Current)) : (amoved ? -1 : 1);
-                if (cmp <= 0)
-                {
-                    yield return aiter.Current;
-                    amoved = aiter.MoveNext();
-                }
-                else
-                {
-                    yield return biter.Current;
-                    bmoved = biter.MoveNext();
-                }
-            }
         }
 
         //chop incoming enumerable into chunks, but uses same array each time to lower GC usage
@@ -84,6 +56,31 @@ namespace Eocron.Algorithms.Sorted
             if (list.Count > 0)
                 yield return list;
             list.Clear();
+        }
+
+        private static IEnumerable<TElement> MergeSorted<TElement, TKey>(IEnumerable<TElement> a,
+            IEnumerable<TElement> b, Func<TElement, TKey> keyProvider, IComparer<TKey> comparer)
+        {
+            using var aiter = a.GetEnumerator();
+            using var biter = b.GetEnumerator();
+
+            var amoved = aiter.MoveNext();
+            var bmoved = biter.MoveNext();
+            while (amoved || bmoved)
+            {
+                var cmp = amoved && bmoved ? comparer.Compare(keyProvider(aiter.Current), keyProvider(biter.Current)) :
+                    amoved ? -1 : 1;
+                if (cmp <= 0)
+                {
+                    yield return aiter.Current;
+                    amoved = aiter.MoveNext();
+                }
+                else
+                {
+                    yield return biter.Current;
+                    bmoved = biter.MoveNext();
+                }
+            }
         }
     }
 }

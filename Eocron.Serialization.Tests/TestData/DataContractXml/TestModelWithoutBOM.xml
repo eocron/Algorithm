@@ -1,39 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<XmlTestModelFooBar xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.datacontract.org/2004/07/Eocron.Serialization.Tests.Models.DataContract">
-  <Array xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
-    <d2p1:long>2</d2p1:long>
-    <d2p1:long>3</d2p1:long>
-    <d2p1:long>4</d2p1:long>
-  </Array>
-  <Boolean>true</Boolean>
-  <DateTime>2022-01-01T01:01:01Z</DateTime>
-  <Dictionary xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
-    <d2p1:KeyValueOfstringstring>
-      <d2p1:Key>key1</d2p1:Key>
-      <d2p1:Value>value1</d2p1:Value>
-    </d2p1:KeyValueOfstringstring>
-    <d2p1:KeyValueOfstringstring>
-      <d2p1:Key>key2</d2p1:Key>
-      <d2p1:Value>value2</d2p1:Value>
-    </d2p1:KeyValueOfstringstring>
-  </Dictionary>
-  <Double>1.4</Double>
-  <EmptyArray xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
-  <EmptyList xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
-  <Enum>Three</Enum>
-  <FooBarString>foobar</FooBarString>
-  <Guid>1a4c5b27-3881-4330-a13b-f709c004bbc4</Guid>
-  <Integer>123</Integer>
-  <List xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
-    <d2p1:int>1</d2p1:int>
-    <d2p1:int>2</d2p1:int>
-    <d2p1:int>3</d2p1:int>
-  </List>
-  <Long>456</Long>
-  <NullReference i:nil="true" />
-  <Nullable i:nil="true" />
-  <Struct>
-    <Value>234</Value>
-  </Struct>
-  <TimeSpan>PT3S</TimeSpan>
+<XmlTestModelFooBar xmlns:i="http://www.w3.org/2001/XMLSchema-instance"
+                    xmlns="http://schemas.datacontract.org/2004/07/Eocron.Serialization.Tests.Models.DataContract">
+    <Array xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+        <d2p1:long>2</d2p1:long>
+        <d2p1:long>3</d2p1:long>
+        <d2p1:long>4</d2p1:long>
+    </Array>
+    <Boolean>true</Boolean>
+    <DateTime>2022-01-01T01:01:01Z</DateTime>
+    <Dictionary xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+        <d2p1:KeyValueOfstringstring>
+            <d2p1:Key>key1</d2p1:Key>
+            <d2p1:Value>value1</d2p1:Value>
+        </d2p1:KeyValueOfstringstring>
+        <d2p1:KeyValueOfstringstring>
+            <d2p1:Key>key2</d2p1:Key>
+            <d2p1:Value>value2</d2p1:Value>
+        </d2p1:KeyValueOfstringstring>
+    </Dictionary>
+    <Double>1.4</Double>
+    <EmptyArray xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/>
+    <EmptyList xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/>
+    <Enum>Three</Enum>
+    <FooBarString>foobar</FooBarString>
+    <Guid>1a4c5b27-3881-4330-a13b-f709c004bbc4</Guid>
+    <Integer>123</Integer>
+    <List xmlns:d2p1="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+        <d2p1:int>1</d2p1:int>
+        <d2p1:int>2</d2p1:int>
+        <d2p1:int>3</d2p1:int>
+    </List>
+    <Long>456</Long>
+    <NullReference i:nil="true"/>
+    <Nullable i:nil="true"/>
+    <Struct>
+        <Value>234</Value>
+    </Struct>
+    <TimeSpan>PT3S</TimeSpan>
 </XmlTestModelFooBar>

@@ -11,25 +11,345 @@ namespace Eocron.Algorithms.FileCache.Async
 {
     public sealed class FileCacheAsync<TKey> : IFileCacheAsync<TKey>, IDisposable
     {
+        /// <summary>
+        ///     File cache default ctr.
+        /// </summary>
+        /// <param name="baseFolder">Folder in which this instance of file cache will reside.</param>
+        /// <param name="fileSystem">File system interface to use in all file operation. Defaul is current file system.</param>
+        /// <param name="disableGc">Check if you will manage garbage collection yourself.</param>
+        public FileCacheAsync(string baseFolder, IFileSystemAsync fileSystem = null, bool disableGc = false)
+        {
+            if (baseFolder == null)
+                throw new ArgumentNullException(nameof(baseFolder));
+            _perKeyLock = new PerKeySemaphoreSlim();
+            _cacheLock = new AsyncReaderWriterLock();
+            _fs = fileSystem ?? FileSystemAsync.Instance;
+            BaseFolder = baseFolder;
+            _invalid = true;
+
+            if (!disableGc)
+            {
+                _cts = new CancellationTokenSource();
+                _gc = GcTask(_cts.Token);
+            }
+        }
+
+        public async Task AddOrUpdateFileAsync(TKey key, string sourceFilePath, CancellationToken token,
+            ICacheExpirationPolicy policy)
+        {
+            NotNull(sourceFilePath, nameof(sourceFilePath));
+            NotNull(key, nameof(key));
+            using (var cfs = new CFileSource(sourceFilePath, _fs))
+            {
+                await EnsureInitializedAsync(token);
+                using (await GlobalReadLock(token))
+                {
+                    await InternalAddOrUpdate(key, cfs, token, policy);
+                }
+            }
+        }
+
+        public async Task AddOrUpdateStreamAsync(TKey key, Stream stream, CancellationToken token,
+            ICacheExpirationPolicy policy, bool leaveOpen = false)
+        {
+            NotNull(stream, nameof(stream));
+            NotNull(key, nameof(key));
+
+            using (var cfs = new CFileSource(stream, leaveOpen, _fs))
+            {
+                await EnsureInitializedAsync(token);
+                using (await GlobalReadLock(token))
+                {
+                    await InternalAddOrUpdate(key, cfs, token, policy);
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            _cts?.Dispose();
+            _gc?.Wait();
+            _perKeyLock.Dispose();
+            //_cacheLock.Dispose();
+        }
+
+        public async Task GarbageCollectAsync(CancellationToken token)
+        {
+            var now = DateTime.UtcNow;
+            using (await GlobalWriteLock(token))
+            {
+                var nonCacheFolders = new List<string>();
+                token.ThrowIfCancellationRequested();
+                foreach (var dir in await _fs.GetDirectoriesAsync(BaseFolder, "fs*", SearchOption.TopDirectoryOnly,
+                             token))
+                {
+                    token.ThrowIfCancellationRequested();
+                    if (!await _fs.EqualsAsync(dir, _currentFolder, token))
+                        nonCacheFolders.Add(dir);
+                }
+
+                if (nonCacheFolders.Any())
+                    foreach (var dir in nonCacheFolders)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        await DeleteAsync(dir, token);
+                    }
+
+                await ShouldExecuteIteration(token);
+
+                token.ThrowIfCancellationRequested();
+                if (_entries != null && _entries.Any())
+                {
+                    var expired = _entries.Where(x => x.Value.IsExpired(now)).Select(x => x.Key);
+                    foreach (var key in expired)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        CFileCacheEntry entry;
+                        if (_entries.TryRemove(key, out entry)) await MoveToTrashAsync(entry.FilePath, token);
+                    }
+                }
+
+                token.ThrowIfCancellationRequested();
+                if (_trashFolder != null && await _fs.DirectoryExistAsync(_trashFolder, token))
+                {
+                    token.ThrowIfCancellationRequested();
+                    foreach (var file in await _fs.GetFilesAsync(_trashFolder, "*", SearchOption.TopDirectoryOnly,
+                                 token))
+                    {
+                        token.ThrowIfCancellationRequested();
+                        await DeleteAsync(file, token);
+                    }
+                }
+            }
+        }
+
+        public async Task GetFileOrAddFileAsync(TKey key, Func<TKey, Task<string>> provider, CancellationToken token,
+            string targetFilePath, ICacheExpirationPolicy policy)
+        {
+            NotNull(provider, nameof(provider));
+            NotNull(key, nameof(key));
+            NotNull(targetFilePath, nameof(targetFilePath));
+
+            await EnsureInitializedAsync(token);
+            using (await GlobalReadLock(token))
+            {
+                var entry = await InternalGetOrAdd(key, async kk => new CFileSource(await provider(kk), _fs), token,
+                    policy);
+                using (var cfs = new CFileSource(entry.FilePath, _fs))
+                {
+                    await cfs.CopyToAsync(targetFilePath, token, true);
+                }
+            }
+        }
+
+        public async Task GetFileOrAddStreamAsync(TKey key, Func<TKey, Task<Stream>> provider, CancellationToken token,
+            string targetFilePath, ICacheExpirationPolicy policy)
+        {
+            NotNull(provider, nameof(provider));
+            NotNull(key, nameof(key));
+            NotNull(targetFilePath, nameof(targetFilePath));
+
+            await EnsureInitializedAsync(token);
+            using (await GlobalReadLock(token))
+            {
+                var entry = await InternalGetOrAdd(key, async kk => new CFileSource(await provider(kk), false, _fs),
+                    token, policy);
+                using (var cfs = new CFileSource(entry.FilePath, _fs))
+                {
+                    await cfs.CopyToAsync(targetFilePath, token, true);
+                }
+            }
+        }
+
+        public async Task<Stream> GetStreamOrAddFileAsync(TKey key, Func<TKey, Task<string>> provider,
+            CancellationToken token, ICacheExpirationPolicy policy)
+        {
+            NotNull(provider, nameof(provider));
+            NotNull(key, nameof(key));
+
+            await EnsureInitializedAsync(token);
+            using (await GlobalReadLock(token))
+            {
+                var entry = await InternalGetOrAdd(key, async kk => new CFileSource(await provider(kk), _fs), token,
+                    policy);
+                return await _fs.OpenReadAsync(entry.FilePath, token);
+            }
+        }
+
+        public async Task<Stream> GetStreamOrAddStreamAsync(TKey key, Func<TKey, Task<Stream>> provider,
+            CancellationToken token, ICacheExpirationPolicy policy)
+        {
+            NotNull(provider, nameof(provider));
+            NotNull(key, nameof(key));
+
+            await EnsureInitializedAsync(token);
+            using (await GlobalReadLock(token))
+            {
+                Func<TKey, Task<CFileSource>> op = async kk => new CFileSource(await provider(kk), false, _fs);
+                var entry = await InternalGetOrAdd(key, op, token, policy);
+                return await _fs.OpenReadAsync(entry.FilePath, token);
+            }
+        }
+
+        public Task InvalidateAsync(CancellationToken token)
+        {
+            _invalid = true;
+            return Task.CompletedTask;
+        }
+
+        public async Task InvalidateAsync(TKey key, CancellationToken token)
+        {
+            if (_invalid) //no meaning to invalidate if cache is entirely invalidated.
+                return;
+
+            using (await GlobalReadLock(token))
+            {
+                if (_invalid)
+                    return;
+
+                CFileCacheEntry entry;
+                if (!_entries.TryRemove(key, out entry))
+                    return;
+
+                await MoveToTrashAsync(entry.FilePath, token);
+            }
+        }
+
+        public async Task<bool> TryGetFileAsync(TKey key, CancellationToken token, string targetFilePath)
+        {
+            NotNull(key, nameof(key));
+            NotNull(targetFilePath, nameof(targetFilePath));
+
+            await EnsureInitializedAsync(token);
+            using (await GlobalReadLock(token))
+            {
+                var entry = await InternalGetEntry(key, token);
+                if (entry == null)
+                    return false;
+
+                using (var cfs = new CFileSource(entry.FilePath, _fs))
+                {
+                    await cfs.CopyToAsync(targetFilePath, token, true);
+                }
+
+                return true;
+            }
+        }
+
+        public async Task<Stream> TryGetStreamAsync(TKey key, CancellationToken token)
+        {
+            NotNull(key, nameof(key));
+
+            await EnsureInitializedAsync(token);
+            using (await GlobalReadLock(token))
+            {
+                var entry = await InternalGetEntry(key, token);
+                if (entry == null)
+                    return null;
+
+                return await _fs.OpenReadAsync(entry.FilePath, token);
+            }
+        }
+
+        private async Task GcTask(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+                try
+                {
+                    var failed = false;
+                    try
+                    {
+                        await GarbageCollectAsync(token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch //we swallow exceptions of other types.
+                    {
+                        failed = true;
+                    }
+
+                    token.ThrowIfCancellationRequested();
+                    await Task.Delay(failed ? _gcFailRetryIntervalMs : _gcIntervalMs, token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+        }
+
+        private void NotNull(object obj, string name)
+        {
+            var str = obj as string;
+            if (str != null && string.IsNullOrWhiteSpace(str))
+                throw new ArgumentNullException(name, "Input parameter is empty.");
+            if (obj == null)
+                throw new ArgumentNullException(name, "Input parameter is null.");
+        }
+
+        public string BaseFolder { get; }
+
+        public string CurrentFolder
+        {
+            get
+            {
+                EnsureInitializedAsync(CancellationToken.None).GetAwaiter().GetResult();
+                return _currentFolder;
+            }
+        }
+
+        private static long _uniqueIdCounter;
+        private readonly AsyncReaderWriterLock _cacheLock;
+        private readonly CancellationTokenSource _cts;
+        private readonly PerKeySemaphoreSlim _perKeyLock;
+        private readonly IFileSystemAsync _fs;
+        private readonly int _gcFailRetryIntervalMs = 10 * 1000;
+
+        private readonly int _gcIntervalMs = 5 * 1000;
+        private readonly Task _gc;
+
+        private volatile bool _invalid;
+        private ConcurrentBag<CancellableAction> _actions;
+        private ConcurrentDictionary<TKey, CFileCacheEntry> _entries;
+        private string _cacheFolder;
+        private string _currentFolder;
+        private string _tempFolder;
+        private string _trashFolder;
+
         #region Private helper classes
+
         private delegate Task CancellableAction(CancellationToken token);
 
         private sealed class PerKeySemaphoreSlim : IDisposable
         {
-            private sealed class RefCounted<T>
+            public void Dispose()
             {
-                public RefCounted(T value)
-                {
-                    RefCount = 1;
-                    Value = value;
-                }
-
-                public int RefCount { get; set; }
-                public T Value { get; private set; }
+                _lock.Dispose();
+                foreach (var v in _dict.Values) v.Value.Dispose();
             }
 
-            private readonly SemaphoreSlim _lock = new SemaphoreSlim(1);
-            private readonly Dictionary<object, RefCounted<SemaphoreSlim>> _dict = new Dictionary<object, RefCounted<SemaphoreSlim>>();
+            public async Task<IDisposable> LockAsync(object key, CancellationToken token)
+            {
+                var item = await GetOrCreate(key, token);
+                await item.Value.WaitAsync(CancellationToken.None);
+                return new Disposable(() =>
+                {
+                    _lock.Wait(CancellationToken.None);
+                    try
+                    {
+                        --item.RefCount;
+                        if (item.RefCount == 0)
+                            _dict.Remove(key);
+                    }
+                    finally
+                    {
+                        _lock.Release();
+                    }
+
+                    item.Value.Release();
+                });
+            }
 
             private async Task<RefCounted<SemaphoreSlim>> GetOrCreate(object key, CancellationToken token)
             {
@@ -55,53 +375,32 @@ namespace Eocron.Algorithms.FileCache.Async
                 return item;
             }
 
-            public async Task<IDisposable> LockAsync(object key, CancellationToken token)
-            {
-                var item = await GetOrCreate(key, token);
-                await item.Value.WaitAsync(CancellationToken.None);
-                return new Disposable(() =>
-                {
-                    _lock.Wait(CancellationToken.None);
-                    try
-                    {
-                        --item.RefCount;
-                        if (item.RefCount == 0)
-                            _dict.Remove(key);
-                    }
-                    finally
-                    {
-                        _lock.Release();
-                    }
+            private readonly Dictionary<object, RefCounted<SemaphoreSlim>> _dict =
+                new Dictionary<object, RefCounted<SemaphoreSlim>>();
 
-                    item.Value.Release();
-                });
-            }
+            private readonly SemaphoreSlim _lock = new SemaphoreSlim(1);
 
-            public void Dispose()
+            private sealed class RefCounted<T>
             {
-                _lock.Dispose();
-                foreach (var v in _dict.Values)
+                public RefCounted(T value)
                 {
-                    v.Value.Dispose();
+                    RefCount = 1;
+                    Value = value;
                 }
+
+                public int RefCount { get; set; }
+                public T Value { get; }
             }
         }
 
         private sealed class CFileCacheEntry : AnyExpirationPolicy
         {
-            public string FilePath { get; set; }
-
             public DateTime Created { get; set; }
+            public string FilePath { get; set; }
         }
+
         private sealed class CFileSource : IDisposable
         {
-            private readonly int _uploadBufferSize = 81920;
-            private readonly bool _leaveOpen;
-            private readonly IFileSystemAsync _fs;
-            private string FilePath { get; set; }
-
-            private Stream Stream { get; set; }
-
             public CFileSource(string filePath, IFileSystemAsync fs)
             {
                 if (string.IsNullOrWhiteSpace(filePath))
@@ -134,14 +433,11 @@ namespace Eocron.Algorithms.FileCache.Async
                 else
                 {
                     if (createHardLink)
-                    {
                         await _fs.CreateHardLinkAsync(FilePath, path, token);
-                    }
                     else
-                    {
                         await _fs.CopyFileAsync(FilePath, path, token);
-                    }
                 }
+
                 await _fs.SetAttributesAsync(path, FileAttributes.Normal, token);
             }
 
@@ -153,110 +449,32 @@ namespace Eocron.Algorithms.FileCache.Async
                     {
                         Stream.Close();
                     }
-                    catch { }
+                    catch
+                    {
+                    }
+
                     try
                     {
                         Stream.Dispose();
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }
             }
+
+            private Stream Stream { get; }
+            private string FilePath { get; }
+            private readonly bool _leaveOpen;
+            private readonly IFileSystemAsync _fs;
+            private readonly int _uploadBufferSize = 81920;
         }
+
         #endregion
-
-        private static long _uniqueIdCounter = 0;
-
-        private readonly int _gcIntervalMs = 5 * 1000;
-        private readonly int _gcFailRetryIntervalMs = 10 * 1000;
-        private readonly PerKeySemaphoreSlim _perKeyLock;
-        private readonly IFileSystemAsync _fs;
-        private readonly string _baseFolder;
-        private readonly AsyncReaderWriterLock _cacheLock;
-        private readonly CancellationTokenSource _cts;
-        private readonly Task _gc;
-
-        private volatile bool _invalid;
-        private string _currentFolder;
-        private string _tempFolder;
-        private string _cacheFolder;
-        private string _trashFolder;
-        private ConcurrentDictionary<TKey, CFileCacheEntry> _entries;
-        private ConcurrentBag<CancellableAction> _actions;
-
-        public string BaseFolder => _baseFolder;
-        public string CurrentFolder
-        {
-            get
-            {
-                EnsureInitializedAsync(CancellationToken.None).GetAwaiter().GetResult();
-                return _currentFolder;
-            }
-        }
-
-        /// <summary>
-        /// File cache default ctr.
-        /// </summary>
-        /// <param name="baseFolder">Folder in which this instance of file cache will reside.</param>
-        /// <param name="fileSystem">File system interface to use in all file operation. Defaul is current file system.</param>
-        /// <param name="disableGc">Check if you will manage garbage collection yourself.</param>
-        public FileCacheAsync(string baseFolder, IFileSystemAsync fileSystem = null, bool disableGc = false)
-        {
-            if (baseFolder == null)
-                throw new ArgumentNullException(nameof(baseFolder));
-            _perKeyLock = new PerKeySemaphoreSlim();
-            _cacheLock = new AsyncReaderWriterLock();
-            _fs = fileSystem ?? FileSystemAsync.Instance;
-            _baseFolder = baseFolder;
-            _invalid = true;
-
-            if (!disableGc)
-            {
-                _cts = new CancellationTokenSource();
-                _gc = GcTask(_cts.Token);
-            }
-        }
-
-        private void NotNull(object obj, string name)
-        {
-            var str = obj as string;
-            if (str != null && string.IsNullOrWhiteSpace(str))
-            {
-                throw new ArgumentNullException(name, "Input parameter is empty.");
-            }
-            if (obj == null)
-                throw new ArgumentNullException(name, "Input parameter is null.");
-        }
-        private async Task GcTask(CancellationToken token)
-        {
-            while (!token.IsCancellationRequested)
-            {
-                try
-                {
-                    bool failed = false;
-                    try
-                    {
-                        await GarbageCollectAsync(token);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        throw;
-                    }
-                    catch //we swallow exceptions of other types.
-                    {
-                        failed = true;
-                    }
-                    token.ThrowIfCancellationRequested();
-                    await Task.Delay(failed ? _gcFailRetryIntervalMs : _gcIntervalMs, token);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-            }
-        }
 
 
         #region Private methods
+
         private static string GetUniqueFileName()
         {
             //it is very unlikelly to iterate over entire uniqueId and come back to collision.
@@ -265,7 +483,7 @@ namespace Eocron.Algorithms.FileCache.Async
         }
 
         /// <summary>
-        /// Locks CurrentFolder to write so it can be modified in process.
+        ///     Locks CurrentFolder to write so it can be modified in process.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
@@ -275,7 +493,7 @@ namespace Eocron.Algorithms.FileCache.Async
         }
 
         /// <summary>
-        /// Locks CurrentFolder to read so it can't be changed in process.
+        ///     Locks CurrentFolder to read so it can't be changed in process.
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
@@ -295,7 +513,7 @@ namespace Eocron.Algorithms.FileCache.Async
                 if (!_invalid)
                     return;
                 token.ThrowIfCancellationRequested();
-                var currentFolder = await GenerateIncrementTmpPath(_baseFolder, token);
+                var currentFolder = await GenerateIncrementTmpPath(BaseFolder, token);
                 var tempFolder = Path.Combine(currentFolder, "tmp");
                 var cacheFolder = Path.Combine(currentFolder, "cch");
                 var trashFolder = Path.Combine(currentFolder, "bin");
@@ -314,7 +532,7 @@ namespace Eocron.Algorithms.FileCache.Async
         }
 
         /// <summary>
-        /// Enforces execution of particular method. It will be retried on each garbage collect.
+        ///     Enforces execution of particular method. It will be retried on each garbage collect.
         /// </summary>
         /// <param name="action"></param>
         /// <param name="token"></param>
@@ -326,7 +544,10 @@ namespace Eocron.Algorithms.FileCache.Async
                 await action(token);
                 return;
             }
-            catch { }
+            catch
+            {
+            }
+
             _actions.Add(action);
         }
 
@@ -340,7 +561,6 @@ namespace Eocron.Algorithms.FileCache.Async
 
             var toRetry = new List<CancellableAction>();
             while (_actions.TryTake(out a))
-            {
                 try
                 {
                     await a(token);
@@ -349,12 +569,8 @@ namespace Eocron.Algorithms.FileCache.Async
                 {
                     toRetry.Add(a);
                 }
-            }
 
-            foreach (var r in toRetry)
-            {
-                actions.Add(r);
-            }
+            foreach (var r in toRetry) actions.Add(r);
         }
 
 
@@ -367,7 +583,7 @@ namespace Eocron.Algorithms.FileCache.Async
         {
             token.ThrowIfCancellationRequested();
             await Ensure(folder, token);
-            int i = 0;
+            var i = 0;
             do
             {
                 token.ThrowIfCancellationRequested();
@@ -398,7 +614,7 @@ namespace Eocron.Algorithms.FileCache.Async
 
         private async Task MoveToTrashAsync(string filePath, CancellationToken token)
         {
-            await ShouldExecute(async (t) =>
+            await ShouldExecute(async t =>
             {
                 await Ensure(_trashFolder, t);
                 //new ZlpFileInfo(filePath).Attributes = FileAttributes.Normal;
@@ -444,18 +660,20 @@ namespace Eocron.Algorithms.FileCache.Async
             }
         }
 
-        private async Task InternalAddOrUpdate(TKey key, CFileSource src, CancellationToken token, ICacheExpirationPolicy policy)
+        private async Task InternalAddOrUpdate(TKey key, CFileSource src, CancellationToken token,
+            ICacheExpirationPolicy policy)
         {
             //at this point we are not responsible of disposing 'src' cause it's lifetime is wider than this method
             var path = await UploadToCacheAsync(src, token);
-            _entries[key] = new CFileCacheEntry()
+            _entries[key] = new CFileCacheEntry
             {
                 Created = DateTime.UtcNow,
                 FilePath = path
             }.Pulse(policy);
         }
 
-        private async Task<CFileCacheEntry> InternalGetOrAdd(TKey key, Func<TKey, Task<CFileSource>> provider, CancellationToken token, ICacheExpirationPolicy policy)
+        private async Task<CFileCacheEntry> InternalGetOrAdd(TKey key, Func<TKey, Task<CFileSource>> provider,
+            CancellationToken token, ICacheExpirationPolicy policy)
         {
             CFileCacheEntry cacheEntry;
 
@@ -476,7 +694,7 @@ namespace Eocron.Algorithms.FileCache.Async
                 {
                     token.ThrowIfCancellationRequested();
                     var path = await UploadToCacheAsync(src, token);
-                    cacheEntry = new CFileCacheEntry()
+                    cacheEntry = new CFileCacheEntry
                     {
                         Created = DateTime.UtcNow,
                         FilePath = path
@@ -506,7 +724,6 @@ namespace Eocron.Algorithms.FileCache.Async
             }
             catch
             {
-
             }
         }
 
@@ -518,6 +735,7 @@ namespace Eocron.Algorithms.FileCache.Async
                 token.ThrowIfCancellationRequested();
                 await SafeDeleteFile(path, token);
             }
+
             token.ThrowIfCancellationRequested();
             if (await _fs.DirectoryExistAsync(path, token))
             {
@@ -527,231 +745,25 @@ namespace Eocron.Algorithms.FileCache.Async
                     token.ThrowIfCancellationRequested();
                     await SafeDeleteFile(file, token);
                 }
+
                 token.ThrowIfCancellationRequested();
                 foreach (var dir in await _fs.GetDirectoriesAsync(path, "*", SearchOption.TopDirectoryOnly, token))
                 {
                     token.ThrowIfCancellationRequested();
                     await DeleteAsync(dir, token);
                 }
+
                 token.ThrowIfCancellationRequested();
                 try
                 {
                     await _fs.DeleteDirectoryNonRecursiveAsync(path, token);
                 }
-                catch { }
+                catch
+                {
+                }
             }
         }
 
         #endregion
-
-        public Task InvalidateAsync(CancellationToken token)
-        {
-            _invalid = true;
-            return Task.CompletedTask;
-        }
-
-        public async Task InvalidateAsync(TKey key, CancellationToken token)
-        {
-            if (_invalid)//no meaning to invalidate if cache is entirely invalidated.
-                return;
-
-            using (await GlobalReadLock(token))
-            {
-                if (_invalid)
-                    return;
-
-                CFileCacheEntry entry;
-                if (!_entries.TryRemove(key, out entry))
-                    return;
-
-                await MoveToTrashAsync(entry.FilePath, token);
-            }
-        }
-
-        public async Task GarbageCollectAsync(CancellationToken token)
-        {
-            var now = DateTime.UtcNow;
-            using (await GlobalWriteLock(token))
-            {
-                var nonCacheFolders = new List<string>();
-                token.ThrowIfCancellationRequested();
-                foreach (var dir in await _fs.GetDirectoriesAsync(_baseFolder, "fs*", SearchOption.TopDirectoryOnly, token))
-                {
-                    token.ThrowIfCancellationRequested();
-                    if (!await _fs.EqualsAsync(dir, _currentFolder, token))
-                        nonCacheFolders.Add(dir);
-                }
-
-                if (nonCacheFolders.Any())
-                {
-                    foreach (var dir in nonCacheFolders)
-                    {
-                        token.ThrowIfCancellationRequested();
-                        await DeleteAsync(dir, token);
-                    }
-                }
-
-                await ShouldExecuteIteration(token);
-
-                token.ThrowIfCancellationRequested();
-                if (_entries != null && _entries.Any())
-                {
-                    var expired = _entries.Where(x => x.Value.IsExpired(now)).Select(x => x.Key);
-                    foreach (var key in expired)
-                    {
-                        token.ThrowIfCancellationRequested();
-                        CFileCacheEntry entry;
-                        if (_entries.TryRemove(key, out entry))
-                        {
-                            await MoveToTrashAsync(entry.FilePath, token);
-                        }
-                    }
-                }
-                token.ThrowIfCancellationRequested();
-                if (_trashFolder != null && await _fs.DirectoryExistAsync(_trashFolder, token))
-                {
-                    token.ThrowIfCancellationRequested();
-                    foreach (var file in await _fs.GetFilesAsync(_trashFolder, "*", SearchOption.TopDirectoryOnly, token))
-                    {
-                        token.ThrowIfCancellationRequested();
-                        await DeleteAsync(file, token);
-                    }
-                }
-            }
-        }
-
-        public async Task<Stream> GetStreamOrAddStreamAsync(TKey key, Func<TKey, Task<Stream>> provider, CancellationToken token, ICacheExpirationPolicy policy)
-        {
-            NotNull(provider, nameof(provider));
-            NotNull(key, nameof(key));
-
-            await EnsureInitializedAsync(token);
-            using (await GlobalReadLock(token))
-            {
-                Func<TKey, Task<CFileSource>> op = async kk => new CFileSource(await provider(kk), false, _fs);
-                var entry = await InternalGetOrAdd(key, op, token, policy);
-                return await _fs.OpenReadAsync(entry.FilePath, token);
-            }
-        }
-
-        public async Task<Stream> GetStreamOrAddFileAsync(TKey key, Func<TKey, Task<string>> provider, CancellationToken token, ICacheExpirationPolicy policy)
-        {
-            NotNull(provider, nameof(provider));
-            NotNull(key, nameof(key));
-
-            await EnsureInitializedAsync(token);
-            using (await GlobalReadLock(token))
-            {
-                var entry = await InternalGetOrAdd(key, async kk => new CFileSource(await provider(kk), _fs), token, policy);
-                return await _fs.OpenReadAsync(entry.FilePath, token);
-            }
-        }
-
-        public async Task AddOrUpdateStreamAsync(TKey key, Stream stream, CancellationToken token, ICacheExpirationPolicy policy, bool leaveOpen = false)
-        {
-            NotNull(stream, nameof(stream));
-            NotNull(key, nameof(key));
-
-            using (var cfs = new CFileSource(stream, leaveOpen, _fs))
-            {
-                await EnsureInitializedAsync(token);
-                using (await GlobalReadLock(token))
-                {
-                    await InternalAddOrUpdate(key, cfs, token, policy);
-                }
-            }
-        }
-
-        public async Task AddOrUpdateFileAsync(TKey key, string sourceFilePath, CancellationToken token, ICacheExpirationPolicy policy)
-        {
-            NotNull(sourceFilePath, nameof(sourceFilePath));
-            NotNull(key, nameof(key));
-            using (var cfs = new CFileSource(sourceFilePath, _fs))
-            {
-                await EnsureInitializedAsync(token);
-                using (await GlobalReadLock(token))
-                {
-                    await InternalAddOrUpdate(key, cfs, token, policy);
-                }
-            }
-        }
-
-        public async Task GetFileOrAddStreamAsync(TKey key, Func<TKey, Task<Stream>> provider, CancellationToken token, string targetFilePath, ICacheExpirationPolicy policy)
-        {
-            NotNull(provider, nameof(provider));
-            NotNull(key, nameof(key));
-            NotNull(targetFilePath, nameof(targetFilePath));
-
-            await EnsureInitializedAsync(token);
-            using (await GlobalReadLock(token))
-            {
-                var entry = await InternalGetOrAdd(key, async kk => new CFileSource(await provider(kk), false, _fs), token, policy);
-                using (var cfs = new CFileSource(entry.FilePath, _fs))
-                {
-                    await cfs.CopyToAsync(targetFilePath, token, true);
-                }
-            }
-        }
-
-        public async Task GetFileOrAddFileAsync(TKey key, Func<TKey, Task<string>> provider, CancellationToken token, string targetFilePath, ICacheExpirationPolicy policy)
-        {
-            NotNull(provider, nameof(provider));
-            NotNull(key, nameof(key));
-            NotNull(targetFilePath, nameof(targetFilePath));
-
-            await EnsureInitializedAsync(token);
-            using (await GlobalReadLock(token))
-            {
-                var entry = await InternalGetOrAdd(key, async kk => new CFileSource(await provider(kk), _fs), token, policy);
-                using (var cfs = new CFileSource(entry.FilePath, _fs))
-                {
-                    await cfs.CopyToAsync(targetFilePath, token, true);
-                }
-            }
-        }
-
-        public async Task<bool> TryGetFileAsync(TKey key, CancellationToken token, string targetFilePath)
-        {
-            NotNull(key, nameof(key));
-            NotNull(targetFilePath, nameof(targetFilePath));
-
-            await EnsureInitializedAsync(token);
-            using (await GlobalReadLock(token))
-            {
-                var entry = await InternalGetEntry(key, token);
-                if (entry == null)
-                    return false;
-
-                using (var cfs = new CFileSource(entry.FilePath, _fs))
-                {
-                    await cfs.CopyToAsync(targetFilePath, token, true);
-                }
-                return true;
-            }
-        }
-
-        public async Task<Stream> TryGetStreamAsync(TKey key, CancellationToken token)
-        {
-            NotNull(key, nameof(key));
-
-            await EnsureInitializedAsync(token);
-            using (await GlobalReadLock(token))
-            {
-                var entry = await InternalGetEntry(key, token);
-                if (entry == null)
-                    return null;
-
-                return await _fs.OpenReadAsync(entry.FilePath, token);
-            }
-        }
-
-        public void Dispose()
-        {
-            _cts?.Dispose();
-            _gc?.Wait();
-            _perKeyLock.Dispose();
-            //_cacheLock.Dispose();
-        }
     }
-
 }

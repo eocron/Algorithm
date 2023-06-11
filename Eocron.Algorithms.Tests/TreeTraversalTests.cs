@@ -9,24 +9,24 @@ namespace Eocron.Algorithms.Tests
     public class TreeTraversalTests
     {
         /// <summary>
-        ///       F
+        ///     F
         ///     / | \
-        ///    B  J  G
-        ///   / \     \
-        ///  A   D     I
+        ///     B  J  G
         ///     / \     \
-        ///    C   E     H
+        ///     A   D     I
+        ///     / \     \
+        ///     C   E     H
         /// </summary>
         /// <returns></returns>
         private Dictionary<char, char[]> GetTestTree()
         {
-            return new Dictionary<char, char[]>()
+            return new Dictionary<char, char[]>
             {
-                {'F', new[]{'B','J','G'}},
-                {'B', new[]{'A','D'}},
-                {'D', new[]{'C','E'}},
-                {'G', new[]{'I'}},
-                {'I', new[]{'H'}},
+                { 'F', new[] { 'B', 'J', 'G' } },
+                { 'B', new[] { 'A', 'D' } },
+                { 'D', new[] { 'C', 'E' } },
+                { 'G', new[] { 'I' } },
+                { 'I', new[] { 'H' } }
             };
         }
 

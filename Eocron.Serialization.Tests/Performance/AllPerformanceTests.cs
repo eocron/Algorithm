@@ -7,13 +7,6 @@ namespace Eocron.Serialization.Tests.Performance
 {
     public class AllPerformanceTests
     {
-        private readonly DataContractSerializationPerformanceTests _dataContract;
-        private readonly JsonSerializationPerformanceTests _json;
-        private readonly ProtobufSerializationPerformanceTests _protobuf;
-        private readonly XDocumentSerializationPerformanceTests _xDocument;
-        private readonly XmlDocumentSerializationPerformanceTests _xmlDocument;
-        private readonly YamlSerializationPerformanceTests _yaml;
-
         public AllPerformanceTests()
         {
             _dataContract = new DataContractSerializationPerformanceTests();
@@ -24,77 +17,41 @@ namespace Eocron.Serialization.Tests.Performance
             _yaml = new YamlSerializationPerformanceTests();
         }
 
-        [Benchmark()]
-        public void ProtobufDeserialize()
-        {
-            _protobuf.Deserialize();
-        }
 
-        [Benchmark()]
-        public void ProtobufSerialize()
-        {
-            _protobuf.Serialize();
-        }
-
-        [Benchmark()]
-        public void JsonDeserialize()
-        {
-            _json.Deserialize();
-        }
-
-        [Benchmark()]
-        public void JsonSerialize()
-        {
-            _json.Serialize();
-        }
-
-
-        [Benchmark()]
+        [Benchmark]
         public void DataContractDeserialize()
         {
             _dataContract.Deserialize();
         }
 
-        [Benchmark()]
+        [Benchmark]
         public void DataContractSerialize()
         {
             _dataContract.Serialize();
         }
 
-        [Benchmark()]
-        public void XDocumentDeserialize()
+        [Benchmark]
+        public void JsonDeserialize()
         {
-            _xDocument.Deserialize();
+            _json.Deserialize();
         }
 
-        [Benchmark()]
-        public void XDocumentSerialize()
+        [Benchmark]
+        public void JsonSerialize()
         {
-            _xDocument.Serialize();
+            _json.Serialize();
         }
 
-        [Benchmark()]
-        public void XmlDocumentDeserialize()
+        [Benchmark]
+        public void ProtobufDeserialize()
         {
-            _xmlDocument.Deserialize();
+            _protobuf.Deserialize();
         }
 
-        [Benchmark()]
-        public void XmlDocumentSerialize()
+        [Benchmark]
+        public void ProtobufSerialize()
         {
-            _xmlDocument.Serialize();
-        }
-
-        [Benchmark()]
-        public void YamlDeserialize()
-        {
-            _yaml.Deserialize();
-        }
-
-        [Benchmark()]
-        public void YamlSerialize()
-        {
-            _yaml.Serialize();
+            _protobuf.Serialize();
         }
 
         [Test]
@@ -103,5 +60,48 @@ namespace Eocron.Serialization.Tests.Performance
         {
             BenchmarkRunner.Run<AllPerformanceTests>(new DebugBuildConfig());
         }
+
+        [Benchmark]
+        public void XDocumentDeserialize()
+        {
+            _xDocument.Deserialize();
+        }
+
+        [Benchmark]
+        public void XDocumentSerialize()
+        {
+            _xDocument.Serialize();
+        }
+
+        [Benchmark]
+        public void XmlDocumentDeserialize()
+        {
+            _xmlDocument.Deserialize();
+        }
+
+        [Benchmark]
+        public void XmlDocumentSerialize()
+        {
+            _xmlDocument.Serialize();
+        }
+
+        [Benchmark]
+        public void YamlDeserialize()
+        {
+            _yaml.Deserialize();
+        }
+
+        [Benchmark]
+        public void YamlSerialize()
+        {
+            _yaml.Serialize();
+        }
+
+        private readonly DataContractSerializationPerformanceTests _dataContract;
+        private readonly JsonSerializationPerformanceTests _json;
+        private readonly ProtobufSerializationPerformanceTests _protobuf;
+        private readonly XDocumentSerializationPerformanceTests _xDocument;
+        private readonly XmlDocumentSerializationPerformanceTests _xmlDocument;
+        private readonly YamlSerializationPerformanceTests _yaml;
     }
 }

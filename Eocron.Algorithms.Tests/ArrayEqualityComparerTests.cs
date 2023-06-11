@@ -9,7 +9,7 @@ namespace Eocron.Algorithms.Tests
     public class ArrayEqualityComparerTests
     {
         [Test]
-        [TestCase("","", true)]
+        [TestCase("", "", true)]
         [TestCase(null, null, true)]
         [TestCase("abc", "abc", true)]
         [TestCase("abc", "bcd", false)]
@@ -18,7 +18,7 @@ namespace Eocron.Algorithms.Tests
         [TestCase("abc", null, false)]
         [TestCase("", "abc", false)]
         [TestCase("abc", "", false)]
-        [TestCase(new object[] { null, null}, new object[]{ null, null }, true)]
+        [TestCase(new object[] { null, null }, new object[] { null, null }, true)]
         public void Check(IEnumerable a, IEnumerable b, bool expected)
         {
             var cmp = ArrayEqualityComparer<object>.Default;

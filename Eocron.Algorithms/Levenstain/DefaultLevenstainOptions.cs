@@ -5,8 +5,6 @@ namespace Eocron.Algorithms.Levenstain
 {
     public class DefaultLevenstainOptions<TSource, TTarget> : ILevenstainOptions<TSource, TTarget>
     {
-        private readonly IEqualityComparer _comparer;
-
         public DefaultLevenstainOptions(IEqualityComparer comparer = null)
         {
             _comparer = comparer ?? EqualityComparer<object>.Default;
@@ -24,8 +22,10 @@ namespace Eocron.Algorithms.Levenstain
 
         public virtual float GetUpdateCost(TSource source, TTarget target)
         {
-            var res = _comparer.Equals(source,target);
+            var res = _comparer.Equals(source, target);
             return res ? 0f : 1f;
         }
+
+        private readonly IEqualityComparer _comparer;
     }
 }

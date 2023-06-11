@@ -9,7 +9,8 @@ namespace Eocron.Serialization
     {
         #region Bytes
 
-        public static byte[] SerializeToBytes<T>(this ISerializationConverter converter, T obj, Encoding encoding = null)
+        public static byte[] SerializeToBytes<T>(this ISerializationConverter converter, T obj,
+            Encoding encoding = null)
         {
             return SerializeToBytes(converter, typeof(T), obj, encoding);
         }
@@ -55,7 +56,7 @@ namespace Eocron.Serialization
         {
             if (converter == null)
                 throw new ArgumentNullException(nameof(converter));
-            
+
             var sb = new StringBuilder();
             converter.SerializeTo(type, obj, new StringStreamWriter(sb));
             return sb.ToString();
@@ -70,7 +71,7 @@ namespace Eocron.Serialization
         {
             if (converter == null)
                 throw new ArgumentNullException(nameof(converter));
-            
+
             return converter.DeserializeFrom(type, new StringStreamReader(input));
         }
 
@@ -119,7 +120,8 @@ namespace Eocron.Serialization
                 throw new ArgumentNullException(nameof(stream));
 
             encoding = encoding ?? SerializationConverter.DefaultEncoding;
-            using var streamReader = new StreamReader(stream, encoding, true, SerializationConverter.DefaultBufferSize, true);
+            using var streamReader =
+                new StreamReader(stream, encoding, true, SerializationConverter.DefaultBufferSize, true);
             return converter.DeserializeFrom(type, streamReader);
         }
 

@@ -49,10 +49,7 @@ namespace Eocron.Algorithms.Tests
 
         private void AssertNoFiles(string path)
         {
-            if (Directory.Exists(path))
-            {
-                Assert.IsEmpty(Directory.GetFiles(path, "*", SearchOption.AllDirectories));
-            }
+            if (Directory.Exists(path)) Assert.IsEmpty(Directory.GetFiles(path, "*", SearchOption.AllDirectories));
         }
 
         private void AssertNoGarbageFiles(FileCache<long> cache)
@@ -70,7 +67,7 @@ namespace Eocron.Algorithms.Tests
 
             var stream = new AssertStream(fileSize, 42);
             using (var cachedStream = cache.GetStreamOrAddStream(123, _ => stream,
-                CancellationToken.None, null))
+                       CancellationToken.None, null))
             {
                 cachedStream.ReadByte();
             }
@@ -86,7 +83,7 @@ namespace Eocron.Algorithms.Tests
             var fileSize = 10 * 1024 * 1024;
 
             var stream = new AssertStream(fileSize, 42);
-            cache.AddOrUpdateStream(123, stream, CancellationToken.None, null, leaveOpen: false);
+            cache.AddOrUpdateStream(123, stream, CancellationToken.None, null, false);
 
             Assert.IsTrue(stream.Closed);
             Assert.IsTrue(stream.Disposed);
@@ -99,7 +96,7 @@ namespace Eocron.Algorithms.Tests
             var fileSize = 10 * 1024 * 1024;
 
             var stream = new AssertStream(fileSize, 42);
-            cache.AddOrUpdateStream(123, stream, CancellationToken.None, null, leaveOpen: true);
+            cache.AddOrUpdateStream(123, stream, CancellationToken.None, null, true);
 
             Assert.IsFalse(stream.Closed);
             Assert.IsFalse(stream.Disposed);
@@ -114,11 +111,11 @@ namespace Eocron.Algorithms.Tests
 
             Console.WriteLine("File size: {0:F1}mb", fileSize / (1024f * 1024f));
             Console.WriteLine("Iter count: {0}", iterCount);
-            Stopwatch sw = Stopwatch.StartNew();
+            var sw = Stopwatch.StartNew();
             //heat up
             var ms = new MemoryStream();
             using (var cachedStream = cache.GetStreamOrAddStream(123, _ => GetRandomFile(fileSize),
-                CancellationToken.None, null))
+                       CancellationToken.None, null))
             {
             }
 
@@ -128,11 +125,11 @@ namespace Eocron.Algorithms.Tests
 
             //test
             sw.Restart();
-            for (int i = 0; i < iterCount; i++)
+            for (var i = 0; i < iterCount; i++)
             {
                 ms = new MemoryStream();
                 using (var cachedStream = cache.GetStreamOrAddStream(123, _ => GetRandomFile(fileSize),
-                    CancellationToken.None, null))
+                           CancellationToken.None, null))
                 {
                 }
             }
@@ -318,7 +315,6 @@ namespace Eocron.Algorithms.Tests
                             CacheExpirationPolicy.AbsoluteUtc(DateTime.MinValue));
                         cache.GarbageCollect(CancellationToken.None);
                         while (true)
-                        {
                             try
                             {
                                 AssertFile(filePath, fileSize);
@@ -328,13 +324,13 @@ namespace Eocron.Algorithms.Tests
                             {
                                 Console.WriteLine(e);
                             }
-                        }
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e.Message);
                         throw;
                     }
+
                     return Task.CompletedTask;
                 }).ToArray();
 
@@ -368,7 +364,7 @@ namespace Eocron.Algorithms.Tests
             cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None,
                 CacheExpirationPolicy.SlidingUtc(slide));
 
-            for (int i = 0; i < calls; i++)
+            for (var i = 0; i < calls; i++)
             {
                 data = FullRead(cache, 123);
                 Assert.IsNotNull(data);
@@ -395,8 +391,7 @@ namespace Eocron.Algorithms.Tests
             var calls = 100;
 
 
-            for (int i = 0; i < calls; i++)
-            {
+            for (var i = 0; i < calls; i++)
                 using (var cts = new CancellationTokenSource())
                 {
                     cts.CancelAfter(10);
@@ -409,7 +404,6 @@ namespace Eocron.Algorithms.Tests
                         //good.
                     }
                 }
-            }
 
             cache.GarbageCollect(CancellationToken.None);
 
@@ -421,14 +415,13 @@ namespace Eocron.Algorithms.Tests
         {
             try
             {
-
                 var cache = CreateCache();
                 var fileSize = 10L * 1024 * 1024;
                 var iterCount = 10;
 
                 Console.WriteLine("File size: {0:F1}mb", fileSize / (1024f * 1024f));
                 Console.WriteLine("Iter count: {0}", iterCount);
-                Stopwatch sw = Stopwatch.StartNew();
+                var sw = Stopwatch.StartNew();
                 //heat up
                 var targetFilePath = GetRandomPath();
                 cache.GetFileOrAddStream(123, _ => GetRandomFile(fileSize), CancellationToken.None,
@@ -443,7 +436,7 @@ namespace Eocron.Algorithms.Tests
 
                 //test
                 sw.Restart();
-                for (int i = 0; i < iterCount; i++)
+                for (var i = 0; i < iterCount; i++)
                 {
                     targetFilePath = GetRandomPath();
                     cache.GetFileOrAddStream(123, _ => GetRandomFile(fileSize), CancellationToken.None,
@@ -506,7 +499,7 @@ namespace Eocron.Algorithms.Tests
                         cache.GarbageCollect(CancellationToken.None);
                     }
 
-                    AssertFile(targetFilePath, fileSize);//item is expired, collected, but available to user
+                    AssertFile(targetFilePath, fileSize); //item is expired, collected, but available to user
 
                     data = FullRead(cache, 123);
                     Assert.IsNull(data);

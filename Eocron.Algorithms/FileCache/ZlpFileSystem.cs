@@ -1,5 +1,4 @@
-﻿
-//using ZetaLongPaths;
+﻿//using ZetaLongPaths;
 
 namespace Eocron.Algorithms.FileCache
 {
@@ -47,7 +46,7 @@ namespace Eocron.Algorithms.FileCache
     //                return Task.CompletedTask;
     //            }
     //        }
-            
+
     //        srcInfo.CopyTo(tgtInfo, false);
     //        return Task.CompletedTask;
     //    }

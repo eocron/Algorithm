@@ -5,18 +5,14 @@ using Eocron.Serialization.Tests.Models.XmlLegacy;
 
 namespace Eocron.Serialization.Tests.Performance
 {
-    public class XDocumentSerializationPerformanceTests : SerializationPerformanceTestsBase<XDocumentSerializationPerformanceTests, XmlTestModelFooBar>, ISerializationPerformanceTests
+    public class XDocumentSerializationPerformanceTests :
+        SerializationPerformanceTestsBase<XDocumentSerializationPerformanceTests, XmlTestModelFooBar>,
+        ISerializationPerformanceTests
     {
-        [Benchmark()]
+        [Benchmark]
         public void Deserialize()
         {
             DeserializeText();
-        }
-
-        [Benchmark()]
-        public void Serialize()
-        {
-            SerializeText();
         }
 
         public override ISerializationConverter GetConverter()
@@ -28,7 +24,7 @@ namespace Eocron.Serialization.Tests.Performance
         {
             return new XmlTestModelFooBar
             {
-                Dictionary = new SerializableDictionary<string, string>()
+                Dictionary = new SerializableDictionary<string, string>
                 {
                     { "key1", "value1" },
                     { "key2", "value2" }
@@ -53,6 +49,12 @@ namespace Eocron.Serialization.Tests.Performance
                 Guid = Guid.Parse("1a4c5b27-3881-4330-a13b-f709c004bbc4"),
                 Enum = XmlTestEnum.Three
             };
+        }
+
+        [Benchmark]
+        public void Serialize()
+        {
+            SerializeText();
         }
     }
 }

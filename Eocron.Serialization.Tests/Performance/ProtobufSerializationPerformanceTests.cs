@@ -5,22 +5,18 @@ using Eocron.Serialization.Tests.Models.Protobuf;
 
 namespace Eocron.Serialization.Tests.Performance
 {
-    public class ProtobufSerializationPerformanceTests : SerializationPerformanceTestsBase<ProtobufSerializationPerformanceTests, ProtobufTestModel>, ISerializationPerformanceTests
+    public class ProtobufSerializationPerformanceTests :
+        SerializationPerformanceTestsBase<ProtobufSerializationPerformanceTests, ProtobufTestModel>,
+        ISerializationPerformanceTests
     {
-        public ProtobufSerializationPerformanceTests() : base(prepareText: false)
+        public ProtobufSerializationPerformanceTests() : base(false)
         {
-
         }
-        [Benchmark()]
+
+        [Benchmark]
         public void Deserialize()
         {
             DeserializeBinary();
-        }
-
-        [Benchmark()]
-        public void Serialize()
-        {
-            SerializeBinary();
         }
 
         public override ISerializationConverter GetConverter()
@@ -46,7 +42,7 @@ namespace Eocron.Serialization.Tests.Performance
                 EmptyArray = null,
                 EmptyList = null,
                 FooBarString = "foobar",
-                Struct = new ProtobufTestStruct()
+                Struct = new ProtobufTestStruct
                 {
                     Value = 234
                 },
@@ -57,6 +53,12 @@ namespace Eocron.Serialization.Tests.Performance
                 Guid = Guid.Parse("1a4c5b27-3881-4330-a13b-f709c004bbc4"),
                 Enum = ProtobufTestEnum.Three
             };
+        }
+
+        [Benchmark]
+        public void Serialize()
+        {
+            SerializeBinary();
         }
     }
 }

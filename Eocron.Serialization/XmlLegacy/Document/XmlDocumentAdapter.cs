@@ -1,14 +1,16 @@
-﻿using System;
-using System.Xml;
+﻿using System.Xml;
 
 namespace Eocron.Serialization.XmlLegacy.Document
 {
     /// <summary>
-    /// Adapting XmlDocument to common interface
+    ///     Adapting XmlDocument to common interface
     /// </summary>
     public sealed class XmlDocumentAdapter : IXmlDocumentAdapter<XmlDocument>
     {
-        public bool EnableCompatibilityWithPreNetCore { get; set; } = true;
+        public void AfterCreation(XmlDocument document)
+        {
+            if (EnableCompatibilityWithPreNetCore) ReorderNamespaceAttributes(document);
+        }
 
         public XmlWriter CreateNewDocumentAndWriter(out XmlDocument newDocument)
         {
@@ -22,11 +24,6 @@ namespace Eocron.Serialization.XmlLegacy.Document
             return new XmlNodeReader(document);
         }
 
-        public void WriteTo(XmlDocument document, XmlWriter writer)
-        {
-            document.WriteTo(writer);
-        }
-
         public XmlDocument ReadFrom(XmlReader reader)
         {
             var document = new XmlDocument();
@@ -34,12 +31,9 @@ namespace Eocron.Serialization.XmlLegacy.Document
             return document;
         }
 
-        public void AfterCreation(XmlDocument document)
+        public void WriteTo(XmlDocument document, XmlWriter writer)
         {
-            if (EnableCompatibilityWithPreNetCore)
-            {
-                ReorderNamespaceAttributes(document);
-            }
+            document.WriteTo(writer);
         }
 
         //For regress only < netcore version
@@ -48,10 +42,9 @@ namespace Eocron.Serialization.XmlLegacy.Document
             var node = doc.DocumentElement;
             var xsi = node.Attributes["xmlns:xsi"];
             var xsd = node.Attributes["xmlns:xsd"];
-            if (xsi != null && xsd != null)
-            {
-                node.Attributes.InsertAfter(xsd, xsi);
-            }
+            if (xsi != null && xsd != null) node.Attributes.InsertAfter(xsd, xsi);
         }
+
+        public bool EnableCompatibilityWithPreNetCore { get; set; } = true;
     }
 }

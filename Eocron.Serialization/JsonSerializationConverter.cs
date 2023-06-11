@@ -6,11 +6,6 @@ namespace Eocron.Serialization
 {
     public sealed class JsonSerializationConverter : ISerializationConverter
     {
-        public JsonSerializer Serializer { get; set; } = JsonSerializer.CreateDefault(new JsonSerializerSettings()
-        {
-            Formatting = SerializationConverter.DefaultIndent ? Formatting.Indented : Formatting.None,
-        });
-
         public object DeserializeFrom(Type type, StreamReader sourceStream)
         {
             if (type == null)
@@ -31,11 +26,16 @@ namespace Eocron.Serialization
                 throw new ArgumentNullException(nameof(targetStream));
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
-            
+
             using var writer = new JsonTextWriter(targetStream);
             writer.CloseOutput = false;
             Serializer.Serialize(writer, obj, type);
             writer.Flush();
         }
+
+        public JsonSerializer Serializer { get; set; } = JsonSerializer.CreateDefault(new JsonSerializerSettings
+        {
+            Formatting = SerializationConverter.DefaultIndent ? Formatting.Indented : Formatting.None
+        });
     }
 }

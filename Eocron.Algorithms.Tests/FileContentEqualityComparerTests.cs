@@ -9,8 +9,6 @@ namespace Eocron.Algorithms.Tests
     [TestFixture]
     public class FileContentEqualityComparerTests
     {
-        private string _smallFile;
-        private string _bigFile;
         [OneTimeSetUp]
         public void SetUp()
         {
@@ -21,6 +19,7 @@ namespace Eocron.Algorithms.Tests
             rnd.NextFile(_smallFile, 100);
             rnd.NextFile(_bigFile, 10_000_000);
         }
+
         [OneTimeTearDown]
         public void TearDown()
         {
@@ -30,6 +29,9 @@ namespace Eocron.Algorithms.Tests
             if (_bigFile != null)
                 File.Delete(_bigFile);
         }
+
+        private string _smallFile;
+        private string _bigFile;
 
         [Test]
         public void Equal()

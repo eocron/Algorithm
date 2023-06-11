@@ -7,10 +7,23 @@ namespace Eocron.Algorithms.Configuration
 {
     public static class ReplacingConfigurationBuilderExtensions
     {
-        public static readonly Regex DefaultPlaceholderNamePattern = new Regex(@"{(?<name>[a-z0-9_\-\.\:\[\]]+?)}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public static IConfigurationBuilder WithPatternReplacing(this IConfigurationBuilder builder, Regex pattern,
+            MatchEvaluator evaluator)
+        {
+            if (builder == null)
+                throw new ArgumentNullException(nameof(builder));
+            if (pattern == null)
+                throw new ArgumentNullException(nameof(pattern));
+            if (evaluator == null)
+                throw new ArgumentNullException(nameof(evaluator));
+
+            for (var i = 0; i < builder.Sources.Count; i++)
+                builder.Sources[i] = new ReplacingConfigurationSource(builder.Sources[i], pattern, evaluator);
+            return builder;
+        }
 
         /// <summary>
-        /// Uses other config values to replace placeholders in format {path:in:placeholder:config}
+        ///     Uses other config values to replace placeholders in format {path:in:placeholder:config}
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="placeholders">Configu which contains placeholder mappings</param>
@@ -32,10 +45,7 @@ namespace Eocron.Algorithms.Configuration
                 {
                     var key = x.Groups["name"].Value;
                     var res = placeholders[x.Groups["name"].Value];
-                    if (res != null)
-                    {
-                        return res;
-                    }
+                    if (res != null) return res;
 
                     if (throwIfNotFound)
                         throw new KeyNotFoundException($"Placeholder '{key}' not found.");
@@ -43,20 +53,7 @@ namespace Eocron.Algorithms.Configuration
                 });
         }
 
-        public static IConfigurationBuilder WithPatternReplacing(this IConfigurationBuilder builder, Regex pattern, MatchEvaluator evaluator)
-        {
-            if (builder == null)
-                throw new ArgumentNullException(nameof(builder));
-            if(pattern == null)
-                throw new ArgumentNullException(nameof(pattern));
-            if (evaluator == null)
-                throw new ArgumentNullException(nameof(evaluator));
-
-            for (int i = 0; i < builder.Sources.Count; i++)
-            {
-                builder.Sources[i] = new ReplacingConfigurationSource(builder.Sources[i], pattern, evaluator);
-            }
-            return builder;
-        }
+        public static readonly Regex DefaultPlaceholderNamePattern = new Regex(@"{(?<name>[a-z0-9_\-\.\:\[\]]+?)}",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
     }
 }

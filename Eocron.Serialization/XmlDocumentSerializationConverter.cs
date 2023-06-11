@@ -6,8 +6,6 @@ namespace Eocron.Serialization
 {
     public sealed class XmlSerializationConverter<TDocument> : ISerializationConverter
     {
-        private readonly IXmlAdapter<TDocument> _serializer;
-
         public XmlSerializationConverter(IXmlAdapter<TDocument> serializer)
         {
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
@@ -34,5 +32,7 @@ namespace Eocron.Serialization
 
             _serializer.WriteDocumentTo(targetStream, _serializer.SerializeToDocument(type, obj));
         }
+
+        private readonly IXmlAdapter<TDocument> _serializer;
     }
 }

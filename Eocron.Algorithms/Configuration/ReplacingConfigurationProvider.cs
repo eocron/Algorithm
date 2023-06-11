@@ -8,30 +8,17 @@ namespace Eocron.Algorithms.Configuration
 {
     public sealed class ReplacingConfigurationProvider : IConfigurationProvider
     {
-        private readonly IConfigurationProvider _inner;
-        private readonly Regex _pattern;
-        private readonly MatchEvaluator _evaluator;
-
-        public ReplacingConfigurationProvider(IConfigurationProvider innerProvider, Regex pattern, MatchEvaluator evaluator)
+        public ReplacingConfigurationProvider(IConfigurationProvider innerProvider, Regex pattern,
+            MatchEvaluator evaluator)
         {
             _inner = innerProvider ?? throw new ArgumentNullException(nameof(innerProvider));
             _pattern = pattern ?? throw new ArgumentNullException(nameof(pattern));
             _evaluator = evaluator ?? throw new ArgumentNullException(nameof(evaluator));
         }
 
-        public bool TryGet(string key, out string? value)
+        public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string? parentPath)
         {
-            if (_inner.TryGet(key, out value))
-            {
-                value = TryReplace(value);
-                return true;
-            }
-            return false;
-        }
-
-        public void Set(string key, string? value)
-        {
-            _inner.Set(key, TryReplace(value));
+            return _inner.GetChildKeys(earlierKeys, parentPath);
         }
 
         public IChangeToken GetReloadToken()
@@ -44,9 +31,20 @@ namespace Eocron.Algorithms.Configuration
             _inner.Load();
         }
 
-        public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string? parentPath)
+        public void Set(string key, string? value)
         {
-            return _inner.GetChildKeys(earlierKeys, parentPath);
+            _inner.Set(key, TryReplace(value));
+        }
+
+        public bool TryGet(string key, out string? value)
+        {
+            if (_inner.TryGet(key, out value))
+            {
+                value = TryReplace(value);
+                return true;
+            }
+
+            return false;
         }
 
         private string? TryReplace(string? input)
@@ -55,5 +53,9 @@ namespace Eocron.Algorithms.Configuration
                 return null;
             return _pattern.Replace(input, _evaluator);
         }
+
+        private readonly IConfigurationProvider _inner;
+        private readonly MatchEvaluator _evaluator;
+        private readonly Regex _pattern;
     }
 }

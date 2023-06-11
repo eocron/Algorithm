@@ -18,28 +18,65 @@ namespace Eocron.Algorithms.Tree
             foreach (var keyValuePair in items) Add(keyValuePair);
         }
 
-        public int Count => _count;
-        public bool IsReadOnly => false;
-        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => GetAll().Select(i => i.Key);
-        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => GetAll().Select(i => i.Value);
-        public ICollection<TKey> Keys => GetAll().Select(i => i.Key).ToList();
-        public ICollection<TValue> Values => GetAll().Select(i => i.Value).ToList();
-
-        public TValue this[TKey key]
+        public void Add(KeyValuePair<TKey, TValue> item)
         {
-            get
-            {
-                TValue value;
-                if (TryGetValue(key, out value))
-                    return value;
-                throw KeyNotFound();
-            }
-            set => AddOrUpdate(key, value);
+            AddOrError(item.Key, item.Value);
         }
 
-        public bool Remove(KeyValuePair<TKey, TValue> item)
+        public void Add(TKey key, TValue value)
         {
-            return Remove(item.Key);
+            AddOrError(key, value);
+        }
+
+
+        public void Clear()
+        {
+            _root = Null;
+            Count = 0;
+        }
+
+        public bool Contains(KeyValuePair<TKey, TValue> item)
+        {
+            return ContainsKey(item.Key);
+        }
+
+        public bool ContainsKey(TKey key)
+        {
+            return FindNodeByKey(key) != null;
+        }
+
+        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+        {
+            if (arrayIndex < 0)
+                throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+            if (array == null)
+                throw new ArgumentNullException(nameof(array));
+            if (array.Length - arrayIndex < Count)
+                throw new ArgumentOutOfRangeException(nameof(array));
+            var currentPosition = arrayIndex;
+            foreach (var item in GetAll())
+            {
+                array.SetValue(item, currentPosition);
+                currentPosition++;
+            }
+        }
+
+        public IEnumerable<KeyValuePair<TKey, TValue>> GetAllKeyValueReversed()
+        {
+            return GetAllReversed();
+        }
+
+        public KeyValuePair<TKey, TValue> GetMaxKeyValuePair()
+        {
+            var workNode = _root;
+
+            if (workNode == null || workNode == Null)
+                throw TreeIsEmpty();
+
+            while (workNode.Right != Null)
+                workNode = workNode.Right;
+
+            return new KeyValuePair<TKey, TValue>(workNode.Key, workNode.Value);
         }
 
 
@@ -56,75 +93,9 @@ namespace Eocron.Algorithms.Tree
             return new KeyValuePair<TKey, TValue>(workNode.Key, workNode.Value);
         }
 
-        public KeyValuePair<TKey, TValue> GetMaxKeyValuePair()
+        public bool Remove(KeyValuePair<TKey, TValue> item)
         {
-            var workNode = _root;
-
-            if (workNode == null || workNode == Null)
-                throw TreeIsEmpty();
-
-            while (workNode.Right != Null)
-                workNode = workNode.Right;
-
-            return new KeyValuePair<TKey, TValue>(workNode.Key, workNode.Value);
-        }
-
-        public IEnumerable<KeyValuePair<TKey, TValue>> GetAllKeyValueReversed()
-        {
-            return GetAllReversed();
-        }
-
-        public void Add(KeyValuePair<TKey, TValue> item)
-        {
-            AddOrError(item.Key, item.Value);
-        }
-
-
-        public void Clear()
-        {
-            _root = Null;
-            _count = 0;
-        }
-
-        public bool Contains(KeyValuePair<TKey, TValue> item)
-        {
-            return ContainsKey(item.Key);
-        }
-
-        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
-        {
-            if (arrayIndex < 0)
-                throw new ArgumentOutOfRangeException(nameof(arrayIndex));
-            if (array == null)
-                throw new ArgumentNullException(nameof(array));
-            if (array.Length - arrayIndex < _count)
-                throw new ArgumentOutOfRangeException(nameof(array));
-            var currentPosition = arrayIndex;
-            foreach (var item in GetAll())
-            {
-                array.SetValue(item, currentPosition);
-                currentPosition++;
-            }
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetAll().GetEnumerator();
-        }
-
-        IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
-        {
-            return GetAll().GetEnumerator();
-        }
-
-        public bool ContainsKey(TKey key)
-        {
-            return FindNodeByKey(key) != null;
-        }
-
-        public void Add(TKey key, TValue value)
-        {
-            AddOrError(key, value);
+            return Remove(item.Key);
         }
 
 
@@ -147,11 +118,42 @@ namespace Eocron.Algorithms.Tree
             return true;
         }
 
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetAll().GetEnumerator();
+        }
+
+        IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
+        {
+            return GetAll().GetEnumerator();
+        }
+
+        public TValue this[TKey key]
+        {
+            get
+            {
+                TValue value;
+                if (TryGetValue(key, out value))
+                    return value;
+                throw KeyNotFound();
+            }
+            set => AddOrUpdate(key, value);
+        }
+
+        public bool IsReadOnly => false;
+        public ICollection<TKey> Keys => GetAll().Select(i => i.Key).ToList();
+        public ICollection<TValue> Values => GetAll().Select(i => i.Value).ToList();
+
+        public int Count { get; private set; }
+
         TValue IDictionary<TKey, TValue>.this[TKey key]
         {
             get => FindNodeByKey(key).Value;
             set => FindNodeByKey(key).Value = value;
         }
+
+        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => GetAll().Select(i => i.Key);
+        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => GetAll().Select(i => i.Value);
 
         #region Private
 
@@ -184,6 +186,7 @@ namespace Eocron.Algorithms.Tree
                     workNode.Value = data;
                     return;
                 }
+
                 workNode = result > 0
                     ? workNode.Right
                     : workNode.Left;
@@ -202,8 +205,9 @@ namespace Eocron.Algorithms.Tree
             }
 
             FixAdd(newNode);
-            _count++;
+            Count++;
         }
+
         private void AddOrError(TKey key, TValue data)
         {
             var newNode = new RedBlackNode(key, data);
@@ -233,7 +237,7 @@ namespace Eocron.Algorithms.Tree
             }
 
             FixAdd(newNode);
-            _count++;
+            Count++;
         }
 
         private void Remove(RedBlackNode node)
@@ -274,7 +278,7 @@ namespace Eocron.Algorithms.Tree
             if (!workNode.Red)
                 FixRemove(linkedNode);
 
-            _count--;
+            Count--;
         }
 
         private void FixRemove(RedBlackNode node)
@@ -357,7 +361,7 @@ namespace Eocron.Algorithms.Tree
 
         private Stack<KeyValuePair<TKey, TValue>> GetAll()
         {
-            var stack = new Stack<KeyValuePair<TKey, TValue>>(_count);
+            var stack = new Stack<KeyValuePair<TKey, TValue>>(Count);
             if (_root != Null) GetAllRecursive(_root, stack);
             return stack;
         }
@@ -373,7 +377,7 @@ namespace Eocron.Algorithms.Tree
 
         private Stack<KeyValuePair<TKey, TValue>> GetAllReversed()
         {
-            var stack = new Stack<KeyValuePair<TKey, TValue>>(_count);
+            var stack = new Stack<KeyValuePair<TKey, TValue>>(Count);
             if (_root != Null) GetAllReversedRecursive(_root, stack);
             return stack;
         }
@@ -518,7 +522,6 @@ namespace Eocron.Algorithms.Tree
         }
 
         private readonly IComparer<TKey> _comparer;
-        private int _count;
         private RedBlackNode _root = Null;
 
         private static readonly RedBlackNode Null =
@@ -532,13 +535,6 @@ namespace Eocron.Algorithms.Tree
 
         private sealed class RedBlackNode
         {
-            public TValue Value;
-            public TKey Key;
-            public bool Red;
-            public RedBlackNode Left;
-            public RedBlackNode Right;
-            public RedBlackNode Parent;
-
             public RedBlackNode()
             {
                 Red = true;
@@ -553,7 +549,14 @@ namespace Eocron.Algorithms.Tree
                 Value = data;
             }
 
+            public bool Red;
+            public RedBlackNode Left;
+            public RedBlackNode Parent;
+            public RedBlackNode Right;
+            public TKey Key;
+            public TValue Value;
         }
+
         #endregion
     }
 }

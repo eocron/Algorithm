@@ -6,12 +6,11 @@ namespace Eocron.Algorithms.FileCache
 {
     internal sealed class AbsoluteExpirationPolicy : ICacheExpirationPolicy
     {
-        private DateTime _expireIn;
-
         public AbsoluteExpirationPolicy(DateTime expireIn)
         {
             _expireIn = expireIn;
         }
+
         public bool IsExpired(DateTime now)
         {
             return _expireIn <= now;
@@ -30,14 +29,12 @@ namespace Eocron.Algorithms.FileCache
             _expireIn = obj._expireIn;
             return true;
         }
+
+        private DateTime _expireIn;
     }
 
     internal sealed class SlidingExpirationPolicy : ICacheExpirationPolicy
     {
-        private DateTime _expireIn;
-
-        private TimeSpan _toUpdate;
-
         public SlidingExpirationPolicy(DateTime now, TimeSpan slide)
         {
             _expireIn = now + slide;
@@ -49,6 +46,14 @@ namespace Eocron.Algorithms.FileCache
             return _expireIn <= now;
         }
 
+        public void LogAccess(DateTime now)
+        {
+            if (IsExpired(now))
+                return;
+
+            _expireIn = now + _toUpdate;
+        }
+
         public bool TryMerge(ICacheExpirationPolicy toMerge)
         {
             var obj = toMerge as SlidingExpirationPolicy;
@@ -58,25 +63,24 @@ namespace Eocron.Algorithms.FileCache
             return true;
         }
 
-        public void LogAccess(DateTime now)
-        {
-            if (IsExpired(now))
-                return;
+        private DateTime _expireIn;
 
-            _expireIn = now + _toUpdate;
-        }
+        private TimeSpan _toUpdate;
     }
 
     /// <summary>
-    /// Represent policy in which it expired only if one of sub policies expired.
+    ///     Represent policy in which it expired only if one of sub policies expired.
     /// </summary>
     internal class AnyExpirationPolicy : ICacheExpirationPolicy
     {
-        private readonly ConcurrentBag<ICacheExpirationPolicy> _policies = new ConcurrentBag<ICacheExpirationPolicy>();
-
         public bool IsExpired(DateTime now)
         {
             return _policies?.Any(x => x.IsExpired(now)) ?? false;
+        }
+
+        public void LogAccess(DateTime now)
+        {
+            foreach (var fileCacheExpirationPolicy in _policies) fileCacheExpirationPolicy.LogAccess(now);
         }
 
         public bool TryMerge(ICacheExpirationPolicy toMerge)
@@ -85,27 +89,37 @@ namespace Eocron.Algorithms.FileCache
                 return true;
 
             foreach (var fileCacheExpirationPolicy in _policies)
-            {
                 if (fileCacheExpirationPolicy.TryMerge(toMerge))
                     return true;
-            }
             _policies.Add(toMerge);
             return true;
         }
 
-        public void LogAccess(DateTime now)
-        {
-            foreach (var fileCacheExpirationPolicy in _policies)
-            {
-                fileCacheExpirationPolicy.LogAccess(now);
-            }
-        }
+        private readonly ConcurrentBag<ICacheExpirationPolicy> _policies = new ConcurrentBag<ICacheExpirationPolicy>();
     }
 
     public static class CacheExpirationPolicy
     {
         /// <summary>
-        /// Updates policy and registers access.
+        ///     It will expire in specified datetime.
+        /// </summary>
+        public static ICacheExpirationPolicy AbsoluteUtc(DateTime expireIn)
+        {
+            return new AbsoluteExpirationPolicy(expireIn);
+        }
+
+
+        /// <summary>
+        ///     Updateable expiration policy. It expires only if slide timeout reached and no access to object was registered. I.e.
+        ///     expiration because of unpopularity
+        /// </summary>
+        public static ICacheExpirationPolicy SlidingUtc(TimeSpan slide)
+        {
+            return new SlidingExpirationPolicy(DateTime.UtcNow, slide);
+        }
+
+        /// <summary>
+        ///     Updates policy and registers access.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="policy"></param>
@@ -116,23 +130,6 @@ namespace Eocron.Algorithms.FileCache
             policy.TryMerge(otherPolicy);
             policy.LogAccess(DateTime.UtcNow);
             return policy;
-        }
-
-        /// <summary>
-        /// It will expire in specified datetime.
-        /// </summary>
-        public static ICacheExpirationPolicy AbsoluteUtc(DateTime expireIn)
-        {
-            return new AbsoluteExpirationPolicy(expireIn);
-        }
-
-
-        /// <summary>
-        /// Updateable expiration policy. It expires only if slide timeout reached and no access to object was registered. I.e. expiration because of unpopularity
-        /// </summary>
-        public static ICacheExpirationPolicy SlidingUtc(TimeSpan slide)
-        {
-            return new SlidingExpirationPolicy(DateTime.UtcNow, slide);
         }
     }
 }

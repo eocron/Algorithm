@@ -70,7 +70,7 @@ namespace Eocron.Algorithms.Tests
         [TestCase("", 'a', -1)]
         public void BinarySearchDescending(string list, char value, int expected_index)
         {
-            var actual = list.ToCharArray().BinarySearchIndexOf(value, descendingOrder:true);
+            var actual = list.ToCharArray().BinarySearchIndexOf(value, descendingOrder: true);
             Assert.AreEqual(expected_index, actual);
         }
 

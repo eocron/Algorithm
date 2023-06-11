@@ -8,15 +8,11 @@ namespace Eocron.Algorithms.Paths
 {
     public static class PathEx
     {
-        private static readonly char[] Separators = new char[] {Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar, '\\', '/'};
-
         /// <summary>
-        /// Evaluates all special commands in path, reducing its variants, such as:
-        /// 
-        /// a/./b/ to a/b/
-        /// a/../b/ to b/
-        /// 
-        /// without converting it to absolute path (so no need to call file system for this)
+        ///     Evaluates all special commands in path, reducing its variants, such as:
+        ///     a/./b/ to a/b/
+        ///     a/../b/ to b/
+        ///     without converting it to absolute path (so no need to call file system for this)
         /// </summary>
         /// <param name="path"></param>
         /// <param name="joinSeparator"></param>
@@ -38,14 +34,12 @@ namespace Eocron.Algorithms.Paths
                 {
                     var lastIdx = result.Count - 1;
                     if (lastIdx >= 0 && !result[lastIdx].EndsWith(':') && !result[lastIdx].EndsWith('.'))
-                    {
                         result.RemoveAt(lastIdx);
-                    }
 
                     continue;
                 }
 
-                if(part == "." && result.Count>0)
+                if (part == "." && result.Count > 0)
                     continue;
 
                 result.Add(part);
@@ -54,7 +48,7 @@ namespace Eocron.Algorithms.Paths
             var sb = new StringBuilder(result.Capacity + path.Length + 3);
             if (!startDot && startSeparator)
                 sb.Append(joinSeparator.Value);
-            for(var i = 0; i < result.Count; i++)
+            for (var i = 0; i < result.Count; i++)
             {
                 if (i > 0)
                     sb.Append(joinSeparator.Value);
@@ -65,5 +59,8 @@ namespace Eocron.Algorithms.Paths
                 sb.Append(joinSeparator.Value);
             return sb.ToString();
         }
+
+        private static readonly char[] Separators =
+            { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar, '\\', '/' };
     }
 }

@@ -6,9 +6,9 @@ namespace Eocron.Algorithms.Sorted
     public static class BinarySearchExtensions
     {
         /// <summary>
-        /// Use binary search approach to find index in sorted list.
-        /// Asymptotic worst case: O(log(n))
-        /// Memory asymptotic worst case: O(1) 
+        ///     Use binary search approach to find index in sorted list.
+        ///     Asymptotic worst case: O(log(n))
+        ///     Memory asymptotic worst case: O(1)
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="collection">Sorted collection.</param>
@@ -16,7 +16,8 @@ namespace Eocron.Algorithms.Sorted
         /// <param name="comparer">Comparer to compare values.</param>
         /// <param name="descendingOrder">True if array sorted in descending order.</param>
         /// <returns>Returns index of element if found and -1 otherwise.</returns>
-        public static int BinarySearchIndexOf<T>(this IList<T> collection, T value, IComparer<T> comparer = null, bool descendingOrder = false)
+        public static int BinarySearchIndexOf<T>(this IList<T> collection, T value, IComparer<T> comparer = null,
+            bool descendingOrder = false)
         {
             if (collection == null)
                 throw new ArgumentNullException(nameof(collection));
@@ -37,7 +38,7 @@ namespace Eocron.Algorithms.Sorted
 
                 if (comparisonResult == 0)
                     return middle;
-                else if (comparisonResult < 0)
+                if (comparisonResult < 0)
                     upper = middle - 1;
                 else
                     lower = middle + 1;
@@ -47,17 +48,21 @@ namespace Eocron.Algorithms.Sorted
         }
 
         /// <summary>
-        /// Use binary search approach to find lower bound index in sorted list.
-        /// Asymptotic worst case: O(log(n))
-        /// Memory asymptotic worst case: O(1) 
+        ///     Use binary search approach to find lower bound index in sorted list.
+        ///     Asymptotic worst case: O(log(n))
+        ///     Memory asymptotic worst case: O(1)
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="collection">Sorted collection.</param>
         /// <param name="value">Value to search.</param>
         /// <param name="comparer">Comparer to compare values.</param>
         /// <param name="descendingOrder">True if array sorted in descending order.</param>
-        /// <returns>Index of last element which is not equal and lower than value. Returns (-1) if value is lower than first value and (Count-1) if it is greater than last value.</returns>
-        public static int LowerBoundIndexOf<T>(this IList<T> collection, T value, IComparer<T> comparer = null, bool descendingOrder = false)
+        /// <returns>
+        ///     Index of last element which is not equal and lower than value. Returns (-1) if value is lower than first value
+        ///     and (Count-1) if it is greater than last value.
+        /// </returns>
+        public static int LowerBoundIndexOf<T>(this IList<T> collection, T value, IComparer<T> comparer = null,
+            bool descendingOrder = false)
         {
             if (collection == null)
                 throw new ArgumentNullException(nameof(collection));
@@ -76,29 +81,30 @@ namespace Eocron.Algorithms.Sorted
                     comparisonResult = -comparisonResult;
 
                 if (comparisonResult <= 0)
-                {
                     upper = middle;
-                }
                 else
-                {
                     lower = middle + 1;
-                }
             }
-            return lower-1;
+
+            return lower - 1;
         }
 
         /// <summary>
-        /// Use binary search approach to find upper bound index in sorted list.
-        /// Asymptotic worst case: O(log(n))
-        /// Memory asymptotic worst case: O(1) 
+        ///     Use binary search approach to find upper bound index in sorted list.
+        ///     Asymptotic worst case: O(log(n))
+        ///     Memory asymptotic worst case: O(1)
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="collection">Sorted collection.</param>
         /// <param name="value">Value to search.</param>
         /// <param name="comparer">Comparer to compare values.</param>
         /// <param name="descendingOrder">True if array sorted in descending order.</param>
-        /// <returns>Index of first element which is not equal and greater than value. Returns (Count) if value is greater than last value and (0) if it is lower than first value.</returns>
-        public static int UpperBoundIndexOf<T>(this IList<T> collection, T value, IComparer<T> comparer = null, bool descendingOrder = false)
+        /// <returns>
+        ///     Index of first element which is not equal and greater than value. Returns (Count) if value is greater than
+        ///     last value and (0) if it is lower than first value.
+        /// </returns>
+        public static int UpperBoundIndexOf<T>(this IList<T> collection, T value, IComparer<T> comparer = null,
+            bool descendingOrder = false)
         {
             if (collection == null)
                 throw new ArgumentNullException(nameof(collection));
@@ -117,14 +123,11 @@ namespace Eocron.Algorithms.Sorted
                     comparisonResult = -comparisonResult;
 
                 if (comparisonResult >= 0)
-                {
                     lower = middle + 1;
-                }
                 else
-                {
                     upper = middle;
-                }
             }
+
             return lower;
         }
     }

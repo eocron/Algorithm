@@ -6,17 +6,14 @@ namespace Eocron.Algorithms.Tests
     [TestFixture]
     public class PathExTests
     {
-
         [Test]
-        [TestCase(@"a",@"a", Category = "simple")]
-        [TestCase(@"a/a",@"a/a", Category = "simple")]
+        [TestCase(@"a", @"a", Category = "simple")]
+        [TestCase(@"a/a", @"a/a", Category = "simple")]
         [TestCase("a\\a", @"a/a", Category = "simple")]
         [TestCase(@"/a/b/", @"/a/b/", Category = "simple")]
-
         [TestCase(@"a/../b", @"b", Category = "parent")]
         [TestCase(@"a/../b/../../../c/", @"c/", Category = "parent")]
         [TestCase(@"F://a/../b/../../../c", @"F:/c", Category = "parent")]
-
         [TestCase(@"a/./b", @"a/b", Category = "dot")]
         [TestCase(@".", @".", Category = "dot")]
         [TestCase(@"./", @"./", Category = "dot")]

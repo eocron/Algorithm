@@ -8,7 +8,7 @@ using System.Xml.Serialization;
 namespace Eocron.Serialization.Tests.Models.XmlLegacy
 {
     /// <summary>
-    /// Represents an XML serializable collection of keys and values.
+    ///     Represents an XML serializable collection of keys and values.
     /// </summary>
     /// <typeparam name="TKey">The type of the keys in the dictionary.</typeparam>
     /// <typeparam name="TValue">The type of the values in the dictionary.</typeparam>
@@ -17,92 +17,36 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
     public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IXmlSerializable
     {
         /// <summary>
-        /// The default XML tag name for an item.
-        /// </summary>
-        private const string DefaultItemTag = "item";
-
-        /// <summary>
-        /// The default XML tag name for a key.
-        /// </summary>
-        private const string DefaultKeyTag = "key";
-
-        /// <summary>
-        /// The default XML tag name for a value.
-        /// </summary>
-        private const string DefaultValueTag = "value";
-
-        /// <summary>
-        /// The XML serializer for the key type.
-        /// </summary>
-        private static readonly XmlSerializer keySerializer = new XmlSerializer(typeof(TKey));
-
-        /// <summary>
-        /// The XML serializer for the value type.
-        /// </summary>
-        private static readonly XmlSerializer valueSerializer = new XmlSerializer(typeof(TValue));
-
-        /// <summary>
-        /// Initializes a new instance of the
-        /// <see cref="SerializableDictionary&lt;TKey, TValue&gt;"/> class.
+        ///     Initializes a new instance of the
+        ///     <see cref="SerializableDictionary&lt;TKey, TValue&gt;" /> class.
         /// </summary>
         public SerializableDictionary()
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the
-        /// <see cref="SerializableDictionary&lt;TKey, TValue&gt;"/> class.
+        ///     Initializes a new instance of the
+        ///     <see cref="SerializableDictionary&lt;TKey, TValue&gt;" /> class.
         /// </summary>
-        /// <param name="info">A
-        /// <see cref="T:System.Runtime.Serialization.SerializationInfo"/> object
-        /// containing the information required to serialize the
-        /// <see cref="T:System.Collections.Generic.Dictionary`2"/>.
+        /// <param name="info">
+        ///     A
+        ///     <see cref="T:System.Runtime.Serialization.SerializationInfo" /> object
+        ///     containing the information required to serialize the
+        ///     <see cref="T:System.Collections.Generic.Dictionary`2" />.
         /// </param>
-        /// <param name="context">A
-        /// <see cref="T:System.Runtime.Serialization.StreamingContext"/> structure
-        /// containing the source and destination of the serialized stream
-        /// associated with the
-        /// <see cref="T:System.Collections.Generic.Dictionary`2"/>.
+        /// <param name="context">
+        ///     A
+        ///     <see cref="T:System.Runtime.Serialization.StreamingContext" /> structure
+        ///     containing the source and destination of the serialized stream
+        ///     associated with the
+        ///     <see cref="T:System.Collections.Generic.Dictionary`2" />.
         /// </param>
         protected SerializableDictionary(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
 
         /// <summary>
-        /// Gets the XML tag name for an item.
-        /// </summary>
-        protected virtual string ItemTagName
-        {
-            get
-            {
-                return DefaultItemTag;
-            }
-        }
-
-        /// <summary>
-        /// Gets the XML tag name for a key.
-        /// </summary>
-        protected virtual string KeyTagName
-        {
-            get
-            {
-                return DefaultKeyTag;
-            }
-        }
-
-        /// <summary>
-        /// Gets the XML tag name for a value.
-        /// </summary>
-        protected virtual string ValueTagName
-        {
-            get
-            {
-                return DefaultValueTag;
-            }
-        }
-
-        /// <summary>
-        /// Gets the XML schema for the XML serialization.
+        ///     Gets the XML schema for the XML serialization.
         /// </summary>
         /// <returns>An XML schema for the serialized object.</returns>
         public XmlSchema GetSchema()
@@ -111,7 +55,7 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
         }
 
         /// <summary>
-        /// Deserializes the object from XML.
+        ///     Deserializes the object from XML.
         /// </summary>
         /// <param name="reader">The XML representation of the object.</param>
         public void ReadXml(XmlReader reader)
@@ -119,16 +63,13 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
             var wasEmpty = reader.IsEmptyElement;
 
             reader.Read();
-            if (wasEmpty)
-            {
-                return;
-            }
+            if (wasEmpty) return;
 
             try
             {
                 while (reader.NodeType != XmlNodeType.EndElement)
                 {
-                    this.ReadItem(reader);
+                    ReadItem(reader);
                     reader.MoveToContent();
                 }
             }
@@ -139,27 +80,24 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
         }
 
         /// <summary>
-        /// Serializes this instance to XML.
+        ///     Serializes this instance to XML.
         /// </summary>
         /// <param name="writer">The XML writer to serialize to.</param>
         public void WriteXml(XmlWriter writer)
         {
-            foreach (var keyValuePair in this)
-            {
-                this.WriteItem(writer, keyValuePair);
-            }
+            foreach (var keyValuePair in this) WriteItem(writer, keyValuePair);
         }
 
         /// <summary>
-        /// Deserializes the dictionary item.
+        ///     Deserializes the dictionary item.
         /// </summary>
         /// <param name="reader">The XML representation of the object.</param>
         private void ReadItem(XmlReader reader)
         {
-            reader.ReadStartElement(this.ItemTagName);
+            reader.ReadStartElement(ItemTagName);
             try
             {
-                this.Add(this.ReadKey(reader), this.ReadValue(reader));
+                Add(ReadKey(reader), ReadValue(reader));
             }
             finally
             {
@@ -168,13 +106,13 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
         }
 
         /// <summary>
-        /// Deserializes the dictionary item's key.
+        ///     Deserializes the dictionary item's key.
         /// </summary>
         /// <param name="reader">The XML representation of the object.</param>
         /// <returns>The dictionary item's key.</returns>
         private TKey ReadKey(XmlReader reader)
         {
-            reader.ReadStartElement(this.KeyTagName);
+            reader.ReadStartElement(KeyTagName);
             try
             {
                 return (TKey)keySerializer.Deserialize(reader);
@@ -186,13 +124,13 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
         }
 
         /// <summary>
-        /// Deserializes the dictionary item's value.
+        ///     Deserializes the dictionary item's value.
         /// </summary>
         /// <param name="reader">The XML representation of the object.</param>
         /// <returns>The dictionary item's value.</returns>
         private TValue ReadValue(XmlReader reader)
         {
-            reader.ReadStartElement(this.ValueTagName);
+            reader.ReadStartElement(ValueTagName);
             try
             {
                 return (TValue)valueSerializer.Deserialize(reader);
@@ -204,17 +142,17 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
         }
 
         /// <summary>
-        /// Serializes the dictionary item.
+        ///     Serializes the dictionary item.
         /// </summary>
         /// <param name="writer">The XML writer to serialize to.</param>
         /// <param name="keyValuePair">The key/value pair.</param>
         private void WriteItem(XmlWriter writer, KeyValuePair<TKey, TValue> keyValuePair)
         {
-            writer.WriteStartElement(this.ItemTagName);
+            writer.WriteStartElement(ItemTagName);
             try
             {
-                this.WriteKey(writer, keyValuePair.Key);
-                this.WriteValue(writer, keyValuePair.Value);
+                WriteKey(writer, keyValuePair.Key);
+                WriteValue(writer, keyValuePair.Value);
             }
             finally
             {
@@ -223,13 +161,13 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
         }
 
         /// <summary>
-        /// Serializes the dictionary item's key.
+        ///     Serializes the dictionary item's key.
         /// </summary>
         /// <param name="writer">The XML writer to serialize to.</param>
         /// <param name="key">The dictionary item's key.</param>
         private void WriteKey(XmlWriter writer, TKey key)
         {
-            writer.WriteStartElement(this.KeyTagName);
+            writer.WriteStartElement(KeyTagName);
             try
             {
                 keySerializer.Serialize(writer, key);
@@ -241,13 +179,13 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
         }
 
         /// <summary>
-        /// Serializes the dictionary item's value.
+        ///     Serializes the dictionary item's value.
         /// </summary>
         /// <param name="writer">The XML writer to serialize to.</param>
         /// <param name="value">The dictionary item's value.</param>
         private void WriteValue(XmlWriter writer, TValue value)
         {
-            writer.WriteStartElement(this.ValueTagName);
+            writer.WriteStartElement(ValueTagName);
             try
             {
                 valueSerializer.Serialize(writer, value);
@@ -257,5 +195,45 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
                 writer.WriteEndElement();
             }
         }
+
+        /// <summary>
+        ///     Gets the XML tag name for an item.
+        /// </summary>
+        protected virtual string ItemTagName => DefaultItemTag;
+
+        /// <summary>
+        ///     Gets the XML tag name for a key.
+        /// </summary>
+        protected virtual string KeyTagName => DefaultKeyTag;
+
+        /// <summary>
+        ///     Gets the XML tag name for a value.
+        /// </summary>
+        protected virtual string ValueTagName => DefaultValueTag;
+
+        /// <summary>
+        ///     The default XML tag name for an item.
+        /// </summary>
+        private const string DefaultItemTag = "item";
+
+        /// <summary>
+        ///     The default XML tag name for a key.
+        /// </summary>
+        private const string DefaultKeyTag = "key";
+
+        /// <summary>
+        ///     The default XML tag name for a value.
+        /// </summary>
+        private const string DefaultValueTag = "value";
+
+        /// <summary>
+        ///     The XML serializer for the key type.
+        /// </summary>
+        private static readonly XmlSerializer keySerializer = new XmlSerializer(typeof(TKey));
+
+        /// <summary>
+        ///     The XML serializer for the value type.
+        /// </summary>
+        private static readonly XmlSerializer valueSerializer = new XmlSerializer(typeof(TValue));
     }
 }

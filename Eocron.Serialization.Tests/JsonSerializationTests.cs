@@ -32,7 +32,7 @@ namespace Eocron.Serialization.Tests
                 EmptyArray = new int[0],
                 EmptyList = new List<int>(),
                 FooBarString = "foobar",
-                Struct = new JsonTestStruct()
+                Struct = new JsonTestStruct
                 {
                     Value = 234
                 },

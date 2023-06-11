@@ -26,7 +26,7 @@ namespace Eocron.Serialization.Tests
                         new XmlObjectSerializerAdapter(x => new DataContractSerializer(x)),
                         new XmlDocumentAdapter())
                     {
-                        WriterSettings = new XmlWriterSettings()
+                        WriterSettings = new XmlWriterSettings
                         {
                             Indent = true
                         }
@@ -40,7 +40,7 @@ namespace Eocron.Serialization.Tests
         {
             return new XmlTestModelFooBar
             {
-                Dictionary = new SerializableDictionary<string, string>()
+                Dictionary = new SerializableDictionary<string, string>
                 {
                     { "key1", "value1" },
                     { "key2", "value2" }

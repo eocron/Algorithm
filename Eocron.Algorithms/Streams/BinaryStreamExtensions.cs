@@ -12,13 +12,13 @@ namespace Eocron.Algorithms.Streams
     public static class BinaryStreamExtensions
     {
         /// <summary>
-        /// Produce single call enumerable
+        ///     Produce single call enumerable
         /// </summary>
         /// <param name="stream"></param>
         /// <param name="pool"></param>
         /// <param name="leaveOpen"></param>
         /// <returns></returns>
-        public static IEnumerable<Memory<byte>> AsEnumerable(this Stream stream, MemoryPool<byte> pool = null,
+        public static IAsyncEnumerable<Memory<byte>> AsAsyncEnumerable(this Stream stream, MemoryPool<byte> pool = null,
             bool leaveOpen = false)
         {
             if (stream == null)
@@ -30,13 +30,13 @@ namespace Eocron.Algorithms.Streams
         }
 
         /// <summary>
-        /// Produce single call enumerable
+        ///     Produce single call enumerable
         /// </summary>
         /// <param name="stream"></param>
         /// <param name="pool"></param>
         /// <param name="leaveOpen"></param>
         /// <returns></returns>
-        public static IAsyncEnumerable<Memory<byte>> AsAsyncEnumerable(this Stream stream, MemoryPool<byte> pool = null,
+        public static IEnumerable<Memory<byte>> AsEnumerable(this Stream stream, MemoryPool<byte> pool = null,
             bool leaveOpen = false)
         {
             if (stream == null)
@@ -63,30 +63,43 @@ namespace Eocron.Algorithms.Streams
             return new EnumerableStream(enumerable);
         }
 
-        public static byte[] ToByteArray(this IEnumerable<Memory<byte>> stream)
+        public static IEnumerable<Memory<byte>> CryptoTransform(this IEnumerable<Memory<byte>> stream,
+            ICryptoTransform transform, CryptoStreamMode mode)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            using var ms = new MemoryStream();
-            foreach (var memory in stream)
-            {
-                ms.Write(memory.Span);
-            }
-            return ms.ToArray();
+            if (transform == null)
+                throw new ArgumentNullException(nameof(transform));
+            return new StreamEnumerable(
+                () => mode == CryptoStreamMode.Read
+                    ? new CryptoStream(new EnumerableStream(stream), transform, mode, false)
+                    : (Stream)new WriteToReadStream<CryptoStream>(
+                        () => new EnumerableStream(stream),
+                        x => new CryptoStream(x, transform, mode, false),
+                        BufferingConstants<byte>.DefaultMemoryPool, (x, ct) =>
+                        {
+                            x.FlushFinalBlock();
+                            return Task.CompletedTask;
+                        },
+                        x => x.FlushFinalBlock()));
         }
 
-        public static async Task<byte[]> ToByteArrayAsync(this IAsyncEnumerable<Memory<byte>> stream,
-            CancellationToken ct = default)
+        public static IAsyncEnumerable<Memory<byte>> CryptoTransform(this IAsyncEnumerable<Memory<byte>> stream,
+            ICryptoTransform transform, CryptoStreamMode mode)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            using var ms = new MemoryStream();
-            await foreach (var memory in stream.WithCancellation(ct).ConfigureAwait(false))
-            {
-                ms.Write(memory.Span);
-            }
-
-            return ms.ToArray();
+            if (transform == null)
+                throw new ArgumentNullException(nameof(transform));
+            return new StreamEnumerable(
+                () => mode == CryptoStreamMode.Read
+                    ? new CryptoStream(new EnumerableStream(stream), transform, mode, false)
+                    : (Stream)new WriteToReadStream<CryptoStream>(
+                        () => new EnumerableStream(stream),
+                        x => new CryptoStream(x, transform, mode, false),
+                        BufferingConstants<byte>.DefaultMemoryPool,
+                        async (x, ct) => x.FlushFinalBlock(),
+                        x => x.FlushFinalBlock()));
         }
 
         public static IEnumerable<Memory<byte>> GZip(this IEnumerable<Memory<byte>> stream, CompressionMode mode)
@@ -114,43 +127,24 @@ namespace Eocron.Algorithms.Streams
                         x => new GZipStream(x, mode, false)));
         }
 
-        public static IEnumerable<Memory<byte>> CryptoTransform(this IEnumerable<Memory<byte>> stream,
-            ICryptoTransform transform, CryptoStreamMode mode)
+        public static byte[] ToByteArray(this IEnumerable<Memory<byte>> stream)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            if (transform == null)
-                throw new ArgumentNullException(nameof(transform));
-            return new StreamEnumerable(
-                () => mode == CryptoStreamMode.Read
-                    ? new CryptoStream(new EnumerableStream(stream), transform, mode, false)
-                    : (Stream)new WriteToReadStream<CryptoStream>(
-                        () => new EnumerableStream(stream),
-                        x => new CryptoStream(x, transform, mode, false),
-                        BufferingConstants<byte>.DefaultMemoryPool, (x, ct) =>
-                        {
-                            x.FlushFinalBlock();
-                            return Task.CompletedTask;
-                        }, 
-                        x => x.FlushFinalBlock()));
+            using var ms = new MemoryStream();
+            foreach (var memory in stream) ms.Write(memory.Span);
+            return ms.ToArray();
         }
 
-        public static IAsyncEnumerable<Memory<byte>> CryptoTransform(this IAsyncEnumerable<Memory<byte>> stream,
-            ICryptoTransform transform, CryptoStreamMode mode)
+        public static async Task<byte[]> ToByteArrayAsync(this IAsyncEnumerable<Memory<byte>> stream,
+            CancellationToken ct = default)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-            if (transform == null)
-                throw new ArgumentNullException(nameof(transform));
-            return new StreamEnumerable(
-                () => mode == CryptoStreamMode.Read
-                    ? new CryptoStream(new EnumerableStream(stream), transform, mode, false)
-                    : (Stream)new WriteToReadStream<CryptoStream>(
-                        () => new EnumerableStream(stream),
-                        x => new CryptoStream(x, transform, mode, false),
-                        BufferingConstants<byte>.DefaultMemoryPool, 
-                        async (x, ct) => x.FlushFinalBlock(),
-                        x => x.FlushFinalBlock()));
+            using var ms = new MemoryStream();
+            await foreach (var memory in stream.WithCancellation(ct).ConfigureAwait(false)) ms.Write(memory.Span);
+
+            return ms.ToArray();
         }
     }
 }

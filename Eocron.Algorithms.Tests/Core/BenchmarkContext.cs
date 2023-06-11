@@ -5,12 +5,11 @@ namespace Eocron.Algorithms.Tests.Core
 {
     public class BenchmarkContext
     {
-        public int TotalCount;
-        public Stopwatch Stopwatch;
         public BenchmarkContext()
         {
             Stopwatch = new Stopwatch();
         }
+
         public void Increment(int count = 1)
         {
             Interlocked.Add(ref TotalCount, count);
@@ -27,5 +26,8 @@ namespace Eocron.Algorithms.Tests.Core
         {
             Stopwatch.Stop();
         }
+
+        public int TotalCount;
+        public Stopwatch Stopwatch;
     }
 }

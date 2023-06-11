@@ -12,7 +12,7 @@ namespace Eocron.Algorithms.Tests
         [Test]
         public void Simple()
         {
-            var intervals = new[] {Interval.Create(1, 2), Interval.Create((int?) 3, null),};
+            var intervals = new[] { Interval.Create(1, 2), Interval.Create((int?)3, null) };
             var json = JsonConvert.SerializeObject(intervals, Formatting.Indented);
             Console.WriteLine(json);
             var actual = JsonConvert.DeserializeObject<List<Interval<int>>>(json);

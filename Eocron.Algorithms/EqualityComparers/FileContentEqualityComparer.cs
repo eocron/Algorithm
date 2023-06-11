@@ -8,27 +8,20 @@ using Eocron.Algorithms.HashCode;
 namespace Eocron.Algorithms.EqualityComparers
 {
     /// <summary>
-    /// Checks file equality. Possible cancellation and pool usage for internal implementation.
+    ///     Checks file equality. Possible cancellation and pool usage for internal implementation.
     /// </summary>
     public sealed class FileContentEqualityComparer : IEqualityComparer<string>, IEqualityComparer<FileInfo>
     {
-        public static readonly FileContentEqualityComparer Default = new FileContentEqualityComparer();
-
-        private readonly ArrayPool<byte> _pool;
-        private readonly IEqualityComparer<ArraySegment<byte>> _byteArrayEqualityComparer;
-        private readonly CancellationToken _shutdownToken;
-        private readonly int _bufferSize;
-
         /// <summary>
-        /// Default constructor.
+        ///     Default constructor.
         /// </summary>
         /// <param name="pool">Array pool to use for comparisons.</param>
         /// <param name="bufferSize">Array pool buffer size.</param>
         /// <param name="byteArrayEqualityComparer">Comparer for array pool buffers.</param>
         /// <param name="shutdownToken">Token to cancel all comparison, which can take long time.</param>
         public FileContentEqualityComparer(
-            ArrayPool<byte> pool = null, 
-            int bufferSize = 8 * 1024, 
+            ArrayPool<byte> pool = null,
+            int bufferSize = 8 * 1024,
             IEqualityComparer<ArraySegment<byte>> byteArrayEqualityComparer = null,
             CancellationToken shutdownToken = default)
         {
@@ -39,6 +32,7 @@ namespace Eocron.Algorithms.EqualityComparers
             _byteArrayEqualityComparer = byteArrayEqualityComparer ?? ByteArrayEqualityComparer.Default;
             _shutdownToken = shutdownToken;
         }
+
         public bool Equals(string x, string y)
         {
             return Equals(new FileInfo(x), new FileInfo(y));
@@ -61,15 +55,15 @@ namespace Eocron.Algorithms.EqualityComparers
                 try
                 {
                     var iterCount = x.Length / _bufferSize + (x.Length % _bufferSize == 0 ? 0 : 1);
-                    for (int i = 0; i < iterCount; i++)
+                    for (var i = 0; i < iterCount; i++)
                     {
                         _shutdownToken.ThrowIfCancellationRequested();
                         var read1 = fs1.Read(one, 0, _bufferSize);
                         var read2 = fs2.Read(two, 0, _bufferSize);
 
                         if (!_byteArrayEqualityComparer.Equals(
-                            new ArraySegment<byte>(one, 0, read1),
-                            new ArraySegment<byte>(two, 0, read2)))
+                                new ArraySegment<byte>(one, 0, read1),
+                                new ArraySegment<byte>(two, 0, read2)))
                             return false;
                     }
                 }
@@ -82,6 +76,7 @@ namespace Eocron.Algorithms.EqualityComparers
             {
                 _pool.Return(one);
             }
+
             return true;
         }
 
@@ -95,5 +90,12 @@ namespace Eocron.Algorithms.EqualityComparers
             using var fs = obj.OpenRead();
             return fs.GetHashCode(_shutdownToken, _pool);
         }
+
+        public static readonly FileContentEqualityComparer Default = new FileContentEqualityComparer();
+
+        private readonly ArrayPool<byte> _pool;
+        private readonly CancellationToken _shutdownToken;
+        private readonly IEqualityComparer<ArraySegment<byte>> _byteArrayEqualityComparer;
+        private readonly int _bufferSize;
     }
 }

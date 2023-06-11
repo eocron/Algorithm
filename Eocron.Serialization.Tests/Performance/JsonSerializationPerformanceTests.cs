@@ -5,18 +5,14 @@ using Eocron.Serialization.Tests.Models.Json;
 
 namespace Eocron.Serialization.Tests.Performance
 {
-    public class JsonSerializationPerformanceTests : SerializationPerformanceTestsBase<JsonSerializationPerformanceTests, JsonTestModel>, ISerializationPerformanceTests
+    public class JsonSerializationPerformanceTests :
+        SerializationPerformanceTestsBase<JsonSerializationPerformanceTests, JsonTestModel>,
+        ISerializationPerformanceTests
     {
-        [Benchmark()]
+        [Benchmark]
         public void Deserialize()
         {
             DeserializeText();
-        }
-
-        [Benchmark()]
-        public void Serialize()
-        {
-            SerializeText();
         }
 
         public override ISerializationConverter GetConverter()
@@ -42,7 +38,7 @@ namespace Eocron.Serialization.Tests.Performance
                 EmptyArray = new int[0],
                 EmptyList = new List<int>(),
                 FooBarString = "foobar",
-                Struct = new JsonTestStruct()
+                Struct = new JsonTestStruct
                 {
                     Value = 234
                 },
@@ -53,6 +49,12 @@ namespace Eocron.Serialization.Tests.Performance
                 Guid = Guid.Parse("1a4c5b27-3881-4330-a13b-f709c004bbc4"),
                 Enum = JsonTestEnum.Three
             };
+        }
+
+        [Benchmark]
+        public void Serialize()
+        {
+            SerializeText();
         }
     }
 }

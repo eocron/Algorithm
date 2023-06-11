@@ -6,8 +6,6 @@ namespace Eocron.Algorithms.Streams
 {
     public sealed class NonDisposableStream : Stream
     {
-        private readonly Stream _streamImplementation;
-
         public NonDisposableStream(Stream streamImplementation)
         {
             _streamImplementation = streamImplementation;
@@ -61,5 +59,7 @@ namespace Eocron.Algorithms.Streams
             get => _streamImplementation.Position;
             set => _streamImplementation.Position = value;
         }
+
+        private readonly Stream _streamImplementation;
     }
 }

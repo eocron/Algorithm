@@ -12,7 +12,7 @@ namespace Eocron.Algorithms.Tests
     {
         private static IEnumerable<TestCaseData> GetSetTests()
         {
-            int counter = 1;
+            var counter = 1;
             yield return CreateSetTest("~(0;1)", "(-inf;0],[1;+inf)", ref counter);
             yield return CreateSetTest("~[0;1]", "(-inf;0),(1;+inf)", ref counter);
             yield return CreateSetTest("~(-inf;1)", "[1;+inf)", ref counter);
@@ -34,7 +34,7 @@ namespace Eocron.Algorithms.Tests
             yield return CreateSetTest("(0;10)&[5;20)", "[5;10)", ref counter);
             yield return CreateSetTest("(0;10]&(5;20)", "(5;10]", ref counter);
             yield return CreateSetTest("(0;10)&(5;20)", "(5;10)", ref counter);
-            
+
             yield return CreateSetTest("(0;1)\\(1;2)", "(0;1)", ref counter);
             yield return CreateSetTest("(0;1]\\(1;2)", "(0;1]", ref counter);
             yield return CreateSetTest("(0;1]\\[1;2)", "(0;1)", ref counter);
@@ -45,7 +45,7 @@ namespace Eocron.Algorithms.Tests
             yield return CreateSetTest("(0;10)\\(5;20)", "(0;5]", ref counter);
             yield return CreateSetTest("(0;10)\\[5;5]", "(0;5),(5;10)", ref counter);
             yield return CreateSetTest("(0;10)\\(5;5)", "(0;10)", ref counter);
-            
+
             yield return CreateSetTest("(0;1)^(1;2)", "(0;1),(1;2)", ref counter);
             yield return CreateSetTest("(0;1]^(1;2)", "(0;2)", ref counter);
             yield return CreateSetTest("(0;1]^[1;2)", "(0;1),(1;2)", ref counter);
@@ -66,13 +66,24 @@ namespace Eocron.Algorithms.Tests
             IEnumerable<Interval<int>> actual;
             switch (op)
             {
-                case '^': actual = input[0].SymmetricDifference(input[1]); break;
-                case '~': actual = input[0].Complement(); break;
-                case '\\': actual = input[0].Difference(input[1]); break;
-                case '|': actual = input.Union(); break;
-                case '&': actual = input.Intersection(); break;
+                case '^':
+                    actual = input[0].SymmetricDifference(input[1]);
+                    break;
+                case '~':
+                    actual = input[0].Complement();
+                    break;
+                case '\\':
+                    actual = input[0].Difference(input[1]);
+                    break;
+                case '|':
+                    actual = input.Union();
+                    break;
+                case '&':
+                    actual = input.Intersection();
+                    break;
                 default: throw new NotSupportedException(op.ToString());
             }
+
             AssertSets(output, actual);
         }
 
@@ -102,7 +113,7 @@ namespace Eocron.Algorithms.Tests
 
         private static Tuple<List<Interval<int>>, char> ParseIntervalSet(string input)
         {
-            var chars = new char[] {',', '&', '|', '^', '~', '\\'};
+            var chars = new[] { ',', '&', '|', '^', '~', '\\' };
             var op = chars.FirstOrDefault(input.Contains);
             return Tuple.Create(
                 input.Split(chars, StringSplitOptions.RemoveEmptyEntries).Select(ParseInterval).ToList(), op);
@@ -110,9 +121,9 @@ namespace Eocron.Algorithms.Tests
 
         private static IntervalPoint<int> ParsePoint(string input, bool gouge)
         {
-            if(input == "+inf")
+            if (input == "+inf")
                 return IntervalPoint<int>.PositiveInfinity;
-            if(input == "-inf")
+            if (input == "-inf")
                 return IntervalPoint<int>.NegativeInfinity;
             return new IntervalPoint<int>(int.Parse(input), gouge);
         }

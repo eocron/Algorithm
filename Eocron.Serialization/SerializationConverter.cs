@@ -38,6 +38,10 @@ namespace Eocron.Serialization
                         new XmlDocumentAdapter()));
         }
 
+        public static bool DefaultIndent;
+        public static Encoding DefaultEncoding;
+        public static int DefaultBufferSize;
+
         public static readonly ISerializationConverter Json;
         public static readonly ISerializationConverter Protobuf;
         public static readonly ISerializationConverter Yaml;
@@ -45,9 +49,5 @@ namespace Eocron.Serialization
         public static readonly ISerializationConverter XmlDocument;
         public static readonly ISerializationConverter XDocument;
         public static readonly ISerializationConverter XmlDataContract;
-
-        public static bool DefaultIndent;
-        public static Encoding DefaultEncoding;
-        public static int DefaultBufferSize;
     }
 }

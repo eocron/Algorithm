@@ -12,10 +12,13 @@ namespace Eocron.Algorithms.Intervals
 
         [DataMember(Order = 1, EmitDefaultValue = false, Name = "v")]
         public readonly T Value;
+
         [DataMember(Order = 2, EmitDefaultValue = false, Name = "g")]
         public readonly bool IsGougedOut;
+
         [DataMember(Order = 3, EmitDefaultValue = false, Name = "ni")]
         public readonly bool IsNegativeInfinity;
+
         [DataMember(Order = 4, EmitDefaultValue = false, Name = "pi")]
         public readonly bool IsPositiveInfinity;
 
@@ -31,7 +34,7 @@ namespace Eocron.Algorithms.Intervals
 
         private IntervalPoint(bool isNegativeInfinity, bool isPositiveInfinity)
         {
-            Value = default(T);
+            Value = default;
             IsGougedOut = false;
             IsNegativeInfinity = isNegativeInfinity;
             IsPositiveInfinity = isPositiveInfinity;
@@ -48,7 +51,8 @@ namespace Eocron.Algorithms.Intervals
 
         public bool Equals(IntervalPoint<T> other)
         {
-            return EqualityComparer<T>.Default.Equals(Value, other.Value) && IsGougedOut == other.IsGougedOut && IsNegativeInfinity == other.IsNegativeInfinity && IsPositiveInfinity == other.IsPositiveInfinity;
+            return EqualityComparer<T>.Default.Equals(Value, other.Value) && IsGougedOut == other.IsGougedOut &&
+                   IsNegativeInfinity == other.IsNegativeInfinity && IsPositiveInfinity == other.IsPositiveInfinity;
         }
 
         public override bool Equals(object obj)
