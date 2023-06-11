@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Misc", "Misc", "{1DA5EA29-2
 		.gitignore = .gitignore
 		LICENSE.txt = LICENSE.txt
 		Directory.Packages.props = Directory.Packages.props
+		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Eocron.Algorithms.Tests", "Eocron.Algorithms.Tests\Eocron.Algorithms.Tests.csproj", "{D7B5517E-1C02-41E0-A9A9-57D8E7347264}"

@@ -4,18 +4,9 @@
         <TargetFramework>net5.0</TargetFramework>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
-
     <ItemGroup>
         <PackageReference Include="BenchmarkDotNet" />
-        <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows"/>
+        <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" />
         <PackageReference Include="Newtonsoft.Json" />
         <PackageReference Include="NUnit" />
         <PackageReference Include="NUnit3TestAdapter" />
@@ -25,8 +16,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Algorithm\Eocron.Algorithms.csproj"/>
-        <ProjectReference Include="..\Eocron.Algorithms\Eocron.Algorithms.csproj"/>
+        <ProjectReference Include="..\Algorithm\Eocron.Algorithms.csproj" />
+        <ProjectReference Include="..\Eocron.Algorithms\Eocron.Algorithms.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="README.md" />
     </ItemGroup>
 
 </Project>

@@ -97,8 +97,11 @@ namespace Eocron.Algorithms.Streams
                     : (Stream)new WriteToReadStream<CryptoStream>(
                         () => new EnumerableStream(stream),
                         x => new CryptoStream(x, transform, mode, false),
-                        BufferingConstants<byte>.DefaultMemoryPool,
-                        async (x, ct) => x.FlushFinalBlock(),
+                        BufferingConstants<byte>.DefaultMemoryPool, (x, ct) =>
+                        {
+                            x.FlushFinalBlock();
+                            return Task.CompletedTask;
+                        },
                         x => x.FlushFinalBlock()));
         }
 
