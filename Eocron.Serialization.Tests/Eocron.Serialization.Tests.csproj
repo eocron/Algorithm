@@ -20,29 +20,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="TestData\Json\TestModelWithoutBOM.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="TestData\Protobuf\TestModelWithoutBOM.bin">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="TestData\DataContractXml\TestModelWithoutBOM.xml">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="TestData\XmlDocument\TestModelWithoutBOM.xml">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="TestData\XDocument\TestModelWithoutBOM.xml">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="TestData\XmlTransform\TestTransform.xslt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="TestData\XmlTransform\TestModelWithoutBOM.xml">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="TestData\Yaml\TestModelWithoutBOM.yaml">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <None Update="TestData\**">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
 
