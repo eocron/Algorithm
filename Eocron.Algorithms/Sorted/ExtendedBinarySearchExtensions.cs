@@ -27,7 +27,7 @@ namespace Eocron.Algorithms.Sorted
                 return -1;
 
             comparer = comparer ?? Comparer<T>.Default;
-            var indexSelector = (indexSelectorBuilder ?? LogarithmicIndexSelectorBuilder<T>.Default).Build(collection, value, comparer);
+            var indexSelector = (indexSelectorBuilder ?? IndexSelectorBuilder<T>.Default).Build(collection, value, comparer);
             
             var lower = 0;
             var upper = collection.Count - 1;
@@ -74,7 +74,7 @@ namespace Eocron.Algorithms.Sorted
                 return -1;
 
             comparer = comparer ?? Comparer<T>.Default;
-            var indexSelector = (indexSelectorBuilder ?? LogarithmicIndexSelectorBuilder<T>.Default).Build(collection, value, comparer);
+            var indexSelector = (indexSelectorBuilder ?? IndexSelectorBuilder<T>.Default).Build(collection, value, comparer);
             
             var lower = 0;
             var upper = collection.Count;
@@ -118,7 +118,7 @@ namespace Eocron.Algorithms.Sorted
                 return 0;
 
             comparer = comparer ?? Comparer<T>.Default;
-            var indexSelector = (indexSelectorBuilder ?? LogarithmicIndexSelectorBuilder<T>.Default).Build(collection, value, comparer);
+            var indexSelector = (indexSelectorBuilder ?? IndexSelectorBuilder<T>.Default).Build(collection, value, comparer);
 
             var lower = 0;
             var upper = collection.Count;
