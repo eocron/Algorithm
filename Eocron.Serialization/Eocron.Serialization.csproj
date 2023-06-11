@@ -22,9 +22,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json" Version="9.0.1"/>
-        <PackageReference Include="protobuf-net" Version="3.1.22"/>
-        <PackageReference Include="YamlDotNet" Version="12.0.1"/>
+        <PackageReference Include="Newtonsoft.Json"/>
+        <PackageReference Include="protobuf-net"/>
+        <PackageReference Include="YamlDotNet"/>
     </ItemGroup>
     <ItemGroup>
         <None Include="README.md" pack="true" PackagePath="."/>
