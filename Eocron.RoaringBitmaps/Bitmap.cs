@@ -9,6 +9,11 @@ namespace Eocron.RoaringBitmaps
     {
         private readonly RoaringBitmap _inner;
 
+        public byte[] ToByteArray()
+        {
+            return _inner.Serialize(SerializationFormat.Portable);
+        }
+        
         public Bitmap(uint size)
         {
             _inner = new RoaringBitmap(size);
@@ -21,7 +26,14 @@ namespace Eocron.RoaringBitmaps
         
         public Bitmap(Bitmap other)
         {
+            if (other == null)
+                throw new ArgumentNullException(nameof(other));
             _inner = (RoaringBitmap)other._inner.Clone();
+        }
+
+        public Bitmap(byte[] data)
+        {
+            _inner = RoaringBitmap.Deserialize(data ?? throw new ArgumentNullException(nameof(data)), SerializationFormat.Portable);
         }
 
         private Bitmap(RoaringBitmap inner)
