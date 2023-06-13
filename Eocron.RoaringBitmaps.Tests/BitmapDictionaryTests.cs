@@ -36,6 +36,24 @@ namespace Eocron.RoaringBitmaps.Tests
         }
         
         [Test]
+        public void Clear()
+        {
+            var list = new BitmapDictionary<string>();
+            list.AddOrUpdate("test1", 5, 2, 3, 4, 1);
+            list.AddOrUpdate("test1", 8, 6);
+            list.AddOrUpdate("test1", 6);
+            list.AddOrUpdate("test2", 1);
+            list.AddOrUpdate("test3");
+            
+            list.Clear();
+            list.Count.Should().Be(0);
+            list.Should().BeEquivalentTo(new KeyValuePair<string, Bitmap>[0]);
+            list.TryGet("test1").Should().BeEquivalentTo(new Bitmap {});
+            list.TryGet("test2").Should().BeEquivalentTo(new Bitmap {});
+            list.TryGet("test3").Should().BeEquivalentTo(new Bitmap {});
+        }
+        
+        [Test]
         public void Remove()
         {
             var list = new BitmapDictionary<string>();
