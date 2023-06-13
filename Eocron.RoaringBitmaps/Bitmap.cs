@@ -5,7 +5,7 @@ using CRoaring;
 
 namespace Eocron.RoaringBitmaps
 {
-    public sealed class Bitmap : ICloneable, IBitmap, IEquatable<Bitmap>
+    public sealed class Bitmap : ICloneable, IEquatable<Bitmap>, IEnumerable<uint>
     {
         private readonly RoaringBitmap _inner;
 
@@ -192,6 +192,21 @@ namespace Eocron.RoaringBitmaps
         public static bool operator ==(Bitmap left, Bitmap right)
         {
             return Equals(left, right);
+        }
+        
+        public static Bitmap operator |(Bitmap left, Bitmap right)
+        {
+            return new Bitmap(left._inner.Or(right._inner));
+        }
+        
+        public static Bitmap operator &(Bitmap left, Bitmap right)
+        {
+            return new Bitmap(left._inner.And(right._inner));
+        }
+        
+        public static Bitmap operator ^(Bitmap left, Bitmap right)
+        {
+            return new Bitmap(left._inner.Xor(right._inner));
         }
 
         public static bool operator !=(Bitmap left, Bitmap right)
