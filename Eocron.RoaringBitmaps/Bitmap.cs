@@ -7,13 +7,6 @@ namespace Eocron.RoaringBitmaps
 {
     public sealed class Bitmap : ICloneable, IEquatable<Bitmap>, IEnumerable<uint>
     {
-        private readonly RoaringBitmap _inner;
-
-        public byte[] ToByteArray()
-        {
-            return _inner.Serialize(SerializationFormat.Portable);
-        }
-        
         public Bitmap(uint size)
         {
             _inner = new RoaringBitmap(size);
@@ -38,60 +31,31 @@ namespace Eocron.RoaringBitmaps
 
         private Bitmap(RoaringBitmap inner)
         {
-            _inner = inner;
+            _inner = inner ?? throw new ArgumentNullException(nameof(inner));
         }
-
-        public IEnumerator<uint> GetEnumerator()
-        {
-            return _inner.GetEnumerator();
-        }
-
+        
         ~Bitmap()
         {
             _inner.Dispose();
+        }
+        
+        #region ReadOnly
+
+        public byte[] ToByteArray()
+        {
+            return _inner.Serialize(SerializationFormat.Portable);
+        }
+        
+        public IEnumerator<uint> GetEnumerator()
+        {
+            return _inner.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }
-
-        public bool IsEmpty => _inner.IsEmpty;
-
-        public uint Min => _inner.Min;
-
-        public uint Max => _inner.Max;
-
-        public void Add(uint value)
-        {
-            _inner.Add(value);
-        }
-
-        public void AddMany(params uint[] values)
-        {
-            _inner.AddMany(values);
-        }
-
-        public void AddMany(uint[] values, uint offset, uint count)
-        {
-            _inner.AddMany(values, offset, count);
-        }
-
-        public void Remove(uint value)
-        {
-            _inner.Remove(value);
-        }
-
-        public void RemoveMany(params uint[] values)
-        {
-            _inner.RemoveMany(values);
-        }
-
-        public void RemoveMany(uint[] values, uint offset, uint count)
-        {
-            _inner.RemoveMany(values, offset, count);
-        }
-
+        
         public bool Contains(uint value)
         {
             return _inner.Contains(value);
@@ -107,65 +71,6 @@ namespace Eocron.RoaringBitmaps
             return _inner.Select(rank, out element);
         }
 
-        public Bitmap Not(ulong start, ulong end)
-        {
-            return new Bitmap(_inner.Not(start, end));
-        }
-
-        public void INot(ulong start, ulong end)
-        {
-            _inner.INot(start, end);
-        }
-
-        public Bitmap And(Bitmap bitmap)
-        {
-            return new Bitmap(_inner.And(bitmap._inner));
-        }
-
-        public void IAnd(Bitmap bitmap)
-        {
-            _inner.IAnd(bitmap._inner);
-        }
-        
-        public Bitmap AndNot(Bitmap bitmap)
-        {
-            return new Bitmap(_inner.AndNot(bitmap._inner));
-        }
-
-        public void IAndNot(Bitmap bitmap)
-        {
-            _inner.IAndNot(bitmap._inner);
-        }
-        
-        public Bitmap Or(Bitmap bitmap)
-        {
-            return new Bitmap(_inner.Or(bitmap._inner));
-        }
-
-        public void IOr(Bitmap bitmap)
-        {
-            _inner.IOr(bitmap._inner);
-        }
-
-        public void IOrMany(IEnumerable<Bitmap> bitmaps)
-        {
-            foreach (var bm in bitmaps)
-            {
-                _inner.ILazyOr(bm._inner, false);
-            }
-            _inner.RepairAfterLazy();
-        }
-
-        public Bitmap Xor(Bitmap bitmap)
-        {
-            return new Bitmap(_inner.Xor(bitmap._inner));
-        }
-
-        public void IXor(Bitmap bitmap)
-        {
-            _inner.IXor(bitmap._inner);
-        }
-        
         public bool Intersects(Bitmap bitmap)
         {
             return _inner.Intersects(bitmap._inner);
@@ -200,6 +105,84 @@ namespace Eocron.RoaringBitmaps
 
             return System.HashCode.Combine(_inner.Cardinality, _inner.Min, _inner.Max);
         }
+        
+        public bool IsEmpty => _inner.IsEmpty;
+        public uint Min => _inner.Min;
+        public uint Max => _inner.Max;
+
+        #endregion
+
+        #region Modification
+
+        public void Add(uint value)
+        {
+            _inner.Add(value);
+        }
+
+        public void AddMany(params uint[] values)
+        {
+            _inner.AddMany(values);
+        }
+        
+        public void Remove(uint value)
+        {
+            _inner.Remove(value);
+        }
+
+        public void RemoveMany(params uint[] values)
+        {
+            _inner.RemoveMany(values);
+        }
+
+        public void Not(ulong start, ulong end)
+        {
+            _inner.INot(start, end);
+        }
+
+        public void Not()
+        {
+            _inner.INot(_inner.Min, _inner.Max);
+        }
+
+        public void And(Bitmap bitmap)
+        {
+            _inner.IAnd(bitmap._inner);
+        }
+
+        public void AndNot(Bitmap bitmap)
+        {
+            _inner.IAndNot(bitmap._inner);
+        }
+
+        public void Or(Bitmap bitmap)
+        {
+            _inner.IOr(bitmap._inner);
+        }
+
+        public void OrMany(IEnumerable<Bitmap> bitmaps)
+        {
+            foreach (var bm in bitmaps)
+            {
+                _inner.ILazyOr(bm._inner, false);
+            }
+            _inner.RepairAfterLazy();
+        }
+
+        public void XorMany(IEnumerable<Bitmap> bitmaps)
+        {
+            foreach (var bm in bitmaps)
+            {
+                _inner.ILazyXor(bm._inner, false);
+            }
+            _inner.RepairAfterLazy();
+        }
+
+        public void Xor(Bitmap bitmap)
+        {
+            _inner.IXor(bitmap._inner);
+        }
+
+        #endregion
 
         public static bool operator ==(Bitmap left, Bitmap right)
         {
@@ -225,5 +208,7 @@ namespace Eocron.RoaringBitmaps
         {
             return !Equals(left, right);
         }
+
+        private readonly RoaringBitmap _inner;
     }
 }

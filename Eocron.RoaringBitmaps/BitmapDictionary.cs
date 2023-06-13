@@ -29,7 +29,7 @@ namespace Eocron.RoaringBitmaps
         {
             if (_bitmaps.TryGetValue(key, out var exists))
             {
-                return bitmap.IsEmpty || exists.And(bitmap).IsEmpty;
+                return bitmap.IsEmpty || exists.Intersects(bitmap);
             }
             return false;
         }
@@ -44,7 +44,7 @@ namespace Eocron.RoaringBitmaps
                 exists = new Bitmap();
                 _bitmaps[key] = exists;
             }
-            exists.IOr(bitmap);
+            exists.Or(bitmap);
         }
 
         public void AddOrUpdate(TKey key, params uint[] indexes)
@@ -99,15 +99,13 @@ namespace Eocron.RoaringBitmaps
                 return false;
             }
 
-            exists.IAndNot(bitmap);
+            exists.AndNot(bitmap);
             if (exists.IsEmpty)
             {
                 _bitmaps.Remove(key);
             }
             return true;
         }
-
-        public int Count => _bitmaps.Count;
 
         public Bitmap TryGet(params TKey[] keys)
         {
@@ -118,7 +116,7 @@ namespace Eocron.RoaringBitmaps
                 return (Bitmap)found[0].Clone();
             
             var r = new Bitmap();
-            r.IOrMany(found);
+            r.OrMany(found);
             return r;
         }
 
@@ -140,5 +138,7 @@ namespace Eocron.RoaringBitmaps
         {
             return GetEnumerator();
         }
+        
+        public int Count => _bitmaps.Count;
     }
 }
