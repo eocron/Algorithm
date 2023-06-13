@@ -2,8 +2,9 @@
 
 namespace Eocron.RoaringBitmaps
 {
-    public interface IReadOnlyBitmapArray<TKey> : IEnumerable<KeyValuePair<TKey, Bitmap>>
+    public interface IReadOnlyBitmapDictionary<TKey> : IEnumerable<KeyValuePair<TKey, Bitmap>>
     {
+        int Count { get; }
         Bitmap TryGet(params TKey[] keys);
         bool Contains(TKey key);
         bool Contains(TKey key, Bitmap bitmap);

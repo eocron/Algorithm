@@ -1,20 +1,21 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Eocron.RoaringBitmaps
 {
-    public sealed class BitmapArray<TKey> : IBitmapArray<TKey>
+    public sealed class BitmapDictionary<TKey> : IBitmapDictionary<TKey>
     {
-        private readonly Dictionary<TKey, Bitmap> _bitmaps;
+        private readonly IDictionary<TKey, Bitmap> _bitmaps;
 
-        public BitmapArray():this(EqualityComparer<TKey>.Default){}
-        public BitmapArray(IEqualityComparer<TKey> comparer)
+        public BitmapDictionary():this(EqualityComparer<TKey>.Default){}
+        public BitmapDictionary(IEqualityComparer<TKey> comparer)
         {
-            _bitmaps = new Dictionary<TKey, Bitmap>(comparer);
+            _bitmaps = new Dictionary<TKey, Bitmap>(comparer ?? throw new ArgumentNullException(nameof(comparer)));
         }
 
-        public BitmapArray(IEnumerable<KeyValuePair<TKey, Bitmap>> pairs, IEqualityComparer<TKey> comparer = null)
+        public BitmapDictionary(IEnumerable<KeyValuePair<TKey, Bitmap>> pairs, IEqualityComparer<TKey> comparer = null)
         {
             _bitmaps = pairs.ToDictionary(x=> x.Key, x=> (Bitmap)x.Value.Clone(), comparer);
         } 
@@ -46,6 +47,38 @@ namespace Eocron.RoaringBitmaps
             exists.IOr(bitmap);
         }
 
+        public void AddOrUpdate(TKey key, params uint[] indexes)
+        {
+            if(indexes == null || indexes.Length == 0)
+                return;
+            
+            if (!_bitmaps.TryGetValue(key, out var exists))
+            {
+                exists = new Bitmap();
+                _bitmaps[key] = exists;
+            }
+
+            exists.AddMany(indexes);
+        }
+
+        public bool TryRemove(TKey key, params uint[] indexes)
+        {
+            if(indexes == null || indexes.Length == 0)
+                return false;
+            
+            if (!_bitmaps.TryGetValue(key, out var exists))
+            {
+                return false;
+            }
+
+            exists.RemoveMany(indexes);
+            if (exists.IsEmpty)
+            {
+                _bitmaps.Remove(key);
+            }
+            return true;
+        }
+
         public bool TryRemove(TKey key)
         {
             return _bitmaps.Remove(key);
@@ -74,6 +107,8 @@ namespace Eocron.RoaringBitmaps
             return true;
         }
 
+        public int Count => _bitmaps.Count;
+
         public Bitmap TryGet(params TKey[] keys)
         {
             var found = keys.Select(GetOrDefault).Where(x => x != null).ToList();
@@ -98,7 +133,7 @@ namespace Eocron.RoaringBitmaps
 
         public IEnumerator<KeyValuePair<TKey, Bitmap>> GetEnumerator()
         {
-            return _bitmaps.Select(kv => new KeyValuePair<TKey, Bitmap>(kv.Key, kv.Value)).GetEnumerator();
+            return _bitmaps.Select(kv => new KeyValuePair<TKey, Bitmap>(kv.Key, (Bitmap)kv.Value.Clone())).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()

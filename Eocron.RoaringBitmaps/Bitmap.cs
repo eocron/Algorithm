@@ -5,7 +5,7 @@ using CRoaring;
 
 namespace Eocron.RoaringBitmaps
 {
-    public sealed class Bitmap : ICloneable, IBitmap
+    public sealed class Bitmap : ICloneable, IBitmap, IEquatable<Bitmap>
     {
         private readonly RoaringBitmap _inner;
 
@@ -167,6 +167,36 @@ namespace Eocron.RoaringBitmaps
         public object Clone()
         {
             return new Bitmap(_inner.Clone());
+        }
+
+        public bool Equals(Bitmap other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return Equals(_inner, other._inner);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return ReferenceEquals(this, obj) || obj is Bitmap other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            if (_inner == null)
+                return 0;
+
+            return System.HashCode.Combine(_inner.Cardinality, _inner.Min, _inner.Max);
+        }
+
+        public static bool operator ==(Bitmap left, Bitmap right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(Bitmap left, Bitmap right)
+        {
+            return !Equals(left, right);
         }
     }
 }

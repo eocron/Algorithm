@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFramework>netstandard2.1</TargetFramework>
         <PackageId>Eocron.RoaringBitmaps</PackageId>
         <Product>Eocron.RoaringBitmaps</Product>
         <PackageTags>bitmap;eocron</PackageTags>
@@ -9,5 +9,9 @@
             This client library contains some basic and usefull bitmap alghorithms for my work.
         </Description>
     </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="CRoaring.NetStandard" />
+    </ItemGroup>
 
 </Project>
