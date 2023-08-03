@@ -49,7 +49,7 @@ namespace Eocron.Algorithms.Tests
         }
 
         [Test]
-        public async Task CatchAsync()
+        public void CatchAsync()
         {
             var testStream = GetTestStream();
             Assert.ThrowsAsync<InvalidDataException>(async () =>

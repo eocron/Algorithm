@@ -16,7 +16,7 @@ namespace Eocron.Algorithms.Configuration
             _evaluator = evaluator ?? throw new ArgumentNullException(nameof(evaluator));
         }
 
-        public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string? parentPath)
+        public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string parentPath)
         {
             return _inner.GetChildKeys(earlierKeys, parentPath);
         }
@@ -31,12 +31,12 @@ namespace Eocron.Algorithms.Configuration
             _inner.Load();
         }
 
-        public void Set(string key, string? value)
+        public void Set(string key, string value)
         {
             _inner.Set(key, TryReplace(value));
         }
 
-        public bool TryGet(string key, out string? value)
+        public bool TryGet(string key, out string value)
         {
             if (_inner.TryGet(key, out value))
             {
@@ -47,7 +47,7 @@ namespace Eocron.Algorithms.Configuration
             return false;
         }
 
-        private string? TryReplace(string? input)
+        private string TryReplace(string input)
         {
             if (input == null)
                 return null;

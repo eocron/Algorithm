@@ -16,7 +16,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Algorithm\Eocron.Algorithms.csproj" />
         <ProjectReference Include="..\Eocron.Algorithms\Eocron.Algorithms.csproj" />
     </ItemGroup>
 
