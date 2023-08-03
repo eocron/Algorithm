@@ -21,7 +21,7 @@ namespace Eocron.RoaringBitmaps
         {
             if (other == null)
                 throw new ArgumentNullException(nameof(other));
-            _inner = (RoaringBitmap)other._inner.Clone();
+            _inner = other._inner.Clone();
         }
 
         public Bitmap(byte[] data)
@@ -43,6 +43,7 @@ namespace Eocron.RoaringBitmaps
 
         public byte[] ToByteArray()
         {
+            _inner.Optimize();
             return _inner.Serialize(SerializationFormat.Portable);
         }
         
@@ -74,11 +75,6 @@ namespace Eocron.RoaringBitmaps
         public bool Intersects(Bitmap bitmap)
         {
             return _inner.Intersects(bitmap._inner);
-        }
-
-        public Statistics GetStatistics()
-        {
-            return _inner.GetStatistics();
         }
 
         public object Clone()
