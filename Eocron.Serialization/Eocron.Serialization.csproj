@@ -11,8 +11,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json"/>
-        <PackageReference Include="protobuf-net"/>
-        <PackageReference Include="YamlDotNet"/>
+        <PackageReference Include="Newtonsoft.Json" />
+        <PackageReference Include="protobuf-net" />
+        <PackageReference Include="YamlDotNet" />
     </ItemGroup>
 </Project>
