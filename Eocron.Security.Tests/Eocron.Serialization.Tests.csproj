@@ -16,10 +16,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Eocron.Security\Eocron.Security.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
         <None Update="TestData\**">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>

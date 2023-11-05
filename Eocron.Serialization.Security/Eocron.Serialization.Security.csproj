@@ -4,14 +4,17 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <PackageId>Eocron.Serialization.Security</PackageId>
         <Product>Eocron.Serialization.Security</Product>
-        <PackageTags>security;encryption;eocron</PackageTags>
+        <PackageTags>serialization;security;encryption;eocron</PackageTags>
         <Description>
-            This client library contains some basic and usefull security alghorithms for my work.
+            This client library contains some basic and usefull serialization alghorithms for my work.
         </Description>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="BouncyCastle.Cryptography" />
-        <PackageReference Include="System.Buffers" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Eocron.Serialization\Eocron.Serialization.csproj" />
     </ItemGroup>
 </Project>
