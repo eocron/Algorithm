@@ -27,6 +27,18 @@ namespace Eocron.Serialization.Tests
         }
         
         [Test]
+        public void EncryptThenDecryptWithAnotherConverterInstance()
+        {
+            var converter1 = GetConverter();
+            var converter2 = GetConverter();
+            var model = new JsonTestModel() { Guid = Guid.NewGuid(), FooBarString = "some_string"};
+            var data = converter1.SerializeToBytes(model);
+            var decryptedModel = converter2.Deserialize<JsonTestModel>(data);
+            decryptedModel.FooBarString.Should().Be("some_string");
+            decryptedModel.Should().BeEquivalentTo(model);
+        }
+        
+        [Test]
         public void EncryptMultipleThenDecrypt()
         {
             var converter = GetConverter();
