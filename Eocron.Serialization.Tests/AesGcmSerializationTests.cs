@@ -65,8 +65,7 @@ namespace Eocron.Serialization.Tests
             var data1 = converter.SerializeToBytes(model);
             var data2 = converter.SerializeToBytes(model);
             data1.Should().NotBeEquivalentTo(data2);
-            Console.WriteLine(BitConverter.ToString(data1));
-            Console.WriteLine(BitConverter.ToString(data2));
+            data1.Should().NotBeEmpty();
         }
     }
 }
