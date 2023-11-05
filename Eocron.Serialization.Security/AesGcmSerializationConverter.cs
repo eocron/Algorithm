@@ -11,22 +11,28 @@ using Org.BouncyCastle.Security;
 namespace Eocron.Serialization.Security;
 
 /// <summary>
-/// Used when Reader and Writer are the same person. Use RSA version when Writers are public, and Readers are private.
+/// Used for general encryption where secret is not shared between users.
+/// Will check integrity of encrypted data.
 /// </summary>
 public sealed class AesGcmSerializationConverter : ISerializationConverter
 {
-    private readonly ISerializationConverter _inner;
     private static readonly SecureRandom Random = new SecureRandom();
-    private readonly ArrayPool<byte> _arrayPool;
-    private readonly byte[] _passwordDerivative;
-
+    private static readonly byte[] Salt =
+    {
+        104, 95, 254, 255, 
+        128, 42, 64, 55, 
+        214, 255, 154, 36, 
+        133, 80, 11, 172
+    };
     private const int MacByteSize = 16;
     private const int NonceByteSize = 12;
-    private const int SaltByteSize = 16;
     private const int KeyByteSize = 32;
     private const int MacBitSize = MacByteSize * 8;
-    private static readonly byte[] Salt = new byte[SaltByteSize];
-
+    
+    private readonly ISerializationConverter _inner;
+    private readonly ArrayPool<byte> _arrayPool;
+    private readonly byte[] _passwordDerivative;
+    
     public AesGcmSerializationConverter(ISerializationConverter inner, string password)
     {
         _inner = inner;
