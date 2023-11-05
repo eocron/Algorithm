@@ -12,32 +12,37 @@ namespace Eocron.Serialization.Security;
 
 /// <summary>
 /// Used for general encryption where secret is not shared between users.
-/// Will check integrity of encrypted data.
+/// AES256 GCM provide two important features: decent security, integrity validation.
 /// </summary>
-public sealed class AesGcmSerializationConverter : ISerializationConverter
+public sealed class Aes256GcmSerializationConverter : ISerializationConverter
 {
     private static readonly SecureRandom Random = new SecureRandom();
-    private static readonly byte[] Salt =
-    {
-        104, 95, 254, 255, 
-        128, 42, 64, 55, 
-        214, 255, 154, 36, 
-        133, 80, 11, 172
-    };
-    private const int MacByteSize = 16;
     private const int NonceByteSize = 12;
     private const int KeyByteSize = 32;
+    private const int MacByteSize = 16;
     private const int MacBitSize = MacByteSize * 8;
     
     private readonly ISerializationConverter _inner;
     private readonly ArrayPool<byte> _arrayPool;
-    private readonly byte[] _passwordDerivative;
-    
-    public AesGcmSerializationConverter(ISerializationConverter inner, string password)
+    private readonly byte[] _key;
+
+    public Aes256GcmSerializationConverter(ISerializationConverter inner, string password, ArrayPool<byte> pool = null) :
+        this(inner, PasswordDerivationHelper.GenerateKeyFrom(password, KeyByteSize), pool)
     {
+    }
+
+    public Aes256GcmSerializationConverter(ISerializationConverter inner, byte[] key, ArrayPool<byte> pool = null)
+    {
+        if (inner == null)
+            throw new ArgumentNullException(nameof(inner));
+        if (key == null || key.Length == 0)
+            throw new ArgumentNullException(nameof(key));
+        if (key.Length != KeyByteSize)
+            throw new ArgumentOutOfRangeException(nameof(key), $"Key should be of size: {KeyByteSize}");
+        
         _inner = inner;
-        _arrayPool = ArrayPool<byte>.Shared;
-        _passwordDerivative = PasswordDerivationHelper.GenerateFrom(password, Salt, KeyByteSize);
+        _arrayPool = pool ?? ArrayPool<byte>.Shared;
+        _key = key;
     }
 
     public object DeserializeFrom(Type type, StreamReader sourceStream)
@@ -82,17 +87,10 @@ public sealed class AesGcmSerializationConverter : ISerializationConverter
         return new RentedByteArray(_arrayPool.Rent(size), size, _arrayPool);
     }
     
-    private static byte[] ToArray(ArraySegment<byte> segment)
-    {
-        var res = new byte[segment.Count];
-        Array.Copy(segment.Array, segment.Offset, res, 0, segment.Count);
-        return res;
-    }
-    
     private IAeadCipher CreateAeadCipher(byte[] nonce, bool forEncryption)
     {
         var cipher = new GcmBlockCipher(new AesLightEngine());
-        var parameters = new AeadParameters(new KeyParameter(_passwordDerivative), MacBitSize, nonce);
+        var parameters = new AeadParameters(new KeyParameter(_key), MacBitSize, nonce);
         cipher.Init(forEncryption, parameters);
         return cipher;
     }
@@ -171,7 +169,7 @@ public sealed class AesGcmSerializationConverter : ISerializationConverter
 
         public void Dispose()
         {
-            _pool.Return(Segment.Array);
+            _pool.Return(Segment.Array, true);
         }
     }
 }

@@ -12,7 +12,7 @@ namespace Eocron.Serialization.Tests
     {
         public ISerializationConverter GetConverter()
         {
-            return new AesGcmSerializationConverter(SerializationConverter.Json, "foobar");
+            return new Aes256GcmSerializationConverter(SerializationConverter.Json, "foobar");
         }
 
         [Test]
