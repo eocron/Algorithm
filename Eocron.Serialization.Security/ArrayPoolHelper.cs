@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Eocron.Serialization.Security
@@ -9,13 +8,15 @@ namespace Eocron.Serialization.Security
     {
         /// <summary>
         /// This method will return disposable object which contain desired size T[] buffer.
+        /// No additional allocations except those in ArrayPool will be issued.
         /// Works with any pool which supports desired size.
         /// </summary>
-        /// <param name="pool">Array pool</param>
+        /// <param name="pool">Array pool to use</param>
         /// <param name="size">Desired size</param>
         /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException"></exception>
+        /// <returns>Disposable rented array</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static IRentedArray<T> RentExact<T>(ArrayPool<T> pool, int size)
         {
             if (pool == null)
@@ -26,9 +27,8 @@ namespace Eocron.Serialization.Security
             }
 
             var rented = pool.Rent(size);
-            Debug.Assert(rented.Length >= size, "rented.Length <= size");
             var originalSize = UnsafeChangeLength(rented, (uint)size);
-            return new RentedByteArray<T>(rented, originalSize, pool);
+            return new RentedArray<T>(rented, originalSize, pool);
         }
 
         private static uint UnsafeChangeLength<T>(T[] array, uint newLength)
@@ -42,15 +42,15 @@ namespace Eocron.Serialization.Security
             return originalLength;
         }
 
-        private sealed class RentedByteArray<T> : IRentedArray<T>
+        private sealed class RentedArray<T> : IRentedArray<T>
         {
             private readonly uint _originalSize;
             private readonly ArrayPool<T> _pool;
             private readonly T[] _original;
             private bool _disposed;
-            public T[] Data => _disposed ? throw new ObjectDisposedException(this.ToString()) : _original;
+            public T[] Data => _disposed ? throw new ObjectDisposedException(ToString()) : _original;
 
-            public RentedByteArray(T[] original, uint originalSize, ArrayPool<T> pool)
+            public RentedArray(T[] original, uint originalSize, ArrayPool<T> pool)
             {
                 _originalSize = originalSize;
                 _pool = pool;
