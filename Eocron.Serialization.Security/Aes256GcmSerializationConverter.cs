@@ -75,8 +75,6 @@ public sealed class Aes256GcmSerializationConverter : BinarySerializationConvert
         
         WriteAesGcmData(writer, body);
     }
-
-
     
     private IAeadCipher CreateAeadCipher(IRentedArray<byte> nonce, bool forEncryption)
     {

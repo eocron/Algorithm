@@ -3,7 +3,7 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 using NUnit.Framework;
 
-namespace Eocron.Serialization.Tests.Performance
+namespace Eocron.Serialization.PerformanceTests
 {
     public class AllPerformanceTests
     {

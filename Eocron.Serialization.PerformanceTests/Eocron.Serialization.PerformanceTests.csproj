@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net472;net5.0;net6.0</TargetFrameworks>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BenchmarkDotNet" />
+        <PackageReference Include="FluentAssertions" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="NUnit" />
+        <PackageReference Include="NUnit3TestAdapter" />
+        <PackageReference Include="NUnit.Analyzers" />
+        <PackageReference Include="coverlet.collector" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Eocron.Serialization.Security\Eocron.Serialization.Security.csproj" />
+        <ProjectReference Include="..\Eocron.Serialization.Tests\Eocron.Serialization.Tests.csproj" />
+        <ProjectReference Include="..\Eocron.Serialization\Eocron.Serialization.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="README.md" />
+    </ItemGroup>
+
+</Project>

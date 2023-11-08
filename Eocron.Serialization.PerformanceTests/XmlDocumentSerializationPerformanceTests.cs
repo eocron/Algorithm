@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
 using Eocron.Serialization.Tests.Models.XmlLegacy;
 
-namespace Eocron.Serialization.Tests.Performance
+namespace Eocron.Serialization.PerformanceTests
 {
     public class XmlDocumentSerializationPerformanceTests :
         SerializationPerformanceTestsBase<XmlDocumentSerializationPerformanceTests, XmlTestModelFooBar>,
