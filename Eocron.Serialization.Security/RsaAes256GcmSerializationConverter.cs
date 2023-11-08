@@ -7,6 +7,11 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Eocron.Serialization.Security
 {
+    /// <summary>
+    /// Encrypt/Serialize with public part of certificate.
+    /// Decrypt/Deserialize with private part of certificate.
+    /// Useful when you have multiple serialization holders/nodes/jobs/etc and single deserializer/reader.
+    /// </summary>
     public sealed class RsaAes256GcmSerializationConverter : ISerializationConverter
     {
         private readonly ISerializationConverter _inner;
@@ -30,8 +35,7 @@ namespace Eocron.Serialization.Security
             }
             using var rsa = _cert.GetRSAPrivateKey();
             var br = new BinaryReader(sourceStream.BaseStream);
-            var encryptedKey = br.ReadBytes(rsa.KeySize / 8);
-            var key = rsa.Decrypt(encryptedKey, _padding);
+            var key = rsa.Decrypt(br.ReadBytes(rsa.KeySize / 8), _padding);
             var converter = new Aes256GcmSerializationConverter(_inner, key, _pool);
             return converter.DeserializeFrom(type, sourceStream);
         }
@@ -40,9 +44,8 @@ namespace Eocron.Serialization.Security
         {
             using var rsa = _cert.GetRSAPublicKey();
             var key = PasswordDerivationHelper.CreateRandomBytes(Aes256GcmSerializationConverter.KeyByteSize);
-            var encryptedKey = rsa.Encrypt(key, _padding);
             var bw = new BinaryWriter(targetStream.BaseStream);
-            bw.Write(encryptedKey);
+            bw.Write(rsa.Encrypt(key, _padding));
             bw.Flush();
             var converter = new Aes256GcmSerializationConverter(_inner, key, _pool);
             converter.SerializeTo(type, obj, targetStream);

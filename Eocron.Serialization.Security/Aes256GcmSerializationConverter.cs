@@ -6,12 +6,11 @@ using System.Text;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Modes;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
 
 namespace Eocron.Serialization.Security;
 
 /// <summary>
-/// Used for general encryption where secret is not shared between users.
+/// Used for general encryption where same secret is shared between writers/readers.
 /// AES256 GCM provide two important features: decent security, integrity validation.
 /// </summary>
 public sealed class Aes256GcmSerializationConverter : BinarySerializationConverterBase

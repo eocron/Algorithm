@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Security;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Eocron.Serialization.Security;
 using Eocron.Serialization.Tests.Models.Json;
