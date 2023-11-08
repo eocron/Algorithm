@@ -1,26 +1,41 @@
 ﻿using System;
 using System.Buffers;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Security;
 
 namespace Eocron.Serialization.Security
 {
     public static class ArrayPoolHelper
     {
-        public static IRentedArray<T> Rent<T>(ArrayPool<T> pool, int size)
+        /// <summary>
+        /// This method will return disposable object which contain desired size T[] buffer.
+        /// Works with any pool which supports desired size.
+        /// </summary>
+        /// <param name="pool">Array pool</param>
+        /// <param name="size">Desired size</param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static IRentedArray<T> RentExact<T>(ArrayPool<T> pool, int size)
         {
+            if (pool == null)
+                throw new ArgumentNullException(nameof(pool));
             if (size <= 0)
             {
-                throw new SecurityException("Invalid rent size.");
+                throw new ArgumentOutOfRangeException(nameof(size));
             }
 
             var rented = pool.Rent(size);
+            Debug.Assert(rented.Length >= size, "rented.Length <= size");
             var originalSize = UnsafeChangeLength(rented, (uint)size);
             return new RentedByteArray<T>(rented, originalSize, pool);
         }
 
         private static uint UnsafeChangeLength<T>(T[] array, uint newLength)
         {
+            if (array.Length == newLength)
+                return newLength;
+            
             var unsafeRented = Unsafe.As<RawArrayData>(array);
             var originalLength = unsafeRented.Length;
             unsafeRented.Length = newLength;

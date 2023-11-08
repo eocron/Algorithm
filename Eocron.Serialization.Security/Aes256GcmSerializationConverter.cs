@@ -47,7 +47,7 @@ public sealed class Aes256GcmSerializationConverter : BinarySerializationConvert
     {
         using var body = ReadAesGcmData(reader);
         var cipher = CreateAeadCipher(body.Nonce, false);
-        using var decryptedPayload = ArrayPoolHelper.Rent(_arrayPool, cipher.GetOutputSize(body.EncryptedPayload.Data.Length));
+        using var decryptedPayload = ArrayPoolHelper.RentExact(_arrayPool, cipher.GetOutputSize(body.EncryptedPayload.Data.Length));
 
         var len = cipher.ProcessBytes(
             body.EncryptedPayload.Data,
@@ -64,7 +64,7 @@ public sealed class Aes256GcmSerializationConverter : BinarySerializationConvert
     {
         var decryptedPayload = new ArraySegment<byte>(_inner.SerializeToBytes(type, obj, Encoding.UTF8));
         using var nonce = PasswordDerivationHelper.CreateRandomBytes(_arrayPool, NonceByteSize);
-        using var encrypted = ArrayPoolHelper.Rent(_arrayPool, decryptedPayload.Count + MacByteSize);
+        using var encrypted = ArrayPoolHelper.RentExact(_arrayPool, decryptedPayload.Count + MacByteSize);
         using var body = new RentedAesGcmData(nonce, encrypted);
         var cipher = CreateAeadCipher(body.Nonce, true);
         var len = cipher.ProcessBytes(
@@ -99,12 +99,12 @@ public sealed class Aes256GcmSerializationConverter : BinarySerializationConvert
 
     private RentedAesGcmData ReadAesGcmData(BinaryReader reader)
     {
-        var nonce = ArrayPoolHelper.Rent(_arrayPool, NonceByteSize);
+        var nonce = ArrayPoolHelper.RentExact(_arrayPool, NonceByteSize);
         try
         {
             ReadExactly(reader, nonce);
             var encryptedPayloadSize = reader.ReadInt32();
-            var encryptedPayload = ArrayPoolHelper.Rent(_arrayPool, encryptedPayloadSize);
+            var encryptedPayload = ArrayPoolHelper.RentExact(_arrayPool, encryptedPayloadSize);
             try
             {
                 ReadExactly(reader, encryptedPayload);

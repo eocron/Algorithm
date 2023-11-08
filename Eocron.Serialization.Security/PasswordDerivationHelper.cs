@@ -26,7 +26,7 @@ namespace Eocron.Serialization.Security
 
         public static IRentedArray<byte> CreateRandomBytes(ArrayPool<byte> pool, int size)
         {
-            var result = ArrayPoolHelper.Rent(pool, size);
+            var result = ArrayPoolHelper.RentExact(pool, size);
             Random.NextBytes(result.Data);
             return result;
         }
