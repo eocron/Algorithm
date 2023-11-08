@@ -13,11 +13,12 @@ namespace Eocron.Serialization.Security
         /// </summary>
         /// <param name="pool">Array pool to use</param>
         /// <param name="size">Desired size</param>
+        /// <param name="clearOnDispose">Should buffer be cleared upon return to pool</param>
         /// <typeparam name="T"></typeparam>
         /// <returns>Disposable rented array</returns>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
-        public static IRentedArray<T> RentExact<T>(ArrayPool<T> pool, int size)
+        public static IRentedArray<T> RentExact<T>(ArrayPool<T> pool, int size, bool clearOnDispose = true)
         {
             if (pool == null)
                 throw new ArgumentNullException(nameof(pool));
@@ -28,7 +29,7 @@ namespace Eocron.Serialization.Security
 
             var rented = pool.Rent(size);
             var originalSize = UnsafeChangeLength(rented, (uint)size);
-            return new RentedArray<T>(rented, originalSize, pool);
+            return new RentedArray<T>(rented, originalSize, pool, clearOnDispose);
         }
 
         private static uint UnsafeChangeLength<T>(T[] array, uint newLength)
@@ -46,14 +47,16 @@ namespace Eocron.Serialization.Security
         {
             private readonly uint _originalSize;
             private readonly ArrayPool<T> _pool;
+            private readonly bool _clearOnDispose;
             private readonly T[] _original;
             private bool _disposed;
             public T[] Data => _disposed ? throw new ObjectDisposedException(ToString()) : _original;
 
-            public RentedArray(T[] original, uint originalSize, ArrayPool<T> pool)
+            public RentedArray(T[] original, uint originalSize, ArrayPool<T> pool, bool clearOnDispose)
             {
                 _originalSize = originalSize;
                 _pool = pool;
+                _clearOnDispose = clearOnDispose;
                 _original = original;
             }
 
@@ -62,7 +65,7 @@ namespace Eocron.Serialization.Security
                 if (_disposed)
                     return;
                 UnsafeChangeLength(_original, _originalSize);
-                _pool.Return(_original, true);
+                _pool.Return(_original, _clearOnDispose);
                 _disposed = true;
             }
         }
