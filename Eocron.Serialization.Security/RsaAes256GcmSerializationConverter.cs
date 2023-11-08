@@ -43,11 +43,11 @@ namespace Eocron.Serialization.Security
         public void SerializeTo(Type type, object obj, StreamWriter targetStream)
         {
             using var rsa = _cert.GetRSAPublicKey();
-            var key = PasswordDerivationHelper.CreateRandomBytes(Aes256GcmSerializationConverter.KeyByteSize);
+            using var key = PasswordDerivationHelper.CreateRandomBytes(_pool, Aes256GcmSerializationConverter.KeyByteSize);
             var bw = new BinaryWriter(targetStream.BaseStream);
-            bw.Write(rsa.Encrypt(key, _padding));
+            bw.Write(rsa.Encrypt(key.Data, _padding));
             bw.Flush();
-            var converter = new Aes256GcmSerializationConverter(_inner, key, _pool);
+            var converter = new Aes256GcmSerializationConverter(_inner, key.Data, _pool);
             converter.SerializeTo(type, obj, targetStream);
         }
     }

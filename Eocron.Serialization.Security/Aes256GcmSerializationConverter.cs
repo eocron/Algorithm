@@ -47,50 +47,51 @@ public sealed class Aes256GcmSerializationConverter : BinarySerializationConvert
     {
         using var body = ReadAesGcmData(reader);
         var cipher = CreateAeadCipher(body.Nonce, false);
-        using var decryptedPayload = ArrayPoolHelper.Rent(_arrayPool, cipher.GetOutputSize(body.EncryptedPayload.Segment.Count));
+        using var decryptedPayload = ArrayPoolHelper.Rent(_arrayPool, cipher.GetOutputSize(body.EncryptedPayload.Data.Length));
 
         var len = cipher.ProcessBytes(
-            body.EncryptedPayload.Segment.Array,
-            body.EncryptedPayload.Segment.Offset,
-            body.EncryptedPayload.Segment.Count,
-            decryptedPayload.Segment.Array,
-            decryptedPayload.Segment.Offset);
-        cipher.DoFinal(decryptedPayload.Segment.Array, len);
-        using var ms = new MemoryStream(decryptedPayload.Segment.Array, decryptedPayload.Segment.Offset, decryptedPayload.Segment.Count, false);
+            body.EncryptedPayload.Data,
+            0,
+            body.EncryptedPayload.Data.Length,
+            decryptedPayload.Data,
+            0);
+        cipher.DoFinal(decryptedPayload.Data, len);
+        using var ms = new MemoryStream(decryptedPayload.Data, 0, decryptedPayload.Data.Length, false);
         return _inner.DeserializeFrom(type, ms);
     }
 
     protected override void SerializeTo(Type type, object obj, BinaryWriter writer)
     {
         var decryptedPayload = new ArraySegment<byte>(_inner.SerializeToBytes(type, obj, Encoding.UTF8));
-        using var body = new RentedAesGcmData(
-            PasswordDerivationHelper.CreateRandomBytes(NonceByteSize), 
-            ArrayPoolHelper.Rent(_arrayPool, decryptedPayload.Count + MacByteSize));
+        using var nonce = PasswordDerivationHelper.CreateRandomBytes(_arrayPool, NonceByteSize);
+        using var encrypted = ArrayPoolHelper.Rent(_arrayPool, decryptedPayload.Count + MacByteSize);
+        using var body = new RentedAesGcmData(nonce, encrypted);
         var cipher = CreateAeadCipher(body.Nonce, true);
         var len = cipher.ProcessBytes(
             decryptedPayload.Array,
             decryptedPayload.Offset,
             decryptedPayload.Count,
-            body.EncryptedPayload.Segment.Array,
-            body.EncryptedPayload.Segment.Offset);
-        cipher.DoFinal(body.EncryptedPayload.Segment.Array, len);
+            body.EncryptedPayload.Data,
+            0);
+        cipher.DoFinal(body.EncryptedPayload.Data, len);
         
         WriteAesGcmData(writer, body);
     }
 
 
     
-    private IAeadCipher CreateAeadCipher(byte[] nonce, bool forEncryption)
+    private IAeadCipher CreateAeadCipher(IRentedArray<byte> nonce, bool forEncryption)
     {
         var cipher = new GcmBlockCipher(new AesLightEngine());
-        var parameters = new AeadParameters(new KeyParameter(_key), MacBitSize, nonce);
+        var parameters = new AeadParameters(new KeyParameter(_key), MacBitSize, nonce.Data);
         cipher.Init(forEncryption, parameters);
         return cipher;
     }
 
-    private void ReadExactly(BinaryReader reader, ArraySegment<byte> segment)
+    private void ReadExactly(BinaryReader reader, IRentedArray<byte> segment)
     {
-        if (reader.Read(segment.Array, segment.Offset, segment.Count) != segment.Count)
+        var read = reader.Read(segment.Data, 0, segment.Data.Length);
+        if (read != segment.Data.Length)
         {
             throw new SecurityException("Integrity check failed. Amount of read bytes doesn't match expected.");
         }
@@ -98,37 +99,46 @@ public sealed class Aes256GcmSerializationConverter : BinarySerializationConvert
 
     private RentedAesGcmData ReadAesGcmData(BinaryReader reader)
     {
-        var nonce = reader.ReadBytes(NonceByteSize);
-        var encryptedPayloadSize = reader.ReadInt32();
-        var encryptedPayload = ArrayPoolHelper.Rent(_arrayPool, encryptedPayloadSize);
+        var nonce = ArrayPoolHelper.Rent(_arrayPool, NonceByteSize);
         try
         {
-            ReadExactly(reader, encryptedPayload.Segment);
-            var result = new RentedAesGcmData(nonce, encryptedPayload);
-            encryptedPayload = null;
-            return result;
+            ReadExactly(reader, nonce);
+            var encryptedPayloadSize = reader.ReadInt32();
+            var encryptedPayload = ArrayPoolHelper.Rent(_arrayPool, encryptedPayloadSize);
+            try
+            {
+                ReadExactly(reader, encryptedPayload);
+                var result = new RentedAesGcmData(nonce, encryptedPayload);
+                encryptedPayload = null;
+                nonce = null;
+                return result;
+            }
+            finally
+            {
+                encryptedPayload?.Dispose();
+            }
         }
         finally
         {
-            encryptedPayload?.Dispose();
+            nonce?.Dispose();
         }
     }
 
     private void WriteAesGcmData(BinaryWriter writer, RentedAesGcmData data)
     {
-        writer.Write(data.Nonce);
-        writer.Write(data.EncryptedPayload.Segment.Count);
-        writer.Write(data.EncryptedPayload.Segment.Array, data.EncryptedPayload.Segment.Offset, data.EncryptedPayload.Segment.Count);
+        writer.Write(data.Nonce.Data);
+        writer.Write(data.EncryptedPayload.Data.Length);
+        writer.Write(data.EncryptedPayload.Data, 0, data.EncryptedPayload.Data.Length);
         writer.Flush();
     }
     
     private sealed class RentedAesGcmData : IDisposable
     {
-        public readonly byte[] Nonce;
+        public readonly IRentedArray<byte> Nonce;
 
-        public readonly ArrayPoolHelper.RentedByteArray EncryptedPayload;
+        public readonly IRentedArray<byte> EncryptedPayload;
 
-        public RentedAesGcmData(byte[] nonce, ArrayPoolHelper.RentedByteArray encryptedPayload)
+        public RentedAesGcmData(IRentedArray<byte> nonce, IRentedArray<byte> encryptedPayload)
         {
             Nonce = nonce;
             EncryptedPayload = encryptedPayload;
@@ -136,6 +146,7 @@ public sealed class Aes256GcmSerializationConverter : BinarySerializationConvert
 
         public void Dispose()
         {
+            Nonce.Dispose();
             EncryptedPayload.Dispose();
         }
     }
