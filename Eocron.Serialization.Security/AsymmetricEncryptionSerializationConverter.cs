@@ -9,18 +9,19 @@ using Eocron.Serialization.Security.Helpers;
 namespace Eocron.Serialization.Security
 {
     /// <summary>
+    /// Asymmetric encryption identical to RSA-AES256-GCM-SHA512 cipher suit.
     /// Encrypt/Serialize with public part of certificate.
     /// Decrypt/Deserialize with private part of certificate.
     /// Useful when you have multiple serialization holders/nodes/jobs/etc and single deserializer/reader.
     /// </summary>
-    public sealed class RsaAes256GcmSerializationConverter : ISerializationConverter
+    public sealed class AsymmetricEncryptionSerializationConverter : ISerializationConverter
     {
         private readonly ISerializationConverter _inner;
         private readonly X509Certificate2 _cert;
         private readonly RSAEncryptionPadding _padding;
         private readonly ArrayPool<byte> _pool;
 
-        public RsaAes256GcmSerializationConverter(ISerializationConverter inner, X509Certificate2 cert, ArrayPool<byte> pool = null)
+        public AsymmetricEncryptionSerializationConverter(ISerializationConverter inner, X509Certificate2 cert, ArrayPool<byte> pool = null)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
             _cert = cert ?? throw new ArgumentNullException(nameof(cert));
@@ -40,19 +41,19 @@ namespace Eocron.Serialization.Security
             var br = new BinaryReader(sourceStream.BaseStream);
             br.ReadExactly(encryptedKey);
             var key = rsa.Decrypt(encryptedKey.Data, _padding);
-            var converter = new Aes256GcmSerializationConverter(_inner, key, _pool);
+            var converter = new SymmetricEncryptionSerializationConverter(_inner, key, _pool);
             return converter.DeserializeFrom(type, sourceStream);
         }
 
         public void SerializeTo(Type type, object obj, StreamWriter targetStream)
         {
             using var rsa = _cert.GetRSAPublicKey();
-            using var key = PasswordDerivationHelper.CreateRandomBytes(_pool, Aes256GcmSerializationConverter.KeyByteSize);
+            using var key = PasswordDerivationHelper.CreateRandomBytes(_pool, SymmetricEncryptionSerializationConverter.KeyByteSize);
             
             var bw = new BinaryWriter(targetStream.BaseStream);
             bw.Write(rsa.Encrypt(key.Data, _padding));
             bw.Flush();
-            var converter = new Aes256GcmSerializationConverter(_inner, key.Data, _pool);
+            var converter = new SymmetricEncryptionSerializationConverter(_inner, key.Data, _pool);
             converter.SerializeTo(type, obj, targetStream);
         }
     }

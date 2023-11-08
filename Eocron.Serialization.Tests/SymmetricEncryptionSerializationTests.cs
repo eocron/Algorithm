@@ -4,11 +4,11 @@ using NUnit.Framework;
 namespace Eocron.Serialization.Tests
 {
     [TestFixture]
-    public class Aes256GcmSerializationTests : SecuredSerializationTests
+    public class SymmetricEncryptionSerializationTests : EncryptionSerializationTestsBase
     {
         public override ISerializationConverter GetConverter()
         {
-            return  new Aes256GcmSerializationConverter(SerializationConverter.Json, "foobar");
+            return  new SymmetricEncryptionSerializationConverter(SerializationConverter.Json, "foobar");
         }
     }
 }

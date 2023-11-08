@@ -9,7 +9,7 @@ using NUnit.Framework;
 namespace Eocron.Serialization.Tests
 {
     [TestFixture]
-    public class RsaSerializationTests : SecuredSerializationTests
+    public class AsymmetricEncryptionSerializationTests : EncryptionSerializationTestsBase
     {
         private X509Certificate2 _privateCertificate;
         private X509Certificate2 _publicCertificate;
@@ -28,7 +28,7 @@ namespace Eocron.Serialization.Tests
 
         private static ISerializationConverter GetConverter(X509Certificate2 certificate)
         {
-            return  new RsaAes256GcmSerializationConverter(SerializationConverter.Json, certificate);
+            return  new AsymmetricEncryptionSerializationConverter(SerializationConverter.Json, certificate);
         }
 
         [Test]

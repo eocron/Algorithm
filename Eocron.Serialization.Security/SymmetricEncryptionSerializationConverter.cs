@@ -9,10 +9,10 @@ using Org.BouncyCastle.Crypto.Parameters;
 namespace Eocron.Serialization.Security;
 
 /// <summary>
+/// Symmetric encryption identical to AES256-GCM cipher suit.
 /// Used for general encryption where same secret is shared between writers/readers.
-/// AES256 GCM provide two important features: decent security, integrity validation.
 /// </summary>
-public sealed class Aes256GcmSerializationConverter : BinarySerializationConverterBase
+public sealed class SymmetricEncryptionSerializationConverter : BinarySerializationConverterBase
 {
     private const int NonceByteSize = 12;
     public const int KeyByteSize = 32;
@@ -23,12 +23,12 @@ public sealed class Aes256GcmSerializationConverter : BinarySerializationConvert
     private readonly ArrayPool<byte> _arrayPool;
     private readonly byte[] _key;
 
-    public Aes256GcmSerializationConverter(ISerializationConverter inner, string password, ArrayPool<byte> pool = null) :
+    public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, string password, ArrayPool<byte> pool = null) :
         this(inner, PasswordDerivationHelper.GenerateKeyFrom(password, KeyByteSize), pool)
     {
     }
 
-    public Aes256GcmSerializationConverter(ISerializationConverter inner, byte[] key, ArrayPool<byte> pool = null)
+    public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, byte[] key, ArrayPool<byte> pool = null)
     {
         if (inner == null)
             throw new ArgumentNullException(nameof(inner));

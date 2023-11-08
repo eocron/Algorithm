@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace Eocron.Serialization.Tests
 {
-    public abstract class SecuredSerializationTests
+    public abstract class EncryptionSerializationTestsBase
     {
         public abstract ISerializationConverter GetConverter();
 

@@ -28,7 +28,7 @@ namespace Eocron.Serialization.PerformanceTests
         }
 
         private static ISerializationConverter Converter =
-            new Aes256GcmSerializationConverter(SerializationConverter.Protobuf, "foobar");
+            new SymmetricEncryptionSerializationConverter(SerializationConverter.Protobuf, "foobar");
         public override ISerializationConverter GetConverter()
         {
             return Converter;
