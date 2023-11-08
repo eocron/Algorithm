@@ -34,8 +34,11 @@ namespace Eocron.Serialization.Security
                 throw new SecurityException("RSA certificate should have private key initialized to perform deserialization.");
             }
             using var rsa = _cert.GetRSAPrivateKey();
+            using var encryptedKey = ArrayPoolHelper.RentExact(_pool, rsa.KeySize / 8);
+            
             var br = new BinaryReader(sourceStream.BaseStream);
-            var key = rsa.Decrypt(br.ReadBytes(rsa.KeySize / 8), _padding);
+            br.ReadExactly(encryptedKey);
+            var key = rsa.Decrypt(encryptedKey.Data, _padding);
             var converter = new Aes256GcmSerializationConverter(_inner, key, _pool);
             return converter.DeserializeFrom(type, sourceStream);
         }
@@ -44,6 +47,7 @@ namespace Eocron.Serialization.Security
         {
             using var rsa = _cert.GetRSAPublicKey();
             using var key = PasswordDerivationHelper.CreateRandomBytes(_pool, Aes256GcmSerializationConverter.KeyByteSize);
+            
             var bw = new BinaryWriter(targetStream.BaseStream);
             bw.Write(rsa.Encrypt(key.Data, _padding));
             bw.Flush();

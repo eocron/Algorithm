@@ -48,7 +48,6 @@ public sealed class Aes256GcmSerializationConverter : BinarySerializationConvert
         using var body = ReadAesGcmData(reader);
         var cipher = CreateAeadCipher(body.Nonce, false);
         using var decryptedPayload = ArrayPoolHelper.RentExact(_arrayPool, cipher.GetOutputSize(body.EncryptedPayload.Data.Length));
-
         var len = cipher.ProcessBytes(
             body.EncryptedPayload.Data,
             0,
@@ -88,26 +87,17 @@ public sealed class Aes256GcmSerializationConverter : BinarySerializationConvert
         return cipher;
     }
 
-    private void ReadExactly(BinaryReader reader, IRentedArray<byte> segment)
-    {
-        var read = reader.Read(segment.Data, 0, segment.Data.Length);
-        if (read != segment.Data.Length)
-        {
-            throw new SecurityException("Integrity check failed. Amount of read bytes doesn't match expected.");
-        }
-    }
-
     private RentedAesGcmData ReadAesGcmData(BinaryReader reader)
     {
         var nonce = ArrayPoolHelper.RentExact(_arrayPool, NonceByteSize);
         try
         {
-            ReadExactly(reader, nonce);
+            reader.ReadExactly(nonce);
             var encryptedPayloadSize = reader.ReadInt32();
             var encryptedPayload = ArrayPoolHelper.RentExact(_arrayPool, encryptedPayloadSize);
             try
             {
-                ReadExactly(reader, encryptedPayload);
+                reader.ReadExactly(encryptedPayload);
                 var result = new RentedAesGcmData(nonce, encryptedPayload);
                 encryptedPayload = null;
                 nonce = null;
