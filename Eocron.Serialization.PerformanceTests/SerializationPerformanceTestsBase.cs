@@ -1,15 +1,12 @@
+using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Running;
 using NUnit.Framework;
 
 namespace Eocron.Serialization.PerformanceTests
 {
-    public interface ISerializationPerformanceTests
-    {
-        void Deserialize();
-        void Serialize();
-    }
-
     public abstract class SerializationPerformanceTestsBase<TTests, TModel>
     {
         protected SerializationPerformanceTestsBase(bool prepareText = true, bool prepareBinary = true)
@@ -41,6 +38,23 @@ namespace Eocron.Serialization.PerformanceTests
         public void Run()
         {
             BenchmarkRunner.Run<TTests>(new DebugInProcessConfig());
+        }
+        
+        private class SerializationBencmarkConfig : ManualConfig
+        {
+            public SerializationBencmarkConfig()
+            {
+                AddDiagnoser(MemoryDiagnoser.Default);
+                AddLogger(ConsoleLogger.Default);
+                AddColumn(
+                    TargetMethodColumn.Method, 
+                    StatisticColumn.Median, 
+                    StatisticColumn.StdDev,
+                    StatisticColumn.Q1, 
+                    StatisticColumn.Q3, 
+                    new ParamColumn("Size"));
+                
+            }
         }
 
         public void SerializeBinary()
