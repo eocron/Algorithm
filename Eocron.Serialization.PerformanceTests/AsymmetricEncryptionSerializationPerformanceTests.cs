@@ -6,11 +6,11 @@ using Eocron.Serialization.Tests.Models.Protobuf;
 
 namespace Eocron.Serialization.PerformanceTests
 {
-    public class Aes256GcmSerializationPerformanceTests :
-        SerializationPerformanceTestsBase<Aes256GcmSerializationPerformanceTests, ProtobufTestModel>,
+    public class AsymmetricEncryptionSerializationPerformanceTests :
+        SerializationPerformanceTestsBase<AsymmetricEncryptionSerializationPerformanceTests, ProtobufTestModel>,
         ISerializationPerformanceTests
     {
-        public Aes256GcmSerializationPerformanceTests() : base(false)
+        public AsymmetricEncryptionSerializationPerformanceTests() : base(false)
         {
             
         }
