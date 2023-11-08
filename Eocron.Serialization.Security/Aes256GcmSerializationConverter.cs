@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Buffers;
 using System.IO;
-using System.Security;
-using System.Text;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Modes;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -61,15 +59,16 @@ public sealed class Aes256GcmSerializationConverter : BinarySerializationConvert
 
     protected override void SerializeTo(Type type, object obj, BinaryWriter writer)
     {
-        var decryptedPayload = new ArraySegment<byte>(_inner.SerializeToBytes(type, obj, Encoding.UTF8));
+        using var ms = new MemoryStream();
+        _inner.SerializeTo(type, obj, ms);
         using var nonce = PasswordDerivationHelper.CreateRandomBytes(_arrayPool, NonceByteSize);
-        using var encrypted = ArrayPoolHelper.RentExact(_arrayPool, decryptedPayload.Count + MacByteSize);
+        using var encrypted = ArrayPoolHelper.RentExact(_arrayPool, (int)ms.Position + MacByteSize);
         using var body = new RentedAesGcmData(nonce, encrypted);
         var cipher = CreateAeadCipher(body.Nonce, true);
         var len = cipher.ProcessBytes(
-            decryptedPayload.Array,
-            decryptedPayload.Offset,
-            decryptedPayload.Count,
+            ms.GetBuffer(),
+            0,
+            (int)ms.Position,
             body.EncryptedPayload.Data,
             0);
         cipher.DoFinal(body.EncryptedPayload.Data, len);
@@ -140,6 +139,4 @@ public sealed class Aes256GcmSerializationConverter : BinarySerializationConvert
             EncryptedPayload.Dispose();
         }
     }
-
-
 }
