@@ -1,19 +1,14 @@
 using System;
 using System.IO;
-using Eocron.Serialization.Security;
 using Eocron.Serialization.Tests.Models.Json;
 using FluentAssertions;
 using NUnit.Framework;
 
 namespace Eocron.Serialization.Tests
 {
-    [TestFixture]
-    public class AesGcmSerializationTests 
+    public abstract class SecuredSerializationTests
     {
-        public ISerializationConverter GetConverter()
-        {
-            return new Aes256GcmSerializationConverter(SerializationConverter.Json, "foobar");
-        }
+        public abstract ISerializationConverter GetConverter();
 
         [Test]
         public void EncryptThenDecrypt()
@@ -66,26 +61,6 @@ namespace Eocron.Serialization.Tests
             var data2 = converter.SerializeToBytes(model);
             data1.Should().NotBeEquivalentTo(data2);
             data1.Should().NotBeEmpty();
-        }
-        
-        [Test]
-        [TestCase(10, 0.1f)]
-        [TestCase(1000, 0.05f)]
-        [TestCase(1000000, 0.00005f)]
-        public void LengthCompare(int original, float expected)
-        {
-            var originalConverter = SerializationConverter.Json;
-            var encryptedConverter = new Aes256GcmSerializationConverter(originalConverter, "foobar");
-            
-            var model = new JsonTestModel() { FooBarString = new string('c', original) };
-            var data1 = originalConverter.SerializeToBytes(model);
-            var data2 = encryptedConverter.SerializeToBytes(model);
-            var ratio = (data2.Length / (float)data1.Length) - 1;
-
-            Console.WriteLine("Original size: {0} bytes", data1.Length);
-            Console.WriteLine("Encrypted size: {0} bytes", data2.Length);
-            Console.WriteLine("Increase in size: {0:F0}%", ratio*100f);
-            ratio.Should().BeLessThan(expected);
         }
     }
 }

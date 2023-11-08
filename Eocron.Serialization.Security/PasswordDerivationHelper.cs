@@ -1,11 +1,14 @@
 ﻿using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
 
 namespace Eocron.Serialization.Security
 {
     public static class PasswordDerivationHelper
     {
+        private static readonly SecureRandom Random = new SecureRandom();
+
         private static readonly byte[] DefaultKeySalt =
         {
             104, 95,  254, 255,
@@ -19,6 +22,13 @@ namespace Eocron.Serialization.Security
         };
 
         private const int DefaultIterationCount = 10001;
+
+        public static byte[] CreateRandomBytes(int size)
+        {
+            var nonce = new byte[size];
+            Random.NextBytes(nonce);
+            return nonce;
+        }
         public static byte[] GenerateKeyFrom(string password, int keyByteSize)
         {
             return GenerateFrom(password, DefaultKeySalt, keyByteSize);

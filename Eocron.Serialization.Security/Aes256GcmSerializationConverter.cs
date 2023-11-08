@@ -14,11 +14,10 @@ namespace Eocron.Serialization.Security;
 /// Used for general encryption where secret is not shared between users.
 /// AES256 GCM provide two important features: decent security, integrity validation.
 /// </summary>
-public sealed class Aes256GcmSerializationConverter : ISerializationConverter
+public sealed class Aes256GcmSerializationConverter : BinarySerializationConverterBase
 {
-    private static readonly SecureRandom Random = new SecureRandom();
     private const int NonceByteSize = 12;
-    private const int KeyByteSize = 32;
+    public const int KeyByteSize = 32;
     private const int MacByteSize = 16;
     private const int MacBitSize = MacByteSize * 8;
     
@@ -45,11 +44,11 @@ public sealed class Aes256GcmSerializationConverter : ISerializationConverter
         _key = key;
     }
 
-    public object DeserializeFrom(Type type, StreamReader sourceStream)
+    protected override object DeserializeFrom(Type type, BinaryReader reader)
     {
-        using var body = ReadAesGcmData(sourceStream);
+        using var body = ReadAesGcmData(reader);
         var cipher = CreateAeadCipher(body.Nonce, false);
-        using var decryptedPayload = Rent(cipher.GetOutputSize(body.EncryptedPayload.Segment.Count));
+        using var decryptedPayload = ArrayPoolHelper.Rent(_arrayPool, cipher.GetOutputSize(body.EncryptedPayload.Segment.Count));
 
         var len = cipher.ProcessBytes(
             body.EncryptedPayload.Segment.Array,
@@ -59,13 +58,15 @@ public sealed class Aes256GcmSerializationConverter : ISerializationConverter
             decryptedPayload.Segment.Offset);
         cipher.DoFinal(decryptedPayload.Segment.Array, len);
         using var ms = new MemoryStream(decryptedPayload.Segment.Array, decryptedPayload.Segment.Offset, decryptedPayload.Segment.Count, false);
-        return _inner.DeserializeFrom(type, ms, Encoding.UTF8);
+        return _inner.DeserializeFrom(type, ms);
     }
-    
-    public void SerializeTo(Type type, object obj, StreamWriter targetStream)
+
+    protected override void SerializeTo(Type type, object obj, BinaryWriter writer)
     {
         var decryptedPayload = new ArraySegment<byte>(_inner.SerializeToBytes(type, obj, Encoding.UTF8));
-        using var body = new RentedAesGcmData(CreateNewNonce(), Rent(decryptedPayload.Count + MacByteSize));
+        using var body = new RentedAesGcmData(
+            PasswordDerivationHelper.CreateRandomBytes(NonceByteSize), 
+            ArrayPoolHelper.Rent(_arrayPool, decryptedPayload.Count + MacByteSize));
         var cipher = CreateAeadCipher(body.Nonce, true);
         var len = cipher.ProcessBytes(
             decryptedPayload.Array,
@@ -75,17 +76,10 @@ public sealed class Aes256GcmSerializationConverter : ISerializationConverter
             body.EncryptedPayload.Segment.Offset);
         cipher.DoFinal(body.EncryptedPayload.Segment.Array, len);
         
-        WriteAesGcmData(targetStream, body);
+        WriteAesGcmData(writer, body);
     }
 
-    private RentedByteArray Rent(int size)
-    {
-        if (size <= 0)
-        {
-            throw new SecurityException("Invalid rent size.");
-        }
-        return new RentedByteArray(_arrayPool.Rent(size), size, _arrayPool);
-    }
+
     
     private IAeadCipher CreateAeadCipher(byte[] nonce, bool forEncryption)
     {
@@ -95,13 +89,6 @@ public sealed class Aes256GcmSerializationConverter : ISerializationConverter
         return cipher;
     }
 
-    private static byte[] CreateNewNonce()
-    {
-        var nonce = new byte[NonceByteSize];
-        Random.NextBytes(nonce);
-        return nonce;
-    }
-    
     private void ReadExactly(BinaryReader reader, ArraySegment<byte> segment)
     {
         if (reader.Read(segment.Array, segment.Offset, segment.Count) != segment.Count)
@@ -110,15 +97,14 @@ public sealed class Aes256GcmSerializationConverter : ISerializationConverter
         }
     }
 
-    private RentedAesGcmData ReadAesGcmData(StreamReader reader)
+    private RentedAesGcmData ReadAesGcmData(BinaryReader reader)
     {
-        var br = new BinaryReader(reader.BaseStream);
-        var nonce = br.ReadBytes(NonceByteSize);
-        var encryptedPayloadSize = br.ReadInt32();
-        var encryptedPayload = Rent(encryptedPayloadSize);
+        var nonce = reader.ReadBytes(NonceByteSize);
+        var encryptedPayloadSize = reader.ReadInt32();
+        var encryptedPayload = ArrayPoolHelper.Rent(_arrayPool, encryptedPayloadSize);
         try
         {
-            ReadExactly(br, encryptedPayload.Segment);
+            ReadExactly(reader, encryptedPayload.Segment);
             var result = new RentedAesGcmData(nonce, encryptedPayload);
             encryptedPayload = null;
             return result;
@@ -129,22 +115,21 @@ public sealed class Aes256GcmSerializationConverter : ISerializationConverter
         }
     }
 
-    private void WriteAesGcmData(StreamWriter writer, RentedAesGcmData data)
+    private void WriteAesGcmData(BinaryWriter writer, RentedAesGcmData data)
     {
-        var bw = new BinaryWriter(writer.BaseStream);
-        bw.Write(data.Nonce);
-        bw.Write(data.EncryptedPayload.Segment.Count);
-        bw.Write(data.EncryptedPayload.Segment.Array, data.EncryptedPayload.Segment.Offset, data.EncryptedPayload.Segment.Count);
-        bw.Flush();
+        writer.Write(data.Nonce);
+        writer.Write(data.EncryptedPayload.Segment.Count);
+        writer.Write(data.EncryptedPayload.Segment.Array, data.EncryptedPayload.Segment.Offset, data.EncryptedPayload.Segment.Count);
+        writer.Flush();
     }
     
     private sealed class RentedAesGcmData : IDisposable
     {
         public readonly byte[] Nonce;
 
-        public readonly RentedByteArray EncryptedPayload;
+        public readonly ArrayPoolHelper.RentedByteArray EncryptedPayload;
 
-        public RentedAesGcmData(byte[] nonce, RentedByteArray encryptedPayload)
+        public RentedAesGcmData(byte[] nonce, ArrayPoolHelper.RentedByteArray encryptedPayload)
         {
             Nonce = nonce;
             EncryptedPayload = encryptedPayload;
@@ -156,20 +141,5 @@ public sealed class Aes256GcmSerializationConverter : ISerializationConverter
         }
     }
 
-    private sealed class RentedByteArray : IDisposable
-    {
-        private readonly ArrayPool<byte> _pool;
-        public readonly ArraySegment<byte> Segment;
 
-        public RentedByteArray(byte[] original, int size, ArrayPool<byte> pool)
-        {
-            _pool = pool;
-            Segment = new ArraySegment<byte>(original, 0, size);
-        }
-
-        public void Dispose()
-        {
-            _pool.Return(Segment.Array, true);
-        }
-    }
 }
