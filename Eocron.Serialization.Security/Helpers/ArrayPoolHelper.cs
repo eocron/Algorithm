@@ -2,7 +2,7 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 
-namespace Eocron.Serialization.Security
+namespace Eocron.Serialization.Security.Helpers
 {
     public static class ArrayPoolHelper
     {

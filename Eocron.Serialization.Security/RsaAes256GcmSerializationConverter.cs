@@ -4,6 +4,7 @@ using System.IO;
 using System.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Eocron.Serialization.Security.Helpers;
 
 namespace Eocron.Serialization.Security
 {
@@ -23,7 +24,7 @@ namespace Eocron.Serialization.Security
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
             _cert = cert ?? throw new ArgumentNullException(nameof(cert));
-            _padding = RSAEncryptionPadding.Pkcs1;
+            _padding = RSAEncryptionPadding.OaepSHA512;
             _pool = pool ?? ArrayPool<byte>.Shared;
         }
 

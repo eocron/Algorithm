@@ -4,7 +4,7 @@ using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 
-namespace Eocron.Serialization.Security
+namespace Eocron.Serialization.Security.Helpers
 {
     public static class PasswordDerivationHelper
     {
