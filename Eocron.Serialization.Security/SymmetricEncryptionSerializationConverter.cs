@@ -38,7 +38,7 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
             throw new ArgumentOutOfRangeException(nameof(key), $"Key should be of size: {KeyByteSize}");
         
         _inner = inner;
-        _pool = pool ?? SecureRentedArrayPool<byte>.Shared;
+        _pool = pool ?? NonRentedArrayPool<byte>.Shared;
         _key = key;
     }
 

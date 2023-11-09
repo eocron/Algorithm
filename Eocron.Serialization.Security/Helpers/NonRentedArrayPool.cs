@@ -2,9 +2,9 @@
 
 namespace Eocron.Serialization.Security.Helpers
 {
-    public sealed class SecureRentedArrayPool<T> : IRentedArrayPool<T>
+    public sealed class NonRentedArrayPool<T> : IRentedArrayPool<T>
     {
-        public static readonly IRentedArrayPool<T> Shared = new SecureRentedArrayPool<T>();
+        public static readonly IRentedArrayPool<T> Shared = new NonRentedArrayPool<T>();
         
         public IRentedArray<T> RentExact(int size)
         {
@@ -15,20 +15,18 @@ namespace Eocron.Serialization.Security.Helpers
         
         private sealed class NonRentedArray : IRentedArray<T>
         {
+            private readonly T[] _data;
             public NonRentedArray(int size)
             {
-                Data = new T[size];
+                _data = new T[size];
             }
 
             public void Dispose()
             {
-                for (int i = 0; i < Data.Length; i++)
-                {
-                    Data[i] = default;
-                }
+                Array.Clear(_data, 0, _data.Length);
             }
 
-            public T[] Data { get; }
+            public T[] Data => _data;
         }
     }
 }

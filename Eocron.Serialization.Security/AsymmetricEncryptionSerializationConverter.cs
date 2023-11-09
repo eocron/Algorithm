@@ -26,7 +26,7 @@ namespace Eocron.Serialization.Security
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
             _cert = cert ?? throw new ArgumentNullException(nameof(cert));
             _padding = RSAEncryptionPadding.OaepSHA512;
-            _pool = pool ?? SecureRentedArrayPool<byte>.Shared;
+            _pool = pool ?? NonRentedArrayPool<byte>.Shared;
         }
 
         public object DeserializeFrom(Type type, StreamReader sourceStream)
