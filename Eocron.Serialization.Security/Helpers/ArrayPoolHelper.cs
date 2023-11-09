@@ -27,9 +27,10 @@ namespace Eocron.Serialization.Security.Helpers
                 throw new ArgumentOutOfRangeException(nameof(size));
             }
 
-            var rented = pool.Rent(size);
-            var originalSize = UnsafeChangeLength(rented, (uint)size);
-            return new RentedArray<T>(rented, originalSize, pool, clearOnDispose);
+            return new NonRentedArray<T>(size);
+            //var rented = pool.Rent(size);
+            //var originalSize = UnsafeChangeLength(rented, (uint)size);
+            //return new RentedArray<T>(rented, originalSize, pool, clearOnDispose);
         }
 
         private static uint UnsafeChangeLength<T>(T[] array, uint newLength)
@@ -43,6 +44,20 @@ namespace Eocron.Serialization.Security.Helpers
             return originalLength;
         }
 
+        private sealed class NonRentedArray<T> : IRentedArray<T>
+        {
+            private readonly T[] _data;
+            public T[] Data => _data;
+
+            public NonRentedArray(int size)
+            {
+                _data = new T[size];
+            }
+
+            public void Dispose()
+            {
+            }
+        }
         private sealed class RentedArray<T> : IRentedArray<T>
         {
             private readonly uint _originalSize;

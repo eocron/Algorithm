@@ -37,7 +37,7 @@ namespace Eocron.Serialization.PerformanceTests
         [Explicit]
         public void Run()
         {
-            BenchmarkRunner.Run<TTests>(new DebugInProcessConfig());
+            BenchmarkRunner.Run<TTests>(new SerializationBencmarkConfig());
         }
         
         private class SerializationBencmarkConfig : ManualConfig

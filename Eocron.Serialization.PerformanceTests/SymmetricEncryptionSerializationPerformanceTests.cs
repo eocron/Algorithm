@@ -6,15 +6,15 @@ using Eocron.Serialization.Tests.Models.Protobuf;
 
 namespace Eocron.Serialization.PerformanceTests
 {
-    public class AsymmetricEncryptionSerializationPerformanceTests :
-        SerializationPerformanceTestsBase<AsymmetricEncryptionSerializationPerformanceTests, ProtobufTestModel>,
+    public class SymmetricEncryptionSerializationPerformanceTests :
+        SerializationPerformanceTestsBase<SymmetricEncryptionSerializationPerformanceTests, ProtobufTestModel>,
         ISerializationPerformanceTests
     {
-        public AsymmetricEncryptionSerializationPerformanceTests() : base(false)
+        public SymmetricEncryptionSerializationPerformanceTests() : base(false)
         {
             
         }
-        
+
         [Benchmark]
         public void Deserialize()
         {
