@@ -19,14 +19,14 @@ namespace Eocron.Serialization.Security
         private readonly ISerializationConverter _inner;
         private readonly X509Certificate2 _cert;
         private readonly RSAEncryptionPadding _padding;
-        private readonly ArrayPool<byte> _pool;
+        private readonly IRentedArrayPool<byte> _pool;
 
-        public AsymmetricEncryptionSerializationConverter(ISerializationConverter inner, X509Certificate2 cert, ArrayPool<byte> pool = null)
+        public AsymmetricEncryptionSerializationConverter(ISerializationConverter inner, X509Certificate2 cert, IRentedArrayPool<byte> pool = null)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
             _cert = cert ?? throw new ArgumentNullException(nameof(cert));
             _padding = RSAEncryptionPadding.OaepSHA512;
-            _pool = pool ?? ArrayPool<byte>.Shared;
+            _pool = pool ?? SecureRentedArrayPool<byte>.Shared;
         }
 
         public object DeserializeFrom(Type type, StreamReader sourceStream)
@@ -36,7 +36,7 @@ namespace Eocron.Serialization.Security
                 throw new SecurityException("RSA certificate should have private key initialized to perform deserialization.");
             }
             using var rsa = _cert.GetRSAPrivateKey();
-            using var encryptedKey = ArrayPoolHelper.RentExact(_pool, rsa.KeySize / 8);
+            using var encryptedKey = _pool.RentExact(rsa.KeySize / 8);
             
             var br = new BinaryReader(sourceStream.BaseStream);
             br.ReadExactly(encryptedKey);

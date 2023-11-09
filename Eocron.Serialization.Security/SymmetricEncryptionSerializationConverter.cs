@@ -20,15 +20,15 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
     private const int MacBitSize = MacByteSize * 8;
     
     private readonly ISerializationConverter _inner;
-    private readonly ArrayPool<byte> _arrayPool;
+    private readonly IRentedArrayPool<byte> _pool;
     private readonly byte[] _key;
 
-    public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, string password, ArrayPool<byte> pool = null) :
+    public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, string password, IRentedArrayPool<byte> pool = null) :
         this(inner, PasswordDerivationHelper.GenerateKeyFrom(password, KeyByteSize), pool)
     {
     }
 
-    public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, byte[] key, ArrayPool<byte> pool = null)
+    public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, byte[] key, IRentedArrayPool<byte> pool = null)
     {
         if (inner == null)
             throw new ArgumentNullException(nameof(inner));
@@ -38,7 +38,7 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
             throw new ArgumentOutOfRangeException(nameof(key), $"Key should be of size: {KeyByteSize}");
         
         _inner = inner;
-        _arrayPool = pool ?? ArrayPool<byte>.Shared;
+        _pool = pool ?? SecureRentedArrayPool<byte>.Shared;
         _key = key;
     }
 
@@ -46,7 +46,7 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
     {
         using var body = ReadAesGcmData(reader);
         var cipher = CreateAeadCipher(body.Nonce, false);
-        using var decryptedPayload = ArrayPoolHelper.RentExact(_arrayPool, cipher.GetOutputSize(body.EncryptedPayload.Data.Length));
+        using var decryptedPayload = _pool.RentExact(cipher.GetOutputSize(body.EncryptedPayload.Data.Length));
         var len = cipher.ProcessBytes(
             body.EncryptedPayload.Data,
             0,
@@ -62,8 +62,8 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
     {
         using var ms = new MemoryStream();
         _inner.SerializeTo(type, obj, ms);
-        using var nonce = PasswordDerivationHelper.CreateRandomBytes(_arrayPool, NonceByteSize);
-        using var encrypted = ArrayPoolHelper.RentExact(_arrayPool, (int)ms.Position + MacByteSize);
+        using var nonce = PasswordDerivationHelper.CreateRandomBytes(_pool, NonceByteSize);
+        using var encrypted = _pool.RentExact((int)ms.Position + MacByteSize);
         using var body = new RentedAesGcmData(nonce, encrypted);
         var cipher = CreateAeadCipher(body.Nonce, true);
         var len = cipher.ProcessBytes(
@@ -87,12 +87,12 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
 
     private RentedAesGcmData ReadAesGcmData(BinaryReader reader)
     {
-        var nonce = ArrayPoolHelper.RentExact(_arrayPool, NonceByteSize);
+        var nonce = _pool.RentExact(NonceByteSize);
         try
         {
             reader.ReadExactly(nonce);
             var encryptedPayloadSize = reader.ReadInt32();
-            var encryptedPayload = ArrayPoolHelper.RentExact(_arrayPool, encryptedPayloadSize);
+            var encryptedPayload = _pool.RentExact(encryptedPayloadSize);
             try
             {
                 reader.ReadExactly(encryptedPayload);
