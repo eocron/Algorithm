@@ -1,4 +1,6 @@
-﻿namespace Eocron.Serialization.Security.Helpers
+﻿using System;
+
+namespace Eocron.Serialization.Security.Helpers
 {
     public sealed class SecureRentedArrayPool<T> : IRentedArrayPool<T>
     {
@@ -6,6 +8,8 @@
         
         public IRentedArray<T> RentExact(int size)
         {
+            if (size <= 0)
+                throw new ArgumentOutOfRangeException(nameof(size));
             return new NonRentedArray(size);
         }
         
