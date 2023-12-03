@@ -40,7 +40,7 @@ namespace Eocron.NetCore.Serialization.Security
             
             var br = new BinaryReader(sourceStream.BaseStream);
             br.ReadExactly(encryptedKey);
-            var key = rsa.Decrypt(encryptedKey.Data, _padding);
+            var key = rsa.Decrypt(encryptedKey.Data.ToArray(), _padding);
             var converter = new SymmetricEncryptionSerializationConverter(_inner, key, _pool);
             return converter.DeserializeFrom(type, sourceStream);
         }
@@ -51,9 +51,9 @@ namespace Eocron.NetCore.Serialization.Security
             using var key = PasswordDerivationHelper.CreateRandomBytes(_pool, SymmetricEncryptionSerializationConverter.KeyByteSize);
             
             var bw = new BinaryWriter(targetStream.BaseStream);
-            bw.Write(rsa.Encrypt(key.Data, _padding));
+            bw.Write(rsa.Encrypt(key.Data.ToArray(), _padding));
             bw.Flush();
-            var converter = new SymmetricEncryptionSerializationConverter(_inner, key.Data, _pool);
+            var converter = new SymmetricEncryptionSerializationConverter(_inner, key.Data.ToArray(), _pool);
             converter.SerializeTo(type, obj, targetStream);
         }
     }

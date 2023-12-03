@@ -51,7 +51,7 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
             body.EncryptedPayload.Data,
             decryptedPayload.Data);
         cipher.DoFinal(decryptedPayload.Data);
-        using var ms = new MemoryStream(decryptedPayload.Data, 0, decryptedPayload.Data.Length, false);
+        using var ms = new MemoryStream(decryptedPayload.Data.ToArray(), 0, decryptedPayload.Data.Length, false);
         return _inner.DeserializeFrom(type, ms);
     }
 
@@ -65,11 +65,8 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
         var cipher = CreateAeadCipher(body.Nonce, true);
         var len = cipher.ProcessBytes(
             ms.GetBuffer(),
-            0,
-            (int)ms.Position,
-            body.EncryptedPayload.Data,
-            0);
-        cipher.DoFinal(body.EncryptedPayload.Data, len);
+            body.EncryptedPayload.Data);
+        cipher.DoFinal(body.EncryptedPayload.Data);
         
         WriteAesGcmData(writer, body);
     }
@@ -77,7 +74,7 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
     private IAeadCipher CreateAeadCipher(IRentedArray<byte> nonce, bool forEncryption)
     {
         var cipher = new GcmBlockCipher(new AesLightEngine());
-        var parameters = new AeadParameters(new KeyParameter(_key), MacBitSize, nonce.Data);
+        var parameters = new AeadParameters(new KeyParameter(_key), MacBitSize, nonce.Data.ToArray());
         cipher.Init(forEncryption, parameters);
         return cipher;
     }
