@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <PackageId>Eocron.NetCore.Serialization.Security</PackageId>
         <Product>Eocron.NetCore.Serialization.Security</Product>
         <PackageTags>serialization;security;encryption;eocron;netcore</PackageTags>

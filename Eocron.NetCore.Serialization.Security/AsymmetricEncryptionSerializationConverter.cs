@@ -37,23 +37,25 @@ namespace Eocron.NetCore.Serialization.Security
             }
             using var rsa = _cert.GetRSAPrivateKey();
             using var encryptedKey = _pool.RentExact(rsa.KeySize / 8);
+            using var decryptedKey = _pool.RentExact(SymmetricEncryptionSerializationConverter.KeyByteSize);
             
             var br = new BinaryReader(sourceStream.BaseStream);
             br.ReadExactly(encryptedKey);
-            var key = rsa.Decrypt(encryptedKey.Data.ToArray(), _padding);
-            var converter = new SymmetricEncryptionSerializationConverter(_inner, key, _pool);
+            rsa.Decrypt(encryptedKey.Data, decryptedKey.Data, _padding);
+            var converter = new SymmetricEncryptionSerializationConverter(_inner, decryptedKey.Data.ToArray(), _pool);
             return converter.DeserializeFrom(type, sourceStream);
         }
 
         public void SerializeTo(Type type, object obj, StreamWriter targetStream)
         {
             using var rsa = _cert.GetRSAPublicKey();
-            using var key = PasswordDerivationHelper.CreateRandomBytes(_pool, SymmetricEncryptionSerializationConverter.KeyByteSize);
-            
+            using var decryptedKey = PasswordDerivationHelper.CreateRandomBytes(_pool, SymmetricEncryptionSerializationConverter.KeyByteSize);
+            using var encryptedKey = _pool.RentExact(rsa.KeySize / 8);
             var bw = new BinaryWriter(targetStream.BaseStream);
-            bw.Write(rsa.Encrypt(key.Data.ToArray(), _padding));
+            rsa.Encrypt(decryptedKey.Data, encryptedKey.Data, _padding);
+            bw.Write(encryptedKey.Data);
             bw.Flush();
-            var converter = new SymmetricEncryptionSerializationConverter(_inner, key.Data.ToArray(), _pool);
+            var converter = new SymmetricEncryptionSerializationConverter(_inner, decryptedKey.Data.ToArray(), _pool);
             converter.SerializeTo(type, obj, targetStream);
         }
     }

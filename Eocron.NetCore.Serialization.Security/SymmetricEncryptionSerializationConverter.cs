@@ -16,6 +16,7 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
 {
     private const int NonceByteSize = 12;
     public const int KeyByteSize = 32;
+    public const int EncryptedKeyByteSize = 256;
     private const int MacByteSize = 16;
     private const int MacBitSize = MacByteSize * 8;
     
