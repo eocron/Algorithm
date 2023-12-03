@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Eocron.NetCore.Serialization.Security.Helpers;
 using Eocron.Serialization;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace Eocron.NetCore.Serialization.Security
 {
@@ -42,7 +43,7 @@ namespace Eocron.NetCore.Serialization.Security
             var br = new BinaryReader(sourceStream.BaseStream);
             br.ReadExactly(encryptedKey);
             rsa.Decrypt(encryptedKey.Data, decryptedKey.Data, _padding);
-            var converter = new SymmetricEncryptionSerializationConverter(_inner, decryptedKey.Data.ToArray(), _pool);
+            var converter = new SymmetricEncryptionSerializationConverter(_inner, new KeyParameter(decryptedKey.Data), _pool);
             return converter.DeserializeFrom(type, sourceStream);
         }
 
@@ -55,7 +56,7 @@ namespace Eocron.NetCore.Serialization.Security
             rsa.Encrypt(decryptedKey.Data, encryptedKey.Data, _padding);
             bw.Write(encryptedKey.Data);
             bw.Flush();
-            var converter = new SymmetricEncryptionSerializationConverter(_inner, decryptedKey.Data.ToArray(), _pool);
+            var converter = new SymmetricEncryptionSerializationConverter(_inner, new KeyParameter(decryptedKey.Data), _pool);
             converter.SerializeTo(type, obj, targetStream);
         }
     }

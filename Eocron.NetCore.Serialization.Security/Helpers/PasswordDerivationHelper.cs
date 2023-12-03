@@ -34,8 +34,8 @@ namespace Eocron.NetCore.Serialization.Security.Helpers
         {
             return GenerateFrom(password, DefaultKeySalt, keyByteSize);
         }
-        
-        public static byte[] GenerateFrom(string password, byte[] salt, int keyByteSize, int iterations = DefaultIterationCount)
+
+        private static byte[] GenerateFrom(string password, byte[] salt, int keyByteSize, int iterations = DefaultIterationCount)
         {
             var generator = new Pkcs5S2ParametersGenerator();
             generator.Init(

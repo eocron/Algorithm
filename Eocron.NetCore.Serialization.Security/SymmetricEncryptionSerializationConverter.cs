@@ -16,13 +16,12 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
 {
     private const int NonceByteSize = 12;
     public const int KeyByteSize = 32;
-    public const int EncryptedKeyByteSize = 256;
     private const int MacByteSize = 16;
     private const int MacBitSize = MacByteSize * 8;
     
     private readonly ISerializationConverter _inner;
     private readonly IRentedArrayPool<byte> _pool;
-    private readonly byte[] _key;
+    private readonly KeyParameter _key;
 
     public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, string password, IRentedArrayPool<byte> pool = null) :
         this(inner, PasswordDerivationHelper.GenerateKeyFrom(password, KeyByteSize), pool)
@@ -40,7 +39,17 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
         
         _inner = inner;
         _pool = pool ?? RentedArrayPool<byte>.Shared;
-        _key = key;
+        _key = new KeyParameter(key);
+    }
+    
+    internal SymmetricEncryptionSerializationConverter(ISerializationConverter inner, KeyParameter keyParameter, IRentedArrayPool<byte> pool = null)
+    {
+        if (inner == null)
+            throw new ArgumentNullException(nameof(inner));
+        
+        _inner = inner;
+        _pool = pool ?? RentedArrayPool<byte>.Shared;
+        _key = keyParameter;
     }
 
     protected override object DeserializeFrom(Type type, BinaryReader reader)
@@ -75,7 +84,7 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
     private IAeadCipher CreateAeadCipher(IRentedArray<byte> nonce, bool forEncryption)
     {
         var cipher = new GcmBlockCipher(new AesLightEngine());
-        var parameters = new AeadParameters(new KeyParameter(_key), MacBitSize, nonce.Data.ToArray());
+        var parameters = new AeadParameters(_key, MacBitSize, nonce.Data.ToArray());
         cipher.Init(forEncryption, parameters);
         return cipher;
     }
