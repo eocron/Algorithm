@@ -22,8 +22,8 @@ namespace Eocron.NetCore.Serialization.Security.Helpers
         private sealed class MemoryRentedArray : IRentedArray<T>
         {
             private readonly int _size;
-            private readonly IMemoryOwner<T> _owner;
-            
+            private IMemoryOwner<T> _owner;
+
             public MemoryRentedArray(int size, IMemoryOwner<T> owner)
             {
                 _size = size;
@@ -32,7 +32,11 @@ namespace Eocron.NetCore.Serialization.Security.Helpers
 
             public void Dispose()
             {
+                if(_owner == null)
+                    return;
+                _owner.Memory.Span.Fill(default);
                 _owner.Dispose();
+                _owner = null;
             }
 
             public Span<T> Data => _owner.Memory.Slice(0, _size).Span;
