@@ -50,7 +50,7 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
         var len = cipher.ProcessBytes(
             body.EncryptedPayload.Data,
             decryptedPayload.Data);
-        cipher.DoFinal(decryptedPayload.Data);
+        cipher.DoFinal(decryptedPayload.Data.Slice(len));
         using var ms = new MemoryStream(decryptedPayload.Data.ToArray(), 0, decryptedPayload.Data.Length, false);
         return _inner.DeserializeFrom(type, ms);
     }
@@ -66,7 +66,7 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
         var len = cipher.ProcessBytes(
             ms.GetBuffer(),
             body.EncryptedPayload.Data);
-        cipher.DoFinal(body.EncryptedPayload.Data);
+        cipher.DoFinal(body.EncryptedPayload.Data.Slice(len));
         
         WriteAesGcmData(writer, body);
     }
