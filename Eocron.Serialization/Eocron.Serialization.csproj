@@ -8,6 +8,7 @@
         <Description>
             This client library contains some basic and usefull serialization alghorithms for my work.
         </Description>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>

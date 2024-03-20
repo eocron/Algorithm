@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net472;net5.0;net6.0</TargetFrameworks>
+        <TargetFramework>net6.0</TargetFramework>
         <IsPackable>false</IsPackable>
         <Nullable>enable</Nullable>
     </PropertyGroup>
@@ -16,8 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Eocron.Serialization.Security\Eocron.Serialization.Security.csproj" />
-        <ProjectReference Include="..\Eocron.Serialization\Eocron.Serialization.csproj" />
+        <ProjectReference Include="..\Eocron.Validation\Eocron.Validation.csproj" />
     </ItemGroup>
 
     <ItemGroup>

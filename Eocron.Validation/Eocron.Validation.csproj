@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <PackageId>Eocron.Validation</PackageId>
+        <Product>Eocron.Validation</Product>
+        <PackageTags>validation;eocron</PackageTags>
+        <Description>
+            This client library contains some basic and usefull validation extensions for my work.
+        </Description>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+</Project>

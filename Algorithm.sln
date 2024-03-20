@@ -51,6 +51,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eocron.NetCore.Serializatio
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eocron.NetCore.Serialization.Tests", "Eocron.NetCore.Serialization.Tests\Eocron.NetCore.Serialization.Tests.csproj", "{45B33EFB-7E55-4CBE-9C35-8157310C9A06}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Validation", "Validation", "{E360FBAB-527A-47F3-BEFB-ACC28AF9AD4C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{D22240EA-5B09-49B0-A55D-1189D0022A7C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eocron.Validation.Tests", "Eocron.Validation.Tests\Eocron.Validation.Tests.csproj", "{896A7E26-709C-466C-A063-71355E2E25BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eocron.Validation", "Eocron.Validation\Eocron.Validation.csproj", "{A16362F9-7273-452B-9EC2-6BBEA71DE039}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -97,6 +105,14 @@ Global
 		{45B33EFB-7E55-4CBE-9C35-8157310C9A06}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{45B33EFB-7E55-4CBE-9C35-8157310C9A06}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{45B33EFB-7E55-4CBE-9C35-8157310C9A06}.Release|Any CPU.Build.0 = Release|Any CPU
+		{896A7E26-709C-466C-A063-71355E2E25BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{896A7E26-709C-466C-A063-71355E2E25BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{896A7E26-709C-466C-A063-71355E2E25BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{896A7E26-709C-466C-A063-71355E2E25BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A16362F9-7273-452B-9EC2-6BBEA71DE039}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A16362F9-7273-452B-9EC2-6BBEA71DE039}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A16362F9-7273-452B-9EC2-6BBEA71DE039}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A16362F9-7273-452B-9EC2-6BBEA71DE039}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -116,6 +132,9 @@ Global
 		{E249BF77-7AA9-400B-A8E0-8BE20A6836F0} = {3CE066D6-5F6D-4F81-B984-E07280FF59D8}
 		{5671AAB6-D100-4A2F-88B7-22A93D25C0EB} = {DA81F4C9-103F-4A4F-A898-20DF70235B3B}
 		{45B33EFB-7E55-4CBE-9C35-8157310C9A06} = {3CE066D6-5F6D-4F81-B984-E07280FF59D8}
+		{D22240EA-5B09-49B0-A55D-1189D0022A7C} = {E360FBAB-527A-47F3-BEFB-ACC28AF9AD4C}
+		{896A7E26-709C-466C-A063-71355E2E25BE} = {D22240EA-5B09-49B0-A55D-1189D0022A7C}
+		{A16362F9-7273-452B-9EC2-6BBEA71DE039} = {E360FBAB-527A-47F3-BEFB-ACC28AF9AD4C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {63EFCA1D-9D5F-4CD1-B2EB-A6176645E598}
