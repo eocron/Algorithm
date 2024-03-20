@@ -4,6 +4,13 @@ namespace Eocron.Validation
 {
     public static class ObjectValidationResultBuilderExtensions
     {
+        public static ObjectValidationResultBuilder<T> WithMessage<T>(this ObjectValidationResultBuilder<T> builder,
+            Func<T, string> messageProvider)
+        {
+            builder.ObjectMessageProvider = messageProvider;
+            return builder;
+        }
+        
         public static ObjectValidationResultBuilder<T> Is<T>(this ObjectValidationResultBuilder<T> builder,
             Func<T, bool> conditionProvider)
         {

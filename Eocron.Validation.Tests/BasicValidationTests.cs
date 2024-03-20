@@ -21,13 +21,13 @@ namespace Eocron.Validation.Tests
         [Test]
         public void Ignore_Fail()
         {
-            Validate.If(() => "a" != "a").WithMessage("foobar").IgnoreIf(false).Should().BeEquivalentTo(TestHelper.VRs("foobar"));
+            Validate.If(() => "a" != "a").WithMessage("foobar").IgnoreOn(false).Should().BeEquivalentTo(TestHelper.VRs("foobar"));
         }
         
         [Test]
         public void Ignore_Success()
         {
-            Validate.If(() => "a" != "a").WithMessage("foobar").IgnoreIf(true).Should().BeEmpty();
+            Validate.If(() => "a" != "a").WithMessage("foobar").IgnoreOn(true).Should().BeEmpty();
         }
 
         [Test]
@@ -62,19 +62,60 @@ namespace Eocron.Validation.Tests
         {
             Validate.If(() => false)
                 .WithMessage("first")
-                .If(() => false)
+                .Or(() => false)
                 .Then(() => Validate.If(() => false).WithMessage("not fired"))
                 .Else(() => Validate.If(() => false).WithMessage("betweenFirstAndSecond"))
                 //no message
-                .If(() => false)
+                .Or(() => false)
                 .WithMessage("second")
-                .If(() => true)
+                .Or(() => true)
                 .Then(() => Validate.If(() => false).WithMessage("betweenSecondAndThird"))
                 .Else(() => Validate.If(() => false).WithMessage("not fired"))
                 .WithMessage("not fired betweenSecondAndThird")
-                .If(() => false)
+                .Or(() => false)
                 .WithMessage("third")
                 .Should().BeEquivalentTo(TestHelper.VRs("first", "betweenFirstAndSecond", "second", "betweenSecondAndThird", "third"));
+        }
+        
+        [Test]
+        public void ObjectValidationExample()
+        {
+            var obj = new TestObject()
+            {
+                Id = 1,
+                Name = "one",
+                Children = new[]
+                {
+                    new TestObject()
+                    {
+                        Id = 2,
+                        Name = "two"
+                    },
+                    new TestObject()
+                    {
+                        Id = 3,
+                        Name = "three"
+                    }
+                }
+            };
+
+            Validate.IfObject(obj)
+                .NotNull()
+                .WithMessage("Null test object")
+                .Then(() => Validate
+                    .IfObject(obj.Children)
+                    .NotNull()
+                    .WithMessage("children is null")
+                    .Or(() => obj.Id > 0)
+                    .WithMessage("id is below 1"))
+                .Should().BeEmpty();
+        }
+        
+        public class TestObject
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public TestObject[] Children { get; set; }
         }
     }
 }

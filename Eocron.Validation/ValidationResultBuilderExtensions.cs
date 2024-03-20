@@ -22,25 +22,9 @@ namespace Eocron.Validation
             builder.ValidationResultType = condition ? ValidationResultType.Warning : builder.ValidationResultType;
             return builder;
         }
-        public static ValidationResultBuilder If(this IEnumerable<ValidationResult> builder, Func<bool> condition)
-        {
-            return new ValidationResultBuilder
-            {
-                Condition = condition,
-                ValidationResultPrefix = builder
-            };
-        }
-        
-        public static ObjectValidationResultBuilder<T> IfObject<T>(this IEnumerable<ValidationResult> builder, Func<T> objectProvider)
-        {
-            return new ObjectValidationResultBuilder<T>
-            {
-                ObjectProvider = objectProvider,
-                ValidationResultPrefix = builder
-            };
-        }
 
-        public static ValidationResultBuilder IgnoreIf(this ValidationResultBuilder builder, Func<bool> condition)
+
+        public static ValidationResultBuilder IgnoreOn(this ValidationResultBuilder builder, Func<bool> condition)
         {
             if(builder.IgnoreCondition != null)
                 throw new InvalidOperationException($"Validation ignore condition already set");
@@ -48,10 +32,8 @@ namespace Eocron.Validation
             return builder;
         }
         
-        public static ValidationResultBuilder IgnoreIf(this ValidationResultBuilder builder, bool condition)
+        public static ValidationResultBuilder IgnoreOn(this ValidationResultBuilder builder, bool condition)
         {
-            if(builder.IgnoreCondition != null)
-                throw new InvalidOperationException($"Validation ignore condition already set");
             builder.IgnoreCondition = ()=> condition;
             return builder;
         }

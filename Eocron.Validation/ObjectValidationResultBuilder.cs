@@ -4,14 +4,21 @@ namespace Eocron.Validation
 {
     public class ObjectValidationResultBuilder<T> : ValidationResultBuilder
     {
-        public Func<T> ObjectProvider { get; set; } =
-            () => throw new ArgumentNullException("Validation object provider is not set");
+        public Lazy<T> ObjectProvider { get; set; } = new Lazy<T>(() => throw new ArgumentNullException("Validation object provider is not set"));
+
+        public Func<T, string> ObjectMessageProvider
+        {
+            set
+            {
+                ValidationResultMessageProvider = () => value(ObjectProvider.Value);
+            }
+        }
 
         public Func<T, bool> ObjectCondition
         {
             set
             {
-                Condition = () => value(ObjectProvider());
+                Condition = () => value(ObjectProvider.Value);
             }
         }
     }
