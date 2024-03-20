@@ -9,13 +9,13 @@ namespace Eocron.Validation.Tests
         [Test]
         public void Match_Success()
         {
-            Validate.IfObject("aaaaa").Match("^a+$").Should().BeEmpty();
+            Validate.If("aaaaa").Match("^a+$").Should().BeEmpty();
         }
         
         [Test]
         public void Match_Fail()
         {
-            Validate.IfObject("aaaaa").Match("^b+$").Should().BeEquivalentTo(TestHelper.VRs("String 'aaaaa' doesn't match regex pattern '^b+$'"));
+            Validate.If("aaaaa").Match("^b+$").Should().BeEquivalentTo(TestHelper.VRs("Expected 'aaaaa' to match regex '^b+$'"));
         }
     }
 }

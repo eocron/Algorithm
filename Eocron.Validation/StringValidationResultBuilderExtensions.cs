@@ -14,7 +14,7 @@ namespace Eocron.Validation
                 throw new ArgumentNullException(nameof(pattern));
             return builder
                 .Is(x => x != null && Regex.IsMatch(x, pattern, options, timeout ?? Regex.InfiniteMatchTimeout))
-                .WithMessage(x => $"String '{x}' doesn't match regex pattern '{pattern}'");
+                .WithMessage(x => $"Expected '{x}' to match regex '{pattern}'");
         }
     }
 }

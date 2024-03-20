@@ -7,7 +7,7 @@ namespace Eocron.Validation
         public static ObjectValidationResultBuilder<T> WithMessage<T>(this ObjectValidationResultBuilder<T> builder,
             Func<T, string> messageProvider)
         {
-            builder.ObjectMessageProvider = messageProvider;
+            builder.ObjectMessageProvider = messageProvider ?? throw new ArgumentNullException(nameof(messageProvider));
             return builder;
         }
         
@@ -22,14 +22,14 @@ namespace Eocron.Validation
             where T : class
         {
             return builder.Is(x => x != null)
-                .WithMessage(()=> "Object is null");
+                .WithMessage(()=> "Expected not null, but got null");
         }
         
         public static ValidationResultBuilder Null<T>(this ObjectValidationResultBuilder<T> builder)
             where T : class
         {
             return builder.Is(x => x == null)
-                .WithMessage(() => "Object is not null");
+                .WithMessage(x => $"Expected null, but got '{x}'");
         }
     }
 }

@@ -14,6 +14,16 @@ namespace Eocron.Validation
         {
             return If(() => condition);
         }
+        
+        public static ObjectValidationResultBuilder<string> If(Func<string> objectProvider)
+        {
+            return IfObject(objectProvider);
+        }
+        
+        public static ObjectValidationResultBuilder<string> If(string obj)
+        {
+            return IfObject(() => obj);
+        }
 
         public static ObjectValidationResultBuilder<T> IfObject<T>(Func<T> objectProvider)
         {

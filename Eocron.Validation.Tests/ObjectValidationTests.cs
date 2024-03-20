@@ -9,10 +9,7 @@ namespace Eocron.Validation.Tests
         [Test]
         public void Null_Fail()
         {
-            Validate.IfObject(() => new object()).Null().Should().BeEquivalentTo(new[]
-            {
-                new ValidationResult { Message = "Object is not null", Type = ValidationResultType.Error }
-            });
+            Validate.IfObject(() => new object()).Null().Should().BeEquivalentTo(TestHelper.VRs("Expected null, but got 'System.Object'"));
         }
         
         [Test]
@@ -30,10 +27,7 @@ namespace Eocron.Validation.Tests
         [Test]
         public void NotNull_Success()
         {
-            Validate.IfObject(() => (object)null).NotNull().Should().BeEquivalentTo(new[]
-            {
-                new ValidationResult { Message = "Object is null", Type = ValidationResultType.Error }
-            });
+            Validate.IfObject(() => (object)null).NotNull().Should().BeEquivalentTo(TestHelper.VRs("Expected not null, but got null"));
         }
     }
 }
