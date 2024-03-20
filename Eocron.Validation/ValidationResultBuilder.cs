@@ -8,7 +8,7 @@ namespace Eocron.Validation
     public class ValidationResultBuilder : IEnumerable<ValidationResult>
     {
         public ValidationResultType ValidationResultType { get; set; } = ValidationResultType.Error;
-        public Func<string> ValidationResultMessageProvider { get; set; } = () => throw new NotImplementedException("Validation message is not provided");
+        public Func<string> ValidationResultMessageProvider { get; set; }
         public IEnumerable<ValidationResult>? ValidationResultPrefix { get; set; }
         public Func<bool>? IgnoreCondition { get; set; }
         public Func<bool> Condition { get; set; } = () => throw new NotImplementedException("Validation condition is not provided");

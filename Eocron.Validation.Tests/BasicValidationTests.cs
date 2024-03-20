@@ -56,5 +56,25 @@ namespace Eocron.Validation.Tests
                 should.BeEquivalentTo(TestHelper.VRs(messages));
             }
         }
+
+        [Test]
+        public void Chaining()
+        {
+            Validate.If(() => false)
+                .WithMessage("first")
+                .If(() => false)
+                .Then(() => Validate.If(() => false).WithMessage("not fired"))
+                .Else(() => Validate.If(() => false).WithMessage("betweenFirstAndSecond"))
+                //no message
+                .If(() => false)
+                .WithMessage("second")
+                .If(() => true)
+                .Then(() => Validate.If(() => false).WithMessage("betweenSecondAndThird"))
+                .Else(() => Validate.If(() => false).WithMessage("not fired"))
+                .WithMessage("not fired betweenSecondAndThird")
+                .If(() => false)
+                .WithMessage("third")
+                .Should().BeEquivalentTo(TestHelper.VRs("first", "betweenFirstAndSecond", "second", "betweenSecondAndThird", "third"));
+        }
     }
 }

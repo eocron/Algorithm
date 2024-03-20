@@ -8,6 +8,11 @@ namespace Eocron.Validation
         {
             return new ValidationResultBuilder(){ Condition = condition ?? throw new ArgumentNullException(nameof(condition))};
         }
+        
+        public static ValidationResultBuilder If(bool condition)
+        {
+            return If(() => condition);
+        }
 
         public static ObjectValidationResultBuilder<T> IfObject<T>(Func<T> objectProvider)
         {
