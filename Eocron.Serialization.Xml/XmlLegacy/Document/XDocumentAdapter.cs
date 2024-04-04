@@ -2,7 +2,7 @@
 using System.Xml;
 using System.Xml.Linq;
 
-namespace Eocron.Serialization.XmlLegacy.Document
+namespace Eocron.Serialization.Xml.XmlLegacy.Document
 {
     /// <summary>
     ///     Adapting XDocument to common interface

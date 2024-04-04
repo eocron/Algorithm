@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <PackageId>Eocron.Serialization.Yaml</PackageId>
+        <Product>Eocron.Serialization.Yaml</Product>
+        <PackageTags>serialization;yaml;eocron</PackageTags>
+        <Description>
+            This client library contains some basic and usefull serialization alghorithms for my work.
+        </Description>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="YamlDotNet" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Eocron.Serialization\Eocron.Serialization.csproj" />
+    </ItemGroup>
+</Project>

@@ -1,4 +1,5 @@
-﻿using Eocron.Serialization.Security;
+﻿using Eocron.Serialization.Json;
+using Eocron.Serialization.Security;
 using NUnit.Framework;
 
 namespace Eocron.Serialization.Tests
@@ -8,7 +9,7 @@ namespace Eocron.Serialization.Tests
     {
         public override ISerializationConverter GetConverter()
         {
-            return  new SymmetricEncryptionSerializationConverter(SerializationConverter.Json, "foobar");
+            return  new SymmetricEncryptionSerializationConverter(SerializationConverterJson.Json, "foobar");
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
+using Eocron.Serialization.Json;
 using Eocron.Serialization.Security;
 using Eocron.Serialization.Tests.Models.Json;
 using FluentAssertions;
@@ -28,7 +29,7 @@ namespace Eocron.Serialization.Tests
 
         private static ISerializationConverter GetConverter(X509Certificate2 certificate)
         {
-            return  new AsymmetricEncryptionSerializationConverter(SerializationConverter.Json, certificate);
+            return  new AsymmetricEncryptionSerializationConverter(SerializationConverterJson.Json, certificate);
         }
 
         [Test]

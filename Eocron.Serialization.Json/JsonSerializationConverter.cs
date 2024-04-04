@@ -1,16 +1,11 @@
 ﻿using System;
 using System.IO;
-using Eocron.Serialization.XmlLegacy;
+using Newtonsoft.Json;
 
-namespace Eocron.Serialization
+namespace Eocron.Serialization.Json
 {
-    public sealed class XmlSerializationConverter<TDocument> : ISerializationConverter
+    public sealed class JsonSerializationConverter : ISerializationConverter
     {
-        public XmlSerializationConverter(IXmlAdapter<TDocument> serializer)
-        {
-            _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
-        }
-
         public object DeserializeFrom(Type type, StreamReader sourceStream)
         {
             if (type == null)
@@ -18,7 +13,9 @@ namespace Eocron.Serialization
             if (sourceStream == null)
                 throw new ArgumentNullException(nameof(sourceStream));
 
-            return _serializer.DeserializeFromDocument(type, _serializer.ReadDocumentFrom(sourceStream));
+            using var reader = new JsonTextReader(sourceStream);
+            reader.CloseInput = false;
+            return Serializer.Deserialize(reader, type);
         }
 
         public void SerializeTo(Type type, object obj, StreamWriter targetStream)
@@ -30,9 +27,15 @@ namespace Eocron.Serialization
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
 
-            _serializer.WriteDocumentTo(targetStream, _serializer.SerializeToDocument(type, obj));
+            using var writer = new JsonTextWriter(targetStream);
+            writer.CloseOutput = false;
+            Serializer.Serialize(writer, obj, type);
+            writer.Flush();
         }
 
-        private readonly IXmlAdapter<TDocument> _serializer;
+        public JsonSerializer Serializer { get; set; } = JsonSerializer.CreateDefault(new JsonSerializerSettings
+        {
+            Formatting = SerializationConverter.DefaultIndent ? Formatting.Indented : Formatting.None
+        });
     }
 }

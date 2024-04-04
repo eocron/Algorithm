@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
+using Eocron.Serialization.Protobuf;
 using Eocron.Serialization.Security;
 using Eocron.Serialization.Tests.Models.Protobuf;
 
@@ -28,7 +29,7 @@ namespace Eocron.Serialization.PerformanceTests
         }
 
         private static ISerializationConverter Converter =
-            new SymmetricEncryptionSerializationConverter(SerializationConverter.Protobuf, "foobar");
+            new SymmetricEncryptionSerializationConverter(SerializationConverterProtobuf.Protobuf, "foobar");
         public override ISerializationConverter GetConverter()
         {
             return Converter;

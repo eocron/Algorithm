@@ -1,6 +1,6 @@
 ﻿using System.Xml;
 
-namespace Eocron.Serialization.XmlLegacy.Document
+namespace Eocron.Serialization.Xml.XmlLegacy.Document
 {
     /// <summary>
     ///     Adapting XmlDocument to common interface

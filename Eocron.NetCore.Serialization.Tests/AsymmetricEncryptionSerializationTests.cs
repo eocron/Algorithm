@@ -4,6 +4,7 @@ using System.Security.Cryptography.X509Certificates;
 using Eocron.NetCore.Serialization.Security;
 using Eocron.NetCore.Serialization.Tests.Models.Json;
 using Eocron.Serialization;
+using Eocron.Serialization.Json;
 using FluentAssertions;
 using NUnit.Framework;
 
@@ -29,7 +30,7 @@ namespace Eocron.NetCore.Serialization.Tests
 
         private static ISerializationConverter GetConverter(X509Certificate2 certificate)
         {
-            return  new AsymmetricEncryptionSerializationConverter(SerializationConverter.Json, certificate);
+            return  new AsymmetricEncryptionSerializationConverter(SerializationConverterJson.Json, certificate);
         }
 
         [Test]

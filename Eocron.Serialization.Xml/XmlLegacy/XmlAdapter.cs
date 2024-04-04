@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Xml;
-using Eocron.Serialization.XmlLegacy.Document;
-using Eocron.Serialization.XmlLegacy.Serializer;
+using Eocron.Serialization.Xml.XmlLegacy.Document;
+using Eocron.Serialization.Xml.XmlLegacy.Serializer;
 
-namespace Eocron.Serialization.XmlLegacy
+namespace Eocron.Serialization.Xml.XmlLegacy
 {
     /// <summary>
     ///     Adapter for different type of legacy xml document formats (XmlDocument, XDocument)

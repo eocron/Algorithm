@@ -1,6 +1,6 @@
 ﻿using System.Xml;
 
-namespace Eocron.Serialization.XmlLegacy.Document
+namespace Eocron.Serialization.Xml.XmlLegacy.Document
 {
     public interface IXmlDocumentAdapter<TDocument>
     {

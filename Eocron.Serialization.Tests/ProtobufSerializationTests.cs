@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Eocron.Serialization.Protobuf;
 using Eocron.Serialization.Tests.Helpers;
 using Eocron.Serialization.Tests.Models.Protobuf;
 using FluentAssertions;
@@ -13,7 +14,7 @@ namespace Eocron.Serialization.Tests
     {
         public override ISerializationConverter GetConverter()
         {
-            return SerializationConverter.Protobuf;
+            return SerializationConverterProtobuf.Protobuf;
         }
 
         public override ProtobufTestModel CreateTestModel(string path)

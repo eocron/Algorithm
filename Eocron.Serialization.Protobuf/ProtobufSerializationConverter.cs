@@ -3,7 +3,7 @@ using System.IO;
 using ProtoBuf;
 using ProtoBuf.Meta;
 
-namespace Eocron.Serialization
+namespace Eocron.Serialization.Protobuf
 {
     public sealed class ProtobufSerializationConverter : ISerializationConverter
     {

@@ -5,10 +5,11 @@ using System.Xml;
 using System.Xml.Xsl;
 using Eocron.Serialization.Tests.Helpers;
 using Eocron.Serialization.Tests.Models.XmlLegacy;
-using Eocron.Serialization.XmlLegacy;
-using Eocron.Serialization.XmlLegacy.Document;
-using Eocron.Serialization.XmlLegacy.Serializer;
-using Eocron.Serialization.XmlLegacy.Xslt;
+using Eocron.Serialization.Xml;
+using Eocron.Serialization.Xml.XmlLegacy;
+using Eocron.Serialization.Xml.XmlLegacy.Document;
+using Eocron.Serialization.Xml.XmlLegacy.Serializer;
+using Eocron.Serialization.Xml.XmlLegacy.Xslt;
 using NUnit.Framework;
 
 namespace Eocron.Serialization.Tests

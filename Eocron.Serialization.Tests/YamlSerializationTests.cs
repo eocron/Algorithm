@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Eocron.Serialization.Tests.Helpers;
 using Eocron.Serialization.Tests.Models.Yaml;
+using Eocron.Serialization.Yaml;
 using NUnit.Framework;
 
 namespace Eocron.Serialization.Tests
@@ -11,7 +12,7 @@ namespace Eocron.Serialization.Tests
     {
         public override ISerializationConverter GetConverter()
         {
-            return SerializationConverter.Yaml;
+            return SerializationConverterYaml.Yaml;
         }
 
         public override YamlTestModel CreateTestModel(string path)

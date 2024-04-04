@@ -17,6 +17,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Eocron.NetCore.Serialization.Security\Eocron.NetCore.Serialization.Security.csproj" />
+        <ProjectReference Include="..\Eocron.Serialization.Json\Eocron.Serialization.Json.csproj" />
         <ProjectReference Include="..\Eocron.Serialization\Eocron.Serialization.csproj" />
     </ItemGroup>
 

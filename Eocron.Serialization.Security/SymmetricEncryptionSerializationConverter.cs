@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers;
 using System.IO;
 using Eocron.Serialization.Security.Helpers;
 using Org.BouncyCastle.Crypto.Engines;
@@ -20,24 +19,22 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
     private const int MacBitSize = MacByteSize * 8;
     
     private readonly ISerializationConverter _inner;
-    private readonly IRentedArrayPool<byte> _pool;
+    private readonly IRentedArrayPool<byte>? _pool;
     private readonly byte[] _key;
 
-    public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, string password, IRentedArrayPool<byte> pool = null) :
+    public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, string password, IRentedArrayPool<byte>? pool = null) :
         this(inner, PasswordDerivationHelper.GenerateKeyFrom(password, KeyByteSize), pool)
     {
     }
 
-    public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, byte[] key, IRentedArrayPool<byte> pool = null)
+    public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, byte[] key, IRentedArrayPool<byte>? pool = null)
     {
-        if (inner == null)
-            throw new ArgumentNullException(nameof(inner));
         if (key == null || key.Length == 0)
             throw new ArgumentNullException(nameof(key));
         if (key.Length != KeyByteSize)
             throw new ArgumentOutOfRangeException(nameof(key), $"Key should be of size: {KeyByteSize}");
         
-        _inner = inner;
+        _inner = inner ?? throw new ArgumentNullException(nameof(inner));
         _pool = pool ?? NonRentedArrayPool<byte>.Shared;
         _key = key;
     }

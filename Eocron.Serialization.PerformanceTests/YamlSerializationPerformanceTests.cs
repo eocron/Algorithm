@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
 using Eocron.Serialization.Tests.Models.Yaml;
+using Eocron.Serialization.Yaml;
 
 namespace Eocron.Serialization.PerformanceTests
 {
@@ -17,7 +18,7 @@ namespace Eocron.Serialization.PerformanceTests
 
         public override ISerializationConverter GetConverter()
         {
-            return SerializationConverter.Yaml;
+            return SerializationConverterYaml.Yaml;
         }
 
         public override YamlTestModel GetTestModel()

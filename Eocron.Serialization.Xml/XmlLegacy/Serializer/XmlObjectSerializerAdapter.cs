@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Runtime.Serialization;
 using System.Xml;
 
-namespace Eocron.Serialization.XmlLegacy.Serializer
+namespace Eocron.Serialization.Xml.XmlLegacy.Serializer
 {
     /// <summary>
     ///     Adapting XmlObjectSerializer/DataContractSerializer to common interface

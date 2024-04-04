@@ -2,7 +2,7 @@
 using System.IO;
 using YamlDotNet.Serialization;
 
-namespace Eocron.Serialization
+namespace Eocron.Serialization.Yaml
 {
     public sealed class YamlSerializationConverter : ISerializationConverter
     {

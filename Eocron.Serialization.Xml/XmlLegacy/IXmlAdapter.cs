@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Eocron.Serialization.XmlLegacy
+namespace Eocron.Serialization.Xml.XmlLegacy
 {
     public interface IXmlAdapter<TDocument>
     {

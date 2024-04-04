@@ -1,5 +1,4 @@
-﻿using System.Buffers;
-using Org.BouncyCastle.Crypto;
+﻿using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
@@ -24,7 +23,7 @@ namespace Eocron.Serialization.Security.Helpers
 
         private const int DefaultIterationCount = 10001;
 
-        public static IRentedArray<byte> CreateRandomBytes(IRentedArrayPool<byte> pool, int size)
+        public static IRentedArray<byte> CreateRandomBytes(IRentedArrayPool<byte>? pool, int size)
         {
             var result = pool.RentExact(size);
             Random.NextBytes(result.Data);

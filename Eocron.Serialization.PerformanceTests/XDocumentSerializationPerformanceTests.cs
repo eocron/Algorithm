@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
 using Eocron.Serialization.Tests.Models.XmlLegacy;
+using Eocron.Serialization.Xml;
 
 namespace Eocron.Serialization.PerformanceTests
 {
@@ -17,7 +18,7 @@ namespace Eocron.Serialization.PerformanceTests
 
         public override ISerializationConverter GetConverter()
         {
-            return SerializationConverter.XDocument;
+            return SerializationConverterXml.XDocument;
         }
 
         public override XmlTestModelFooBar GetTestModel()

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Xml;
 
-namespace Eocron.Serialization.XmlLegacy.Serializer
+namespace Eocron.Serialization.Xml.XmlLegacy.Serializer
 {
     public interface IXmlSerializerAdapter
     {

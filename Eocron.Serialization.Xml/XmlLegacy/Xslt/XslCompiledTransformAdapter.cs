@@ -4,7 +4,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Xsl;
 
-namespace Eocron.Serialization.XmlLegacy.Xslt
+namespace Eocron.Serialization.Xml.XmlLegacy.Xslt
 {
     public class XslCompiledTransformAdapter<TDocument> : IXmlAdapter<TDocument>
         where TDocument : new()

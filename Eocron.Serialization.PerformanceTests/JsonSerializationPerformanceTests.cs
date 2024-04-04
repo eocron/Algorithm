@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
+using Eocron.Serialization.Json;
 using Eocron.Serialization.Tests.Models.Json;
 
 namespace Eocron.Serialization.PerformanceTests
@@ -17,7 +18,7 @@ namespace Eocron.Serialization.PerformanceTests
 
         public override ISerializationConverter GetConverter()
         {
-            return SerializationConverter.Json;
+            return SerializationConverterJson.Json;
         }
 
         public override JsonTestModel GetTestModel()

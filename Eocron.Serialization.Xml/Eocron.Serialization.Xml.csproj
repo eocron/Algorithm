@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <PackageId>Eocron.Serialization.Xml</PackageId>
+        <Product>Eocron.Serialization.Xml</Product>
+        <PackageTags>serialization;xml;eocron</PackageTags>
+        <Description>
+            This client library contains some basic and usefull serialization alghorithms for my work.
+        </Description>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Eocron.Serialization\Eocron.Serialization.csproj" />
+    </ItemGroup>
+</Project>

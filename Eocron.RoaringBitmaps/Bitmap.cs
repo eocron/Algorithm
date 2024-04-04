@@ -99,7 +99,7 @@ namespace Eocron.RoaringBitmaps
             if (_inner == null)
                 return 0;
 
-            return System.HashCode.Combine(_inner.Cardinality, _inner.Min, _inner.Max);
+            return HashCode.Combine(_inner.Cardinality, _inner.Min, _inner.Max);
         }
         
         public bool IsEmpty => _inner.IsEmpty;

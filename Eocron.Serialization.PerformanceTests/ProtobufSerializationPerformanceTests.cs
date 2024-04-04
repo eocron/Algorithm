@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
+using Eocron.Serialization.Protobuf;
 using Eocron.Serialization.Tests.Models.Protobuf;
 
 namespace Eocron.Serialization.PerformanceTests
@@ -21,7 +22,7 @@ namespace Eocron.Serialization.PerformanceTests
 
         public override ISerializationConverter GetConverter()
         {
-            return SerializationConverter.Protobuf;
+            return SerializationConverterProtobuf.Protobuf;
         }
 
         public override ProtobufTestModel GetTestModel()

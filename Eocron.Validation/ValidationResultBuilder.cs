@@ -42,7 +42,7 @@ namespace Eocron.Validation
             {
                 if (ValidationResultMessageProvider != null)
                 {
-                    yield return new ValidationResult() { Message = ValidationResultMessageProvider(), Type = this.ValidationResultType };
+                    yield return new ValidationResult() { Message = ValidationResultMessageProvider(), Type = ValidationResultType };
                 }
                 if(ElseValidations == null)
                     yield break;

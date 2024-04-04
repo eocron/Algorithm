@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Buffers;
 using System.IO;
 using System.Security;
 using System.Security.Cryptography;
@@ -19,9 +18,9 @@ namespace Eocron.Serialization.Security
         private readonly ISerializationConverter _inner;
         private readonly X509Certificate2 _cert;
         private readonly RSAEncryptionPadding _padding;
-        private readonly IRentedArrayPool<byte> _pool;
+        private readonly IRentedArrayPool<byte>? _pool;
 
-        public AsymmetricEncryptionSerializationConverter(ISerializationConverter inner, X509Certificate2 cert, IRentedArrayPool<byte> pool = null)
+        public AsymmetricEncryptionSerializationConverter(ISerializationConverter inner, X509Certificate2 cert, IRentedArrayPool<byte>? pool = null)
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
             _cert = cert ?? throw new ArgumentNullException(nameof(cert));

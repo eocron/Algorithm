@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Eocron.Serialization.Json;
 using Eocron.Serialization.Tests.Helpers;
 using Eocron.Serialization.Tests.Models.Json;
 using NUnit.Framework;
@@ -11,7 +12,7 @@ namespace Eocron.Serialization.Tests
     {
         public override ISerializationConverter GetConverter()
         {
-            return SerializationConverter.Json;
+            return SerializationConverterJson.Json;
         }
 
         public override JsonTestModel CreateTestModel(string path)
