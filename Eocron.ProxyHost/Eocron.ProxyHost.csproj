@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <PackageId>Eocron.ProxyHost</PackageId>
+        <Product>Eocron.ProxyHost</Product>
+        <PackageTags>proxy;tcp;eocron</PackageTags>
+        <Description>
+            This client library contains some basic and usefull tcp proxy alghorithms for my work.
+        </Description>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+</Project>
