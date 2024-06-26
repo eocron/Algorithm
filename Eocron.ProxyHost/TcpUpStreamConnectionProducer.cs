@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Eocron.ProxyHost;
 
@@ -17,31 +18,65 @@ public sealed class TcpUpStreamConnectionProducer : IProxyUpStreamConnectionProd
     private readonly ArrayPool<byte> _pool;
     private readonly Action<TcpClient> _configureUpStream;
     private readonly Action<TcpClient> _configureDownStream;
-
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly ILogger _logger;
+    public EndPoint UpStreamEndpoint => _listener.LocalEndpoint;
     public TcpUpStreamConnectionProducer(
         TcpListener listener,
         TcpProxySettings settings,
         ArrayPool<byte> pool,
-        Action<TcpClient> configureUpStream, 
-        Action<TcpClient> configureDownStream)
+        Action<TcpClient> configureUpStream,
+        Action<TcpClient> configureDownStream,
+        ILoggerFactory loggerFactory,
+        ILogger logger)
     {
         _listener = listener;
         _settings = settings;
         _pool = pool;
         _configureUpStream = configureUpStream;
         _configureDownStream = configureDownStream;
+        _loggerFactory = loggerFactory;
+        _logger = logger;
     }
 
     public async IAsyncEnumerable<IProxyConnection> GetPendingConnections([EnumeratorCancellation] CancellationToken ct)
     {
         while (!ct.IsCancellationRequested)
         {
-            var endpoint = await DefaultResolve(_settings.DownStreamHost, _settings.DownStreamPort, ct).ConfigureAwait(false);
-            var upStreamClient = await _listener.AcceptTcpClientAsync(ct).ConfigureAwait(false);
-            _configureUpStream?.Invoke(upStreamClient);
-            var downStreamClient = new TcpClient();
-            _configureDownStream?.Invoke(downStreamClient);
-            yield return new TcpConnection(upStreamClient, downStreamClient, endpoint, _pool, _settings);
+            IProxyConnection toReturn = null;
+            try
+            {
+                var endpoint = await DefaultResolve(_settings.DownStreamHost, _settings.DownStreamPort, ct)
+                    .ConfigureAwait(false);
+                var upStreamClient = await _listener.AcceptTcpClientAsync(ct).ConfigureAwait(false);
+                try
+                {
+                    _configureUpStream.Invoke(upStreamClient);
+                    var downStreamClient = new TcpClient();
+                    _configureDownStream.Invoke(downStreamClient);
+                    toReturn = new TcpConnection(upStreamClient, downStreamClient, endpoint, _pool, _settings,
+                        _loggerFactory.CreateLogger<TcpConnection>());
+                }
+                catch (Exception)
+                {
+                    upStreamClient.Close();
+                    throw;
+                }
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                _logger.LogTrace("Cancelled");
+                break;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to accept upstream connection");
+            }
+
+            if (toReturn != null)
+            {
+                yield return toReturn;
+            }
         }
     }
 

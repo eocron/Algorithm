@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -58,4 +59,6 @@ public sealed class ThreadSafeProxy : IProxy
     {
         return new InvalidOperationException("Proxy already started.");
     }
+
+    public EndPoint UpStreamEndpoint => _inner.UpStreamEndpoint;
 }
