@@ -1,12 +1,8 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
+﻿using Microsoft.Extensions.Hosting;
 
 namespace Eocron.ProxyHost
 {
-    public interface IProxy
+    public interface IProxy : IHostedService
     {
-        Task StartAsync(CancellationToken ct);
-
-        Task StopAsync(CancellationToken ct);
     }
 }
