@@ -1,10 +1,8 @@
-﻿using System;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 
-namespace Eocron.ProxyHost
+namespace Eocron.ProxyHost;
+
+public interface IProxyConnection : IHostedService
 {
-    public interface IProxyConnection : IHostedService
-    {
-        bool IsHealthy();
-    }
+    bool IsHealthy();
 }

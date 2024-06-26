@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 
-namespace Eocron.ProxyHost
+namespace Eocron.ProxyHost;
+
+public interface IProxyUpStreamConnectionProducer 
 {
-    public interface IProxyUpStreamConnectionProducer 
-    {
-        IAsyncEnumerable<IProxyConnection> GetPendingConnections(CancellationToken ct);
-    }
+    IAsyncEnumerable<IProxyConnection> GetPendingConnections(CancellationToken ct);
 }

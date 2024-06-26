@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 
-namespace Eocron.ProxyHost
+namespace Eocron.ProxyHost;
+
+public interface IProxy : IHostedService
 {
-    public interface IProxy : IHostedService
-    {
-    }
 }

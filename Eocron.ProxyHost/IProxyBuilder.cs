@@ -1,7 +1,6 @@
-﻿namespace Eocron.ProxyHost
+﻿namespace Eocron.ProxyHost;
+
+public interface IProxyBuilder
 {
-    public interface IProxyBuilder
-    {
-        IProxy Build();
-    }
+    IProxy Build();
 }

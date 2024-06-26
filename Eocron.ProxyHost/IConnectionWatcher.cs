@@ -1,7 +1,6 @@
-﻿namespace Eocron.ProxyHost
+﻿namespace Eocron.ProxyHost;
+
+public interface IConnectionWatcher
 {
-    public interface IConnectionWatcher
-    {
-        void Watch(IProxyConnection connection);
-    }
+    void Watch(IProxyConnection connection);
 }
