@@ -29,6 +29,7 @@ public sealed class ConnectionWatcher : BackgroundService, IConnectionWatcher
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await Task.Yield();
         while (!stoppingToken.IsCancellationRequested)
         {
             try

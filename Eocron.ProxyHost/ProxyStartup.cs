@@ -26,12 +26,12 @@ namespace Eocron.ProxyHost
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
+            await Task.Yield();
             try
             {
                 var toStart = _serviceProvider.GetServices<IHostedService>().ToList();
                 await Task.WhenAll(toStart.Select(async x =>
                 {
-                    await Task.Yield();
                     await x.StartAsync(cancellationToken).ConfigureAwait(false);
                     _started.TryAdd(x, null);
                 }));
@@ -56,13 +56,13 @@ namespace Eocron.ProxyHost
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
+            await Task.Yield();
             if (_started.Any())
             {
                 try
                 {
                     await Task.WhenAll(_started.Select(async x =>
                     {
-                        await Task.Yield();
                         await x.Key.StopAsync(cancellationToken).ConfigureAwait(false);
                         _started.TryRemove(x);
                     }));

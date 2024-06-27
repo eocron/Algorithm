@@ -38,6 +38,7 @@ public class TcpProxyBuilder : IProxyBuilder
                     x.GetRequiredService<ILoggerFactory>(),
                     x.GetRequiredService<ILogger<TcpUpStreamConnectionProducer>>()))
             .AddSingleton<IHostedService>(x => x.GetRequiredService<TcpUpStreamConnectionProducer>())
+            .AddSingleton<IProxyUpStreamConnectionProducer>(x=> x.GetRequiredService<TcpUpStreamConnectionProducer>())
             .AddSingleton<ConnectionWatcher>(x => new ConnectionWatcher(x.GetRequiredService<ILogger<ConnectionWatcher>>(), Settings.StopTimeout, Settings.WatcherCheckInterval))
             .AddSingleton<IConnectionWatcher>(x => x.GetRequiredService<ConnectionWatcher>())
             .AddSingleton<IHostedService>(x => x.GetRequiredService<ConnectionWatcher>())

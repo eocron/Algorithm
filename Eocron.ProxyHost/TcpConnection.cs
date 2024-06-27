@@ -66,6 +66,7 @@ public sealed class TcpConnection : BackgroundService, IProxyConnection
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await Task.Yield();
         await _downStreamClient.ConnectAsync(_downStreamEndpoint.Address, _downStreamEndpoint.Port, stoppingToken).ConfigureAwait(false);
         await using var serverStream = _downStreamClient.GetStream();
         await using var clientStream = _upStreamClient.GetStream();

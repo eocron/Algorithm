@@ -82,6 +82,16 @@ public sealed class TcpUpStreamConnectionProducer : IProxyUpStreamConnectionProd
 
     private static async Task<IPEndPoint> DefaultResolve(string downStreamHost, int remoteServerPort, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(downStreamHost))
+        {
+            throw new ArgumentNullException(nameof(downStreamHost), "Down stream host is empty");
+        }
+
+        if (remoteServerPort <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(remoteServerPort),
+                "Down stream port is invalid: " + remoteServerPort);
+        }
         var ips = await Dns.GetHostAddressesAsync(downStreamHost, ct).ConfigureAwait(false);
         var endpoint = new IPEndPoint(ips[0], remoteServerPort);
         return endpoint;
