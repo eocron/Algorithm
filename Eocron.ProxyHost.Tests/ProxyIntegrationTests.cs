@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using Eocron.ProxyHost.Tcp;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 

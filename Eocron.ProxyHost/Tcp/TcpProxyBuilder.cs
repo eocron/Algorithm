@@ -7,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Eocron.ProxyHost;
+namespace Eocron.ProxyHost.Tcp;
 
 public class TcpProxyBuilder : IProxyBuilder
 {

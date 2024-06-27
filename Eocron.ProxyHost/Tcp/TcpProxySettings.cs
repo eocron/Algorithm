@@ -1,4 +1,4 @@
-﻿namespace Eocron.ProxyHost;
+﻿namespace Eocron.ProxyHost.Tcp;
 
 public class TcpProxySettings : ProxySettingsBase
 {

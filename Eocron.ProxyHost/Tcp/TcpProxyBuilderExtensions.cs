@@ -2,7 +2,7 @@
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 
-namespace Eocron.ProxyHost
+namespace Eocron.ProxyHost.Tcp
 {
     public static class TcpProxyBuilderExtensions
     {

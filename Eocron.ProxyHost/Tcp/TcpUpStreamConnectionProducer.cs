@@ -10,7 +10,7 @@ using Eocron.ProxyHost.Helpers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Eocron.ProxyHost;
+namespace Eocron.ProxyHost.Tcp;
 
 public sealed class TcpUpStreamConnectionProducer : IProxyUpStreamConnectionProducer, IHostedService
 {
