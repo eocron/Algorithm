@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Eocron.ProxyHost;
+﻿namespace Eocron.ProxyHost;
 
 public class TcpProxySettings : ProxySettingsBase
 {

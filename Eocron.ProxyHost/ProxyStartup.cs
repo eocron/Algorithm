@@ -14,7 +14,7 @@ namespace Eocron.ProxyHost
     {
         private readonly ServiceProvider _serviceProvider;
         private readonly ILogger _logger;
-        private readonly ConcurrentBag<IHostedService> _started = new ConcurrentBag<IHostedService>();
+        private readonly ConcurrentDictionary<IHostedService, object> _started = new ConcurrentDictionary<IHostedService, object>();
         private readonly TimeSpan _onStartupFailStopTimeout;
         public EndPoint UpStreamEndpoint => _serviceProvider.GetRequiredService<IProxyUpStreamConnectionProducer>().UpStreamEndpoint;
         public ProxyStartup(ServiceProvider serviceProvider, ILogger logger, TimeSpan onStartupFailStopTimeout)
@@ -33,7 +33,7 @@ namespace Eocron.ProxyHost
                 {
                     await Task.Yield();
                     await x.StartAsync(cancellationToken).ConfigureAwait(false);
-                    _started.Add(x);
+                    _started.TryAdd(x, null);
                 }));
                 _logger.LogInformation("Proxy started on {endpoint}", UpStreamEndpoint);
             }
@@ -63,9 +63,9 @@ namespace Eocron.ProxyHost
                     await Task.WhenAll(_started.Select(async x =>
                     {
                         await Task.Yield();
-                        await x.StopAsync(cancellationToken).ConfigureAwait(false);
+                        await x.Key.StopAsync(cancellationToken).ConfigureAwait(false);
+                        _started.TryRemove(x);
                     }));
-                    _started.Clear();
                 }
                 catch (Exception e)
                 {
@@ -74,7 +74,5 @@ namespace Eocron.ProxyHost
                 }
             }
         }
-
-
     }
 }
