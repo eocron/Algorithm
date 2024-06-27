@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Eocron.ProxyHost.Helpers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -32,8 +33,9 @@ public sealed class ProxyHandler : BackgroundService
                     _watcher.Watch(pendingConnection);
                 }
             }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            catch (Exception e) when (stoppingToken.IsCancellationRequested)
             {
+                TcpProxyHelper.OnCancelled(e, _logger);
                 break;
             }
             catch (Exception e)

@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Eocron.ProxyHost.Helpers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -46,11 +47,11 @@ public sealed class TcpUpStreamConnectionProducer : IProxyUpStreamConnectionProd
             IProxyConnection toReturn = null;
             try
             {
-                var endpoint = await DefaultResolve(_settings.DownStreamHost, _settings.DownStreamPort, ct)
-                    .ConfigureAwait(false);
                 var upStreamClient = await _listener.AcceptTcpClientAsync(ct).ConfigureAwait(false);
                 try
                 {
+                    var endpoint = await DefaultResolve(_settings.DownStreamHost, _settings.DownStreamPort, ct)
+                        .ConfigureAwait(false);
                     _configureUpStream.Invoke(upStreamClient);
                     var downStreamClient = new TcpClient();
                     _configureDownStream.Invoke(downStreamClient);
@@ -63,9 +64,14 @@ public sealed class TcpUpStreamConnectionProducer : IProxyUpStreamConnectionProd
                     throw;
                 }
             }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            catch (Exception e) when (ct.IsCancellationRequested)
             {
-                _logger.LogTrace("Cancelled");
+                TcpProxyHelper.OnCancelled(e, _logger);
+                break;
+            }
+            catch (ObjectDisposedException e)
+            {
+                TcpProxyHelper.OnCancelled(e, _logger);
                 break;
             }
             catch (Exception e)

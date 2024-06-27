@@ -52,9 +52,9 @@ public sealed class ConnectionWatcher : BackgroundService, IConnectionWatcher
                     }
                 }));
             }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            catch (Exception e) when (stoppingToken.IsCancellationRequested)
             {
-                _logger.LogTrace("Cancelled");
+                TcpProxyHelper.OnCancelled(e, _logger);
                 break;
             }
 
@@ -64,7 +64,7 @@ public sealed class ConnectionWatcher : BackgroundService, IConnectionWatcher
             }
             catch (Exception e)
             {
-                _logger.LogTrace("Cancelled");
+                TcpProxyHelper.OnCancelled(e, _logger);
                 break;
             }
         }

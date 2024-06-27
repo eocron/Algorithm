@@ -19,8 +19,12 @@ namespace Eocron.ProxyHost.Tests
                     x.SetMinimumLevel(LogLevel.Trace);
                 })
                 .Build();
-            await proxy.StartAsync(CancellationToken.None);
-            await proxy.StopAsync(CancellationToken.None);
+
+            for(int i = 0; i < 10; i++)
+            {
+                proxy.StartAsync(CancellationToken.None).Wait();
+                proxy.StopAsync(CancellationToken.None).Wait();
+            }
         }
     }
 }
