@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Eocron.ProxyHost.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -14,7 +15,7 @@ namespace Eocron.ProxyHost
     {
         private readonly ServiceProvider _serviceProvider;
         private readonly ILogger _logger;
-        private readonly ConcurrentDictionary<IHostedService, object> _started = new ConcurrentDictionary<IHostedService, object>();
+        private readonly ConcurrentList<IHostedService> _started = new();
         private readonly TimeSpan _onStartupFailStopTimeout;
         public EndPoint UpStreamEndpoint => _serviceProvider.GetRequiredService<IProxyUpStreamConnectionProducer>().UpStreamEndpoint;
         public ProxyStartup(ServiceProvider serviceProvider, ILogger logger, TimeSpan onStartupFailStopTimeout)
@@ -33,7 +34,7 @@ namespace Eocron.ProxyHost
                 await Task.WhenAll(toStart.Select(async x =>
                 {
                     await x.StartAsync(cancellationToken).ConfigureAwait(false);
-                    _started.TryAdd(x, null);
+                    _started.Add(x);
                 }));
                 _logger.LogInformation("Proxy started on {endpoint}", UpStreamEndpoint);
             }
@@ -63,8 +64,8 @@ namespace Eocron.ProxyHost
                 {
                     await Task.WhenAll(_started.Select(async x =>
                     {
-                        await x.Key.StopAsync(cancellationToken).ConfigureAwait(false);
-                        _started.TryRemove(x);
+                        await x.StopAsync(cancellationToken).ConfigureAwait(false);
+                        _started.Remove(x);
                     }));
                 }
                 catch (Exception e)

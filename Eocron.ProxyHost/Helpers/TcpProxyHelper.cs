@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 
-namespace Eocron.ProxyHost;
+namespace Eocron.ProxyHost.Helpers;
 
 public static class TcpProxyHelper
 {

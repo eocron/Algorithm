@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Eocron.ProxyHost.Helpers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -13,7 +14,7 @@ public sealed class ConnectionWatcher : BackgroundService, IConnectionWatcher
     private readonly ILogger _logger;
     private readonly TimeSpan _stopTimeout;
     private readonly TimeSpan _gcInterval;
-    private readonly ConcurrentDictionary<IProxyConnection, object> _connections = new ConcurrentDictionary<IProxyConnection, object>();
+    private readonly ConcurrentList<IProxyConnection> _connections = new();
         
     public ConnectionWatcher(ILogger logger, TimeSpan stopTimeout, TimeSpan gcInterval)
     {
@@ -24,7 +25,7 @@ public sealed class ConnectionWatcher : BackgroundService, IConnectionWatcher
 
     public void Watch(IProxyConnection connection)
     {
-        _connections.TryAdd(connection, null);
+        _connections.Add(connection);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -34,7 +35,7 @@ public sealed class ConnectionWatcher : BackgroundService, IConnectionWatcher
         {
             try
             {
-                var toRemove = _connections.Where(x => !x.Key.IsHealthy()).ToList();
+                var toRemove = _connections.Where(x => !x.IsHealthy()).ToList();
 
                 if (!toRemove.Any()) continue;
 
@@ -43,8 +44,8 @@ public sealed class ConnectionWatcher : BackgroundService, IConnectionWatcher
                 {
                     try
                     {
-                        await x.Key.StopAsync(cts.Token).ConfigureAwait(false);
-                        _connections.TryRemove(x);
+                        await x.StopAsync(cts.Token).ConfigureAwait(false);
+                        _connections.Remove(x);
                     }
                     catch (Exception e)
                     {
