@@ -23,8 +23,8 @@ namespace Eocron.ProxyHost.Tests
 
             for(int i = 0; i < 10; i++)
             {
-                proxy.StartAsync(CancellationToken.None).Wait();
-                proxy.StopAsync(CancellationToken.None).Wait();
+                await proxy.StartAsync(CancellationToken.None);
+                await proxy.StopAsync(CancellationToken.None);
             }
         }
     }
