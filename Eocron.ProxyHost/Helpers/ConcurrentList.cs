@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Eocron.ProxyHost.Helpers
 {
-    internal sealed class ConcurrentList<T> : IEnumerable<T>
+    internal sealed class ConcurrentList<T> : IEnumerable<T> where T : notnull
     {
         private readonly ConcurrentDictionary<T, object> _items = new ConcurrentDictionary<T, object>();
 
