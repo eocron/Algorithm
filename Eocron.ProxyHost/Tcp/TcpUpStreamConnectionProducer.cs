@@ -19,6 +19,7 @@ public sealed class TcpUpStreamConnectionProducer : IProxyUpStreamConnectionProd
     private readonly ArrayPool<byte> _pool;
     private readonly Action<TcpClient> _configureUpStream;
     private readonly Action<TcpClient> _configureDownStream;
+    private readonly DownStreamResolverDelegate _downStreamResolve;
     private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger _logger;
     public EndPoint UpStreamEndpoint => _listener.LocalEndpoint;
@@ -28,6 +29,7 @@ public sealed class TcpUpStreamConnectionProducer : IProxyUpStreamConnectionProd
         ArrayPool<byte> pool,
         Action<TcpClient> configureUpStream,
         Action<TcpClient> configureDownStream,
+        DownStreamResolverDelegate downStreamResolve,
         ILoggerFactory loggerFactory,
         ILogger logger)
     {
@@ -36,6 +38,7 @@ public sealed class TcpUpStreamConnectionProducer : IProxyUpStreamConnectionProd
         _pool = pool;
         _configureUpStream = configureUpStream;
         _configureDownStream = configureDownStream;
+        _downStreamResolve = downStreamResolve;
         _loggerFactory = loggerFactory;
         _logger = logger;
     }
@@ -50,7 +53,7 @@ public sealed class TcpUpStreamConnectionProducer : IProxyUpStreamConnectionProd
                 var upStreamClient = await _listener.AcceptTcpClientAsync(ct).ConfigureAwait(false);
                 try
                 {
-                    var endpoint = await DefaultResolve(_settings.DownStreamHost, _settings.DownStreamPort, ct)
+                    var endpoint = await _downStreamResolve(_settings.DownStreamHost, _settings.DownStreamPort, ct)
                         .ConfigureAwait(false);
                     _configureUpStream.Invoke(upStreamClient);
                     var downStreamClient = new TcpClient();

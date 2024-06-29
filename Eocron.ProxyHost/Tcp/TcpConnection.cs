@@ -21,6 +21,8 @@ public sealed class TcpConnection : BackgroundService, IProxyConnection
     private long _totalBytesForwarded;
     private long _totalBytesResponded;
     private long _lastActivity = Environment.TickCount64;
+    private bool _disposed;
+    private bool _isStopped;
 
     public TcpConnection(TcpClient upStreamClient, TcpClient downStreamClient, IPEndPoint downStreamEndpoint, ArrayPool<byte> pool, TcpProxySettings settings, ILogger logger)
     {
@@ -67,40 +69,72 @@ public sealed class TcpConnection : BackgroundService, IProxyConnection
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await Task.Yield();
-        await _downStreamClient.ConnectAsync(_downStreamEndpoint.Address, _downStreamEndpoint.Port, stoppingToken).ConfigureAwait(false);
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        await _downStreamClient.ConnectAsync(_downStreamEndpoint.Address, _downStreamEndpoint.Port, cts.Token).ConfigureAwait(false);
         await using var serverStream = _downStreamClient.GetStream();
         await using var clientStream = _upStreamClient.GetStream();
-        await using (stoppingToken.Register(() =>
+        await using (cts.Token.Register(() =>
                      {
-                         try
-                         {
-                             serverStream.Close();
-                         }
-                         catch (Exception e)
-                         {
-                             _logger.LogError(e, "Failed to close downstream");
-                         }
-
-                         try
-                         {
-                             clientStream.Close();
-                         }
-                         catch (Exception e)
-                         {
-                             _logger.LogError(e, "Failed to close upstream");
-                         }
+                         SafeClose(serverStream);
+                         SafeClose(clientStream);
                      }, true))
         {
-            await Task.WhenAll(
-                CopyToAsync(clientStream, serverStream, _settings.DownStreamBufferSize, Direction.DownStream, stoppingToken),
-                CopyToAsync(serverStream, clientStream, _settings.UpStreamBufferSize, Direction.UpStream, stoppingToken)
+            await Task.WhenAny(
+                CopyToAsync(clientStream, serverStream, _settings.DownStreamBufferSize, Direction.DownStream, cts.Token),
+                CopyToAsync(serverStream, clientStream, _settings.UpStreamBufferSize, Direction.UpStream, cts.Token)
             ).ConfigureAwait(false);
+            cts.Cancel();
+            _isStopped = true;
         }
     }
 
     public bool IsHealthy()
     {
-        return _lastActivity + _settings.ConnectionTimeout.Ticks > Environment.TickCount64;
+        return !_isStopped && !_disposed && (_lastActivity + _settings.ConnectionTimeout.Ticks > Environment.TickCount64);
+    }
+
+    public override void Dispose()
+    {
+        if(_disposed)
+            return;
+        
+        SafeDispose(_upStreamClient);
+        SafeDispose(_downStreamClient);
+        base.Dispose();
+        _disposed = true;
+    }
+
+    private static void SafeDispose(TcpClient client)
+    {
+        try
+        {
+            client?.Close();
+        }
+        catch
+        {
+            // ignored
+        }
+
+        try
+        {
+            client?.Dispose();
+        }
+        catch
+        {
+            // ignored
+        }
+    }
+
+    private static void SafeClose(Stream stream)
+    {
+        try
+        {
+            stream?.Close();
+        }
+        catch
+        {
+            // ignored
+        }
     }
 
     private enum Direction

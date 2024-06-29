@@ -29,8 +29,16 @@ public sealed class ProxyHandler : BackgroundService
             {
                 await foreach (var pendingConnection in _producer.GetPendingConnections(stoppingToken))
                 {
-                    await pendingConnection.StartAsync(stoppingToken).ConfigureAwait(false);
-                    _watcher.Watch(pendingConnection);
+                    try
+                    {
+                        await pendingConnection.StartAsync(stoppingToken).ConfigureAwait(false);
+                        _watcher.Watch(pendingConnection);
+                    }
+                    catch
+                    {
+                        pendingConnection.Dispose();
+                        throw;
+                    }
                 }
             }
             catch (Exception e) when (stoppingToken.IsCancellationRequested)

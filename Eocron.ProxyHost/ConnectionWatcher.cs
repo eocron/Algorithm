@@ -50,6 +50,10 @@ public sealed class ConnectionWatcher : BackgroundService, IConnectionWatcher
                     {
                         _logger.LogError(e, "Failed to stop connection");
                     }
+                    finally
+                    {
+                        x.Dispose();
+                    }
                 }));
             }
             catch (Exception e) when (stoppingToken.IsCancellationRequested)

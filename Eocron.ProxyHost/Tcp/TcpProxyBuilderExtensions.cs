@@ -6,6 +6,15 @@ namespace Eocron.ProxyHost.Tcp
 {
     public static class TcpProxyBuilderExtensions
     {
+        public static TcpProxyBuilder ConfigureEndpointResolve(this TcpProxyBuilder builder, DownStreamResolverDelegate resolver)
+        {
+            if (resolver == null)
+                throw new ArgumentNullException(nameof(resolver));
+
+            builder.EndpointResolver = resolver;
+            return builder;
+        }
+        
         public static TcpProxyBuilder ConfigureLogging(this TcpProxyBuilder builder, Action<ILoggingBuilder> configure)
         {
             if (configure == null)
