@@ -53,7 +53,7 @@ namespace Eocron.Aspects
 
             if (_cache.TryGetValue(key, out object? tmp))
             {
-                invocation.ReturnValue = ((Lazy<object>)tmp).Value;
+                invocation.ReturnValue = ((AtomicLazy<object>)tmp).Value;
                 return;
             }
 
@@ -61,17 +61,17 @@ namespace Eocron.Aspects
             {
                 if (!_cache.TryGetValue(key, out tmp))
                 {
-                    tmp = new Lazy<object>(() =>
+                    tmp = new AtomicLazy<object>(() =>
                     {
                         invocation.Proceed();
                         return invocation.ReturnValue;
-                    }, LazyThreadSafetyMode.ExecutionAndPublication);
+                    });
                     using var entry = _cache.CreateEntry(key);
                     _configureEntry(invocation.MethodInvocationTarget, invocation.Arguments, entry);
                     entry.SetValue(tmp);
                 }
             }
-            invocation.ReturnValue = ((Lazy<object>)tmp).Value;
+            invocation.ReturnValue = ((AtomicLazy<object>)tmp).Value;
         }
 
         public void InterceptAsynchronous(IInvocation invocation)
@@ -85,7 +85,7 @@ namespace Eocron.Aspects
 
             if (_cache.TryGetValue(key, out object? tmp))
             {
-                invocation.ReturnValue = ((AsyncLazy<TResult>)tmp).Task;
+                invocation.ReturnValue = ((AsyncAtomicLazy<TResult>)tmp).Value();
                 return;
             }
 
@@ -93,18 +93,18 @@ namespace Eocron.Aspects
             {
                 if (!_cache.TryGetValue(key, out tmp))
                 {
-                    tmp = new AsyncLazy<TResult>(async () =>
+                    tmp = new AsyncAtomicLazy<TResult>(async () =>
                     {
                         invocation.Proceed();
                         var task = (Task<TResult>)invocation.ReturnValue;
                         return await task.ConfigureAwait(false);
-                    }, AsyncLazyFlags.RetryOnFailure | AsyncLazyFlags.ExecuteOnCallingThread);
+                    });
                     using var entry = _cache.CreateEntry(key);
                     _configureEntry(invocation.MethodInvocationTarget, invocation.Arguments, entry);
                     entry.SetValue(tmp);
                 }
             }
-            invocation.ReturnValue = ((AsyncLazy<TResult>)tmp).Task;
+            invocation.ReturnValue = ((AsyncAtomicLazy<TResult>)tmp).Value();
         }
     }
 }

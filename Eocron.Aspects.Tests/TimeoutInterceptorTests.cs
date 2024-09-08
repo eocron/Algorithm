@@ -20,7 +20,7 @@ namespace Eocron.Aspects.Tests
             _interceptorWithDelay = new TimeoutAsyncInterceptor(TimeSpan.FromSeconds(1));
         }
         [Test]
-        public async Task WorkAsyncOptimistic()
+        public async Task Optimistic()
         {
             var instance = new Mock<ITest>(MockBehavior.Strict);
             using var cts = new CancellationTokenSource();
@@ -61,7 +61,7 @@ namespace Eocron.Aspects.Tests
         }
         
         [Test]
-        public async Task WorkSuccess()
+        public async Task Success()
         {
             var instance = new Mock<ITest>(MockBehavior.Strict);
             using var cts = new CancellationTokenSource();
@@ -94,7 +94,7 @@ namespace Eocron.Aspects.Tests
         }
         
         [Test]
-        public async Task WorkAsyncPessimistic()
+        public async Task Pessimistic()
         {
             var instance = new Mock<ITest>(MockBehavior.Strict);
             using var cts = new CancellationTokenSource();
