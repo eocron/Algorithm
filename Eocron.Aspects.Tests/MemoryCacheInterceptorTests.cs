@@ -78,7 +78,7 @@ namespace Eocron.Aspects.Tests
                 .Returns(2);
             var proxy = InterceptionHelper.CreateProxy(instance.Object, _interceptor);
 
-            Parallel.For(0, 100, (_) =>
+            Parallel.For(0, 100, _ =>
             {
                  proxy.WorkWithResult(2);
             });

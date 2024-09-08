@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
+using Eocron.Aspects.Caching;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Eocron.Aspects
@@ -49,17 +50,28 @@ namespace Eocron.Aspects
             }
             
             var key = CreateKey(invocation);
-            var lazy = _cache.GetOrCreate(key, entry =>
+
+            if (_cache.TryGetValue(key, out object? tmp))
             {
-                var result = new Lazy<object>(() =>
+                invocation.ReturnValue = ((Lazy<object>)tmp).Value;
+                return;
+            }
+
+            lock (_cache)
+            {
+                if (!_cache.TryGetValue(key, out tmp))
                 {
-                    invocation.Proceed();
-                    return invocation.ReturnValue;
-                }, LazyThreadSafetyMode.ExecutionAndPublication);
-                _configureEntry(invocation.MethodInvocationTarget, invocation.Arguments, entry);
-                return result;
-            });
-            invocation.ReturnValue = lazy.Value;
+                    tmp = new Lazy<object>(() =>
+                    {
+                        invocation.Proceed();
+                        return invocation.ReturnValue;
+                    }, LazyThreadSafetyMode.ExecutionAndPublication);
+                    using var entry = _cache.CreateEntry(key);
+                    _configureEntry(invocation.MethodInvocationTarget, invocation.Arguments, entry);
+                    entry.SetValue(tmp);
+                }
+            }
+            invocation.ReturnValue = ((Lazy<object>)tmp).Value;
         }
 
         public void InterceptAsynchronous(IInvocation invocation)
@@ -70,13 +82,29 @@ namespace Eocron.Aspects
         public void InterceptAsynchronous<TResult>(IInvocation invocation)
         {
             var key = CreateKey(invocation);
-            invocation.ReturnValue = _cache.GetOrCreateAsync(key, async entry =>
+
+            if (_cache.TryGetValue(key, out object? tmp))
             {
-                _configureEntry(invocation.MethodInvocationTarget, invocation.Arguments, entry);
-                invocation.Proceed();
-                var task = (Task<TResult>)invocation.ReturnValue;
-                return await task.ConfigureAwait(false);
-            });
+                invocation.ReturnValue = ((AsyncLazy<TResult>)tmp).Task;
+                return;
+            }
+
+            lock (_cache)
+            {
+                if (!_cache.TryGetValue(key, out tmp))
+                {
+                    tmp = new AsyncLazy<TResult>(async () =>
+                    {
+                        invocation.Proceed();
+                        var task = (Task<TResult>)invocation.ReturnValue;
+                        return await task.ConfigureAwait(false);
+                    }, AsyncLazyFlags.RetryOnFailure | AsyncLazyFlags.ExecuteOnCallingThread);
+                    using var entry = _cache.CreateEntry(key);
+                    _configureEntry(invocation.MethodInvocationTarget, invocation.Arguments, entry);
+                    entry.SetValue(tmp);
+                }
+            }
+            invocation.ReturnValue = ((AsyncLazy<TResult>)tmp).Task;
         }
     }
 }

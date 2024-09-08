@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Eocron.Aspects
+namespace Eocron.Aspects.Caching
 {
     internal sealed class CompoundKey : IEquatable<CompoundKey>
     {
