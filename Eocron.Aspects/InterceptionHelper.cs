@@ -8,9 +8,35 @@ namespace Eocron.Aspects;
 
 public static class InterceptionHelper
 {
-    public static CancellationToken? TryGetCancellationToken(IInvocation invocation)
+    public static CancellationToken GetCancellationTokenOrDefault(IInvocation invocation)
     {
-        return (CancellationToken?)invocation.Arguments.SingleOrDefault(x => x is CancellationToken);
+        if (TryGetCancellationTokenIndex(invocation, out var idx))
+        {
+            return (CancellationToken)invocation.GetArgumentValue(idx);
+        }
+        return CancellationToken.None;
+    }
+
+    public static void TryReplaceCancellationToken(IInvocation invocation, CancellationToken newCt)
+    {
+        if (TryGetCancellationTokenIndex(invocation, out var idx))
+        {
+            invocation.SetArgumentValue(idx, newCt);
+        }
+    }
+
+    private static bool TryGetCancellationTokenIndex(IInvocation invocation, out int index)
+    {
+        index = -1;
+        for(var i = 0; i < invocation.Arguments.Length; i++)
+        {
+            if (invocation.Arguments[i] is CancellationToken)
+            {
+                index = i;
+                return true;
+            }
+        }
+        return false;
     }
 
     public static async Task SafeDelay(TimeSpan delay, CancellationToken ct)
@@ -19,7 +45,7 @@ public static class InterceptionHelper
         {
             await Task.Delay(delay, ct).ConfigureAwait(false);
         }
-        catch (OperationCanceledException)
+        catch
         {
             //ignore
         }

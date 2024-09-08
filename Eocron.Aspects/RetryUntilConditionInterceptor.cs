@@ -6,13 +6,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Eocron.Aspects
 {
-    public sealed class RetryUntilConditionInterceptor : IAsyncInterceptor
+    public sealed class RetryUntilConditionAsyncInterceptor : IAsyncInterceptor
     {
         private readonly Func<int, Exception, bool> _exceptionPredicate;
         private readonly Func<int, Exception, TimeSpan> _retryIntervalProvider;
         private readonly ILogger _logger;
 
-        public RetryUntilConditionInterceptor(
+        public RetryUntilConditionAsyncInterceptor(
             Func<int, Exception, bool> exceptionPredicate, 
             Func<int, Exception, TimeSpan> retryIntervalProvider,
             ILogger logger)
@@ -73,7 +73,7 @@ namespace Eocron.Aspects
 
         private async Task ExecuteAsync(IInvocation invocation)
         {
-            var ct = InterceptionHelper.TryGetCancellationToken(invocation) ?? CancellationToken.None;
+            var ct = InterceptionHelper.GetCancellationTokenOrDefault(invocation);
             var totalTries = 0;
             while (true)
             {
@@ -133,7 +133,7 @@ namespace Eocron.Aspects
 
         private async Task<T> ExecuteAsync<T>(IInvocation invocation)
         {
-            var ct = InterceptionHelper.TryGetCancellationToken(invocation) ?? CancellationToken.None;
+            var ct = InterceptionHelper.GetCancellationTokenOrDefault(invocation);
             var totalTries = 0;
             while (true)
             {

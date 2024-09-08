@@ -17,8 +17,8 @@ namespace Eocron.Aspects.Tests
         [SetUp]
         public void Setup()
         {
-            _interceptor = new RetryUntilConditionInterceptor((_, _) => true, (_, _) => TimeSpan.Zero, TestConsoleLogger.Instance);
-            _interceptorWithDelay = new RetryUntilConditionInterceptor((_, _) => true, (_, _) => TimeSpan.FromSeconds(10), TestConsoleLogger.Instance);
+            _interceptor = new RetryUntilConditionAsyncInterceptor((_, _) => true, (_, _) => TimeSpan.Zero, TestConsoleLogger.Instance);
+            _interceptorWithDelay = new RetryUntilConditionAsyncInterceptor((_, _) => true, (_, _) => TimeSpan.FromSeconds(10), TestConsoleLogger.Instance);
         }
         [Test]
         public async Task WorkAsync()
