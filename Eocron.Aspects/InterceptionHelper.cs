@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
@@ -50,9 +51,9 @@ public static class InterceptionHelper
         }
     }
 
-    public static T CreateProxy<T>(T target, IAsyncInterceptor interceptor) where T : class
+    public static T CreateProxy<T>(T target, params IAsyncInterceptor[] interceptors) where T : class
     {
         ProxyGenerator generator = new ProxyGenerator();
-        return generator.CreateInterfaceProxyWithTargetInterface<T>(target, interceptor.ToInterceptor());
+        return generator.CreateInterfaceProxyWithTargetInterface<T>(target, interceptors.Select(x=> x.ToInterceptor()).ToArray());
     }
 }
