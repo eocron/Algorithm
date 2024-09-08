@@ -61,6 +61,39 @@ namespace Eocron.Aspects.Tests
         }
         
         [Test]
+        public async Task WorkSuccess()
+        {
+            var instance = new Mock<ITest>(MockBehavior.Strict);
+            using var cts = new CancellationTokenSource();
+            var token = cts.Token;
+            instance.Setup(x => x.WorkAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+            instance.Setup(x => x.WorkAsync(It.IsAny<int>()))
+                .Returns(Task.CompletedTask);
+            instance.Setup(x => x.WorkWithResultAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(2);
+            instance.Setup(x => x.WorkWithResultAsync(It.IsAny<int>()))
+                .ReturnsAsync(2);
+            instance.Setup(x => x.Work(It.IsAny<int>()));
+            instance.Setup(x => x.WorkWithResult(It.IsAny<int>()))
+                .Returns(2);
+            var proxy = InterceptionHelper.CreateProxy(instance.Object, _interceptorWithDelay);
+            await proxy.WorkAsync(1, token);
+            await proxy.WorkAsync(1);
+            (await proxy.WorkWithResultAsync(1, token)).Should().Be(2);
+            (await proxy.WorkWithResultAsync(1)).Should().Be(2);
+            proxy.Work(1);
+            proxy.WorkWithResult(1).Should().Be(2);
+            
+            instance.Verify(x=> x.WorkAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(1));
+            instance.Verify(x=> x.WorkAsync(It.IsAny<int>()), Times.Exactly(1));
+            instance.Verify(x=> x.WorkWithResultAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(1));
+            instance.Verify(x=> x.WorkWithResultAsync(It.IsAny<int>()), Times.Exactly(1));
+            instance.Verify(x=> x.Work(It.IsAny<int>()), Times.Exactly(1));
+            instance.Verify(x=> x.WorkWithResult(It.IsAny<int>()), Times.Exactly(1));
+        }
+        
+        [Test]
         public async Task WorkAsyncPessimistic()
         {
             var instance = new Mock<ITest>(MockBehavior.Strict);

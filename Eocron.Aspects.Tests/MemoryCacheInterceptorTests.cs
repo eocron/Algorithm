@@ -21,6 +21,7 @@ namespace Eocron.Aspects.Tests
                 (_, args) => args[0],
                 (_, _, entry) => entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(10)));
         }
+
         [Test]
         public async Task CachingAndKeySharing()
         {
@@ -41,16 +42,17 @@ namespace Eocron.Aspects.Tests
             var r2 = await proxy.WorkWithResultAsync(2, token);
 
             r1.Should().Be(r2);
-            
-            instance.Verify(x=> x.WorkWithResultAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(1));
 
-            r1 =  proxy.WorkWithResult(2);
-            r2 =  proxy.WorkWithResult(2);
+            instance.Verify(x => x.WorkWithResultAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
+                Times.Exactly(1));
+
+            r1 = proxy.WorkWithResult(2);
+            r2 = proxy.WorkWithResult(2);
 
             r1.Should().Be(r2);
             instance.Verify(x => x.WorkWithResult(It.IsAny<int>()), Times.Exactly(1));
         }
-        
+
         [Test]
         public async Task AtMostOnceAsync()
         {
@@ -61,14 +63,11 @@ namespace Eocron.Aspects.Tests
                 .ReturnsAsync(2);
             var proxy = InterceptionHelper.CreateProxy(instance.Object, _interceptor);
 
-            await Parallel.ForAsync(0, 100, token, async (_, ct) =>
-            {
-                await proxy.WorkWithResultAsync(2, ct);
-            });
+            await Parallel.ForAsync(0, 100, token, async (_, ct) => { await proxy.WorkWithResultAsync(2, ct); });
 
-            instance.Verify(x=> x.WorkWithResultAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(1));
+            instance.Verify(x => x.WorkWithResultAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(1));
         }
-        
+
         [Test]
         public void AtMostOnceSync()
         {
@@ -78,12 +77,50 @@ namespace Eocron.Aspects.Tests
                 .Returns(2);
             var proxy = InterceptionHelper.CreateProxy(instance.Object, _interceptor);
 
-            Parallel.For(0, 100, _ =>
-            {
-                 proxy.WorkWithResult(2);
-            });
+            Parallel.For(0, 100, _ => { proxy.WorkWithResult(2); });
 
-            instance.Verify(x=> x.WorkWithResult(It.IsAny<int>()), Times.Exactly(1));
+            instance.Verify(x => x.WorkWithResult(It.IsAny<int>()), Times.Exactly(1));
+        }
+
+        [Test]
+        public async Task NoExceptionCachingAsync()
+        {
+            var instance = new Mock<ITest>(MockBehavior.Strict);
+            using var cts = new CancellationTokenSource();
+            var token = cts.Token;
+            instance.SetupSequence(x => x.WorkWithResultAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception())
+                .ReturnsAsync(3)
+                .ReturnsAsync(4);
+            var proxy = InterceptionHelper.CreateProxy(instance.Object, _interceptor);
+
+            var w1 = async () => await proxy.WorkWithResultAsync(2, token);
+
+            await w1.Should().ThrowAsync<Exception>();
+            (await w1()).Should().Be(3);
+            (await w1()).Should().Be(3);
+
+            instance.Verify(x => x.WorkWithResultAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
+        
+        [Test]
+        public void NoExceptionCachingSync()
+        {
+            var instance = new Mock<ITest>(MockBehavior.Strict);
+            using var cts = new CancellationTokenSource();
+            instance.SetupSequence(x => x.WorkWithResult(It.IsAny<int>()))
+                .Throws(new Exception())
+                .Returns(3)
+                .Returns(4);
+            var proxy = InterceptionHelper.CreateProxy(instance.Object, _interceptor);
+
+            var w2 = () => proxy.WorkWithResult(2);
+
+            w2.Should().Throw<Exception>();
+            w2().Should().Be(3);
+            w2().Should().Be(3);
+
+            instance.Verify(x => x.WorkWithResult(It.IsAny<int>()), Times.Exactly(2));
         }
     }
 }
