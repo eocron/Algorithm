@@ -39,7 +39,7 @@ public static class InterceptionHelper
         return false;
     }
 
-    public static async Task SafeDelay(TimeSpan delay, CancellationToken ct)
+    public static async Task SafeDelay(TimeSpan delay, CancellationToken ct = default)
     {
         try
         {

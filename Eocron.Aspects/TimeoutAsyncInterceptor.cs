@@ -11,69 +11,122 @@ namespace Eocron.Aspects
 
         public TimeoutAsyncInterceptor(TimeSpan timeout)
         {
+            if (timeout <= TimeSpan.Zero || timeout == Timeout.InfiniteTimeSpan)
+            {
+                throw new ArgumentOutOfRangeException($"Invalid timeout provided: {timeout}");
+            }
+
             _timeout = timeout;
+
         }
 
-        protected override async Task InterceptAsync(IInvocation invocation, IInvocationProceedInfo proceedInfo, Func<IInvocation, IInvocationProceedInfo, Task> proceed)
+        protected override async Task InterceptAsync(IInvocation invocation, IInvocationProceedInfo proceedInfo,
+            Func<IInvocation, IInvocationProceedInfo, Task> proceed)
         {
             var rootCt = InterceptionHelper.GetCancellationTokenOrDefault(invocation);
-
-            
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(rootCt);
             InterceptionHelper.TryReplaceCancellationToken(invocation, cts.Token);
-            async Task To()
+
+            var tcs = new TaskCompletionSource<object>();
+
+            async Task TimeoutJob()
             {
-                await Task.Delay(_timeout, rootCt).ConfigureAwait(false);
-                cts.Cancel();
-                throw new TimeoutException($"Method {invocation} timed out after {_timeout}");
+                await InterceptionHelper.SafeDelay(_timeout).ConfigureAwait(false);
+                tcs.TrySetException(CreateTimeoutException(invocation));
             }
 
-            try
+            async Task ProceedJob()
             {
-                await await Task.WhenAny(
-                        Task.Run(async () => await proceed(invocation, proceedInfo), cts.Token),
-                        To())
-                    .ConfigureAwait(false);
+                await Task.Yield();
+                cts.CancelAfter(_timeout);
+                try
+                {
+                    await proceed(invocation, proceedInfo);
+                    if (IsTimedOut())
+                    {
+                        tcs.TrySetException(CreateTimeoutException(invocation));
+                    }
+                    else
+                    {
+                        tcs.TrySetResult(null);
+                    }
+                }
+                catch (Exception e) when (IsTimedOut())
+                {
+                    tcs.TrySetException(CreateTimeoutException(invocation, e));
+                }
+                catch (Exception e)
+                {
+                    tcs.TrySetException(e);
+                }
             }
-            catch (OperationCanceledException) when (rootCt.IsCancellationRequested)
+
+            bool IsTimedOut()
             {
-                throw;
+                return cts.IsCancellationRequested && !rootCt.IsCancellationRequested;
             }
-            catch (OperationCanceledException)
-            {
-                throw new TimeoutException($"Method {invocation} timed out after {_timeout}");
-            }
+
+            TimeoutJob();
+            ProceedJob();
+            await tcs.Task.ConfigureAwait(false);
         }
 
-        protected override async Task<TResult> InterceptAsync<TResult>(IInvocation invocation, IInvocationProceedInfo proceedInfo, Func<IInvocation, IInvocationProceedInfo, Task<TResult>> proceed)
+        protected override async Task<TResult> InterceptAsync<TResult>(IInvocation invocation,
+            IInvocationProceedInfo proceedInfo, Func<IInvocation, IInvocationProceedInfo, Task<TResult>> proceed)
         {
             var rootCt = InterceptionHelper.GetCancellationTokenOrDefault(invocation);
-
-            
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(rootCt);
             InterceptionHelper.TryReplaceCancellationToken(invocation, cts.Token);
-            async Task<TResult> To()
+
+            var tcs = new TaskCompletionSource<TResult>();
+
+            async Task TimeoutJob()
             {
-                await Task.Delay(_timeout, rootCt).ConfigureAwait(false);
-                cts.Cancel();
-                throw new TimeoutException($"Method {invocation} timed out after {_timeout}");
+                await InterceptionHelper.SafeDelay(_timeout).ConfigureAwait(false);
+                tcs.TrySetException(CreateTimeoutException(invocation));
             }
 
-            try
+            async Task ProceedJob()
             {
-                return await await Task.WhenAny(
-                        Task.Run(async () => await proceed(invocation, proceedInfo), cts.Token),
-                        To())
-                    .ConfigureAwait(false);
+                await Task.Yield();
+                cts.CancelAfter(_timeout);
+                TResult result;
+                try
+                {
+                    result = await proceed(invocation, proceedInfo);
+                    if (IsTimedOut())
+                    {
+                        tcs.TrySetException(CreateTimeoutException(invocation));
+                    }
+                    else
+                    {
+                        tcs.TrySetResult(result);
+                    }
+                }
+                catch (Exception e) when (IsTimedOut())
+                {
+                    tcs.TrySetException(CreateTimeoutException(invocation, e));
+                }
+                catch (Exception e)
+                {
+                    tcs.TrySetException(e);
+                }
             }
-            catch (OperationCanceledException) when (rootCt.IsCancellationRequested)
+
+            bool IsTimedOut()
             {
-                throw;
+                return cts.IsCancellationRequested && !rootCt.IsCancellationRequested;
             }
-            catch (OperationCanceledException)
-            {
-                throw new TimeoutException($"Method {invocation} timed out after {_timeout}");
-            }
+
+            
+            TimeoutJob();
+            ProceedJob();
+            return await tcs.Task.ConfigureAwait(false);
+        }
+
+        private Exception CreateTimeoutException(IInvocation invocation, Exception e = null)
+        {
+            return new TimeoutException($"Method {invocation} timed out after {_timeout}", e);
         }
     }
 }

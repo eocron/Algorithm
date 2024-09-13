@@ -11,12 +11,12 @@ namespace Eocron.Aspects.Tests
     [TestFixture]
     public class TimeoutInterceptorTests
     {
-        private IAsyncInterceptor _interceptorWithDelay;
+        private IAsyncInterceptor _interceptor;
 
         [SetUp]
         public void Setup()
         {
-            _interceptorWithDelay = new TimeoutAsyncInterceptor(TimeSpan.FromSeconds(1));
+            _interceptor = new TimeoutAsyncInterceptor(TimeSpan.FromSeconds(1));
         }
         [Test]
         public async Task Optimistic()
@@ -25,18 +25,18 @@ namespace Eocron.Aspects.Tests
             using var cts = new CancellationTokenSource();
             var token = cts.Token;
             instance.Setup(x => x.WorkAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-                .Callback(async () => OptimisticSleep(token));
+                .Returns(async () => OptimisticSleep(token));
             instance.Setup(x => x.WorkAsync(It.IsAny<int>()))
-                .Callback(async () => OptimisticSleep(token));
+                .Returns(async () => OptimisticSleep(token));
             instance.Setup(x => x.WorkWithResultAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-                .Callback(async () => OptimisticSleep(token));
+                .Returns(async () => OptimisticSleep(token));
             instance.Setup(x => x.WorkWithResultAsync(It.IsAny<int>()))
-                .Callback(async () => OptimisticSleep(token));
+                .Returns(async () => OptimisticSleep(token));
             instance.Setup(x => x.Work(It.IsAny<int>()))
-                .Callback(async () => OptimisticSleep(token));
+                .Callback(()=> OptimisticSleep(token));
             instance.Setup(x => x.WorkWithResult(It.IsAny<int>()))
-                .Callback(async () => OptimisticSleep(token));
-            var proxy = InterceptionHelper.CreateProxy(instance.Object, _interceptorWithDelay);
+                .Returns(()=> OptimisticSleep(token));
+            var proxy = InterceptionHelper.CreateProxy(instance.Object, _interceptor);
             var a1 = async()=> await proxy.WorkAsync(1, token);
             var a2 = async()=> await proxy.WorkAsync(1);
             var a3 = async()=> await proxy.WorkWithResultAsync(1, token);
@@ -76,7 +76,7 @@ namespace Eocron.Aspects.Tests
             instance.Setup(x => x.Work(It.IsAny<int>()));
             instance.Setup(x => x.WorkWithResult(It.IsAny<int>()))
                 .Returns(2);
-            var proxy = InterceptionHelper.CreateProxy(instance.Object, _interceptorWithDelay);
+            var proxy = InterceptionHelper.CreateProxy(instance.Object, _interceptor);
             await proxy.WorkAsync(1, token);
             await proxy.WorkAsync(1);
             (await proxy.WorkWithResultAsync(1, token)).Should().Be(2);
@@ -99,18 +99,18 @@ namespace Eocron.Aspects.Tests
             using var cts = new CancellationTokenSource();
             var token = cts.Token;
             instance.Setup(x => x.WorkAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-                .Callback(async () => PessimisticSleep());
+                .Returns(async () => PessimisticSleep());
             instance.Setup(x => x.WorkAsync(It.IsAny<int>()))
-                .Callback(async () => PessimisticSleep());
+                .Returns(async () => PessimisticSleep());
             instance.Setup(x => x.WorkWithResultAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-                .Callback(async () => PessimisticSleep());
+                .Returns(async () => PessimisticSleep());
             instance.Setup(x => x.WorkWithResultAsync(It.IsAny<int>()))
-                .Callback(async () => PessimisticSleep());
+                .Returns(async () => PessimisticSleep());
             instance.Setup(x => x.Work(It.IsAny<int>()))
-                .Callback(async () => PessimisticSleep());
+                .Callback(()=> PessimisticSleep());
             instance.Setup(x => x.WorkWithResult(It.IsAny<int>()))
-                .Callback(async () => PessimisticSleep());
-            var proxy = InterceptionHelper.CreateProxy(instance.Object, _interceptorWithDelay);
+                .Returns(PessimisticSleep);
+            var proxy = InterceptionHelper.CreateProxy(instance.Object, _interceptor);
             var a1 = async()=> await proxy.WorkAsync(1, token);
             var a2 = async()=> await proxy.WorkAsync(1);
             var a3 = async()=> await proxy.WorkWithResultAsync(1, token);
@@ -132,18 +132,23 @@ namespace Eocron.Aspects.Tests
             instance.Verify(x=> x.WorkWithResult(It.IsAny<int>()), Times.Exactly(1));
         }
 
-        private void OptimisticSleep(CancellationToken ct)
+        private int OptimisticSleep(CancellationToken ct)
         {
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(TimeSpan.FromSeconds(5));
             while (true)
             {
-                ct.ThrowIfCancellationRequested();
+                cts.Token.ThrowIfCancellationRequested();
                 Thread.Sleep(1);
             }
+
+            return 0;
         }
 
-        private void PessimisticSleep()
+        private int PessimisticSleep()
         {
-            Thread.Sleep(TimeSpan.FromMinutes(1));
+            Thread.Sleep(TimeSpan.FromSeconds(5));
+            return 0;
         }
     }
 }
