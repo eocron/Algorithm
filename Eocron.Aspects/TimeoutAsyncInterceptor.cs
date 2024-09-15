@@ -23,52 +23,11 @@ namespace Eocron.Aspects
         protected override async Task InterceptAsync(IInvocation invocation, IInvocationProceedInfo proceedInfo,
             Func<IInvocation, IInvocationProceedInfo, Task> proceed)
         {
-            var rootCt = InterceptionHelper.GetCancellationTokenOrDefault(invocation);
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(rootCt);
-            InterceptionHelper.TryReplaceCancellationToken(invocation, cts.Token);
-
-            var tcs = new TaskCompletionSource<object>();
-
-            async Task TimeoutJob()
+            await InterceptAsync(invocation, proceedInfo, async (x,y) =>
             {
-                await InterceptionHelper.SafeDelay(_timeout).ConfigureAwait(false);
-                tcs.TrySetException(CreateTimeoutException(invocation));
-            }
-
-            async Task ProceedJob()
-            {
-                await Task.Yield();
-                cts.CancelAfter(_timeout);
-                try
-                {
-                    await proceed(invocation, proceedInfo);
-                    if (IsTimedOut())
-                    {
-                        tcs.TrySetException(CreateTimeoutException(invocation));
-                    }
-                    else
-                    {
-                        tcs.TrySetResult(null);
-                    }
-                }
-                catch (Exception e) when (IsTimedOut())
-                {
-                    tcs.TrySetException(CreateTimeoutException(invocation, e));
-                }
-                catch (Exception e)
-                {
-                    tcs.TrySetException(e);
-                }
-            }
-
-            bool IsTimedOut()
-            {
-                return cts.IsCancellationRequested && !rootCt.IsCancellationRequested;
-            }
-
-            TimeoutJob();
-            ProceedJob();
-            await tcs.Task.ConfigureAwait(false);
+                await proceed(x, y).ConfigureAwait(false);
+                return (object)null;
+            }).ConfigureAwait(false);
         }
 
         protected override async Task<TResult> InterceptAsync<TResult>(IInvocation invocation,
