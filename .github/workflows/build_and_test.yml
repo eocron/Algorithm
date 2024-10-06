@@ -18,14 +18,14 @@ jobs:
           dotnet-version: |
             8.0.x
       - name: Restore dependencies
-        run: dotnet restore ./src
+        run: dotnet restore "./src"
       - name: Build
-        run: dotnet build --no-restore --configuration Release --output ./bin
+        run: dotnet build "./src" --no-restore --configuration Release --output "./bin"
       - name: Publish
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
-          path: ./bin
+          path: './bin'
           if-no-files-found: error
           retention-days: 1
   test:
