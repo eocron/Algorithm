@@ -24,6 +24,14 @@ namespace Eocron.Algorithms.Tests
                         .WithExponential(TimeSpan.FromMinutes(1), 2)
                         .WithClamp(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10))
                         .Build()
+                },
+                {
+                    "exponentialOffsetClamped",
+                    new BackOffBuilder()
+                        .WithExponential(TimeSpan.FromMinutes(1), 2)
+                        .WithOffset(TimeSpan.FromMinutes(3))
+                        .WithClamp(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10))
+                        .Build()
                 }
             };
         }
@@ -43,6 +51,13 @@ namespace Eocron.Algorithms.Tests
         [TestCase("exponentialClamped" ,4, "00:08:00")]
         [TestCase("exponentialClamped" ,5, "00:10:00")]
         [TestCase("exponentialClamped" ,6, "00:10:00")]
+        [TestCase("exponentialOffsetClamped" ,0, "00:03:00")]
+        [TestCase("exponentialOffsetClamped" ,1, "00:04:00")]
+        [TestCase("exponentialOffsetClamped" ,2, "00:05:00")]
+        [TestCase("exponentialOffsetClamped" ,3, "00:07:00")]
+        [TestCase("exponentialOffsetClamped" ,4, "00:10:00")]
+        [TestCase("exponentialOffsetClamped" ,5, "00:10:00")]
+        [TestCase("exponentialOffsetClamped" ,6, "00:10:00")]
         public void Test(string providerStr, int n, string timespanStr)
         {
             var timespan = TimeSpan.Parse(timespanStr);

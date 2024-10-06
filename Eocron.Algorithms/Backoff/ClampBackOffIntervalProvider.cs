@@ -8,7 +8,7 @@ namespace Eocron.Algorithms.Backoff
         private readonly TimeSpan _max;
         private readonly IBackOffIntervalProvider _provider;
 
-        public ClampBackOffIntervalProvider(TimeSpan min, TimeSpan max, IBackOffIntervalProvider provider)
+        public ClampBackOffIntervalProvider(IBackOffIntervalProvider provider, TimeSpan min, TimeSpan max)
         {
             if (min >= max)
             {
