@@ -69,6 +69,7 @@ jobs:
           results-path: ./TestResults/*.trx
   publish:
     needs: [build,test]
+    runs-on: ubuntu-latest
     steps:
       - uses: trstringer/manual-approval@v1
         timeout-minutes: 60
