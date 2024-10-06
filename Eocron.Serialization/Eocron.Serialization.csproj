@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <PackageId>Eocron.Serialization</PackageId>
         <Product>Eocron.Serialization</Product>
         <PackageTags>serialization;eocron</PackageTags>
