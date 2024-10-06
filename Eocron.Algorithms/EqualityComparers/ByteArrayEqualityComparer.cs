@@ -55,6 +55,8 @@ namespace Eocron.Algorithms.EqualityComparers
 
         public int GetHashCode(byte[] obj)
         {
+            if (obj == default)
+                return 0;
             return GetHashCode(new ArraySegment<byte>(obj));
         }
 
