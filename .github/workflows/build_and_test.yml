@@ -18,10 +18,10 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
-        run: dotnet build --no-restore -c Release
+        run: dotnet build --no-restore --configuration Release
   test:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Test
-        run: dotnet test --no-build --verbosity -c Release normal --filter TestCategory!=FailOnNix 
+        run: dotnet test --no-build --verbosity normal --configuration Release --filter TestCategory!=FailOnNix 
