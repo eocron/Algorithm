@@ -10,22 +10,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: './src'
       - name: Setup .NET 8.0
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             8.0.x
       - name: Restore dependencies
-        run: dotnet restore "./src"
+        run: dotnet restore
       - name: Build
-        run: dotnet build "./src" --no-restore --configuration Release --property:OutputPath="./bin"
+        run: dotnet build --no-restore --configuration Release --property OutputPath="./bin"
       - name: Publish
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
-          path: './bin'
+          path: |
+            **/bin/**
           if-no-files-found: error
           retention-days: 1
   test:
