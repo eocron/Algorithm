@@ -1,5 +1,6 @@
 ﻿using Eocron.Algorithms.Paths;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -20,7 +21,7 @@ namespace Eocron.Algorithms.Tests
         [TestCase(@"/./", @"./", Category = "dot")]
         public void Check(string inputPath, string expectedPath)
         {
-            Assert.AreEqual(expectedPath, PathEx.Eval(inputPath, '/'));
+            ClassicAssert.AreEqual(expectedPath, PathEx.Eval(inputPath, '/'));
         }
     }
 }

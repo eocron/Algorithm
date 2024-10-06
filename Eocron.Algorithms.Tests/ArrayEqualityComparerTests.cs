@@ -2,6 +2,7 @@
 using System.Linq;
 using Eocron.Algorithms.EqualityComparers;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -23,7 +24,7 @@ namespace Eocron.Algorithms.Tests
         {
             var cmp = ArrayEqualityComparer<object>.Default;
             var actual = cmp.Equals(a?.Cast<object>(), b?.Cast<object>());
-            Assert.AreEqual(expected, actual);
+            ClassicAssert.AreEqual(expected, actual);
         }
     }
 }

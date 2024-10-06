@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Eocron.Algorithms.Tree;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -24,9 +25,9 @@ namespace Eocron.Algorithms.Tests
             var dict = new RedBlackTree<int, string>();
             foreach (var keyValuePair in items) dict.Add(keyValuePair);
             foreach (var keyValuePair in items) AssertExist(dict, keyValuePair);
-            Assert.AreEqual(items.Count, dict.Count);
-            Assert.AreEqual(items.First(), dict.GetMinKeyValuePair());
-            Assert.AreEqual(items.Last(), dict.GetMaxKeyValuePair());
+            ClassicAssert.AreEqual(items.Count, dict.Count);
+            ClassicAssert.AreEqual(items.First(), dict.GetMinKeyValuePair());
+            ClassicAssert.AreEqual(items.Last(), dict.GetMaxKeyValuePair());
             CollectionAssert.AreEquivalent(items, dict);
         }
 
@@ -38,10 +39,10 @@ namespace Eocron.Algorithms.Tests
             foreach (var keyValuePair in items) dict.Add(keyValuePair);
             dict.Clear();
 
-            Assert.IsEmpty(dict);
-            Assert.AreEqual(0, dict.Count);
-            Assert.Throws<InvalidOperationException>(() => dict.GetMaxKeyValuePair());
-            Assert.Throws<InvalidOperationException>(() => dict.GetMinKeyValuePair());
+            ClassicAssert.IsEmpty(dict);
+            ClassicAssert.AreEqual(0, dict.Count);
+            ClassicAssert.Throws<InvalidOperationException>(() => dict.GetMaxKeyValuePair());
+            ClassicAssert.Throws<InvalidOperationException>(() => dict.GetMinKeyValuePair());
         }
 
         [Test]
@@ -50,9 +51,9 @@ namespace Eocron.Algorithms.Tests
             var items = GetTestItems();
             var dict = new RedBlackTree<int, string>();
             foreach (var keyValuePair in items) dict[keyValuePair.Key] = keyValuePair.Value;
-            Assert.AreEqual(items.Count, dict.Count);
-            Assert.AreEqual(items.First(), dict.GetMinKeyValuePair());
-            Assert.AreEqual(items.Last(), dict.GetMaxKeyValuePair());
+            ClassicAssert.AreEqual(items.Count, dict.Count);
+            ClassicAssert.AreEqual(items.First(), dict.GetMinKeyValuePair());
+            ClassicAssert.AreEqual(items.Last(), dict.GetMaxKeyValuePair());
             CollectionAssert.AreEquivalent(items, dict);
         }
 
@@ -70,35 +71,35 @@ namespace Eocron.Algorithms.Tests
             foreach (var keyValuePair in items) AssertExist(dict, keyValuePair);
 
             foreach (var keyValuePair in toDelete) AssertNotExist(dict, keyValuePair);
-            Assert.AreEqual(items.Count, dict.Count);
-            Assert.AreEqual(items.First(), dict.GetMinKeyValuePair());
-            Assert.AreEqual(items.Last(), dict.GetMaxKeyValuePair());
+            ClassicAssert.AreEqual(items.Count, dict.Count);
+            ClassicAssert.AreEqual(items.First(), dict.GetMinKeyValuePair());
+            ClassicAssert.AreEqual(items.Last(), dict.GetMaxKeyValuePair());
             CollectionAssert.AreEquivalent(items, dict);
         }
 
         private void AssertNotExist<TKey, TValue>(RedBlackTree<TKey, TValue> dict, KeyValuePair<TKey, TValue> item)
         {
-            Assert.IsFalse(dict.ContainsKey(item.Key));
-            Assert.Throws<KeyNotFoundException>(() =>
+            ClassicAssert.IsFalse(dict.ContainsKey(item.Key));
+            ClassicAssert.Throws<KeyNotFoundException>(() =>
             {
                 var t = dict[item.Key];
             });
             TValue tmp;
-            Assert.IsFalse(dict.TryGetValue(item.Key, out tmp));
-            Assert.AreEqual(default(TValue), tmp);
-            Assert.IsFalse(dict.Contains(item));
-            Assert.IsFalse(dict.Remove(item.Key));
+            ClassicAssert.IsFalse(dict.TryGetValue(item.Key, out tmp));
+            ClassicAssert.AreEqual(default(TValue), tmp);
+            ClassicAssert.IsFalse(dict.Contains(item));
+            ClassicAssert.IsFalse(dict.Remove(item.Key));
         }
 
         private void AssertExist<TKey, TValue>(IDictionary<TKey, TValue> dict, KeyValuePair<TKey, TValue> item)
         {
-            Assert.IsTrue(dict.ContainsKey(item.Key));
-            Assert.AreEqual(item.Value, dict[item.Key]);
+            ClassicAssert.IsTrue(dict.ContainsKey(item.Key));
+            ClassicAssert.AreEqual(item.Value, dict[item.Key]);
             TValue tmp;
-            Assert.IsTrue(dict.TryGetValue(item.Key, out tmp));
-            Assert.AreEqual(item.Value, tmp);
-            Assert.IsTrue(dict.Contains(item));
-            Assert.Throws<ArgumentException>(() => { dict.Add(item); });
+            ClassicAssert.IsTrue(dict.TryGetValue(item.Key, out tmp));
+            ClassicAssert.AreEqual(item.Value, tmp);
+            ClassicAssert.IsTrue(dict.Contains(item));
+            ClassicAssert.Throws<ArgumentException>(() => { dict.Add(item); });
         }
     }
 }

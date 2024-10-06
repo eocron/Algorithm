@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Eocron.Algorithms.Randoms;
 using Eocron.Algorithms.Streams;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -35,7 +36,7 @@ namespace Eocron.Algorithms.Tests
         public void Catch()
         {
             var testStream = GetTestStream();
-            Assert.Throws<InvalidDataException>(() =>
+            ClassicAssert.Throws<InvalidDataException>(() =>
             {
                 var actual = testStream
                     .AsEnumerable()
@@ -43,16 +44,16 @@ namespace Eocron.Algorithms.Tests
                     .ToByteArray();
             });
 
-            Assert.AreEqual(1, testStream.CloseCallCount);
-            Assert.AreEqual(0, testStream.DisposeAsyncCallCount);
-            Assert.AreEqual(1, testStream.DisposeCallCount);
+            ClassicAssert.AreEqual(1, testStream.CloseCallCount);
+            ClassicAssert.AreEqual(0, testStream.DisposeAsyncCallCount);
+            ClassicAssert.AreEqual(1, testStream.DisposeCallCount);
         }
 
         [Test]
         public void CatchAsync()
         {
             var testStream = GetTestStream();
-            Assert.ThrowsAsync<InvalidDataException>(async () =>
+            ClassicAssert.ThrowsAsync<InvalidDataException>(async () =>
             {
                 var actual = await testStream
                     .AsAsyncEnumerable()
@@ -60,9 +61,9 @@ namespace Eocron.Algorithms.Tests
                     .ToByteArrayAsync();
             });
 
-            Assert.AreEqual(1, testStream.CloseCallCount);
-            Assert.AreEqual(1, testStream.DisposeAsyncCallCount);
-            Assert.AreEqual(1, testStream.DisposeCallCount);
+            ClassicAssert.AreEqual(1, testStream.CloseCallCount);
+            ClassicAssert.AreEqual(1, testStream.DisposeAsyncCallCount);
+            ClassicAssert.AreEqual(1, testStream.DisposeCallCount);
         }
 
         [Test]
@@ -73,14 +74,14 @@ namespace Eocron.Algorithms.Tests
                 .AsEnumerable(new TestMemoryPool<byte>(2))
                 .Select(x => x.ToArray())
                 .ToList();
-            Assert.AreEqual(3, result.Count);
+            ClassicAssert.AreEqual(3, result.Count);
             CollectionAssert.AreEqual(new[] { 1, 2 }, result[0]);
             CollectionAssert.AreEqual(new[] { 3, 4 }, result[1]);
             CollectionAssert.AreEqual(new[] { 5 }, result[2]);
 
-            Assert.AreEqual(1, testStream.CloseCallCount);
-            Assert.AreEqual(0, testStream.DisposeAsyncCallCount);
-            Assert.AreEqual(1, testStream.DisposeCallCount);
+            ClassicAssert.AreEqual(1, testStream.CloseCallCount);
+            ClassicAssert.AreEqual(0, testStream.DisposeAsyncCallCount);
+            ClassicAssert.AreEqual(1, testStream.DisposeCallCount);
         }
 
         [Test]
@@ -91,14 +92,14 @@ namespace Eocron.Algorithms.Tests
                 .AsEnumerable(new TestMemoryPool<byte>(2), true)
                 .Select(x => x.ToArray())
                 .ToList();
-            Assert.AreEqual(3, result.Count);
+            ClassicAssert.AreEqual(3, result.Count);
             CollectionAssert.AreEqual(new[] { 1, 2 }, result[0]);
             CollectionAssert.AreEqual(new[] { 3, 4 }, result[1]);
             CollectionAssert.AreEqual(new[] { 5 }, result[2]);
 
-            Assert.AreEqual(0, testStream.CloseCallCount);
-            Assert.AreEqual(0, testStream.DisposeAsyncCallCount);
-            Assert.AreEqual(0, testStream.DisposeCallCount);
+            ClassicAssert.AreEqual(0, testStream.CloseCallCount);
+            ClassicAssert.AreEqual(0, testStream.DisposeAsyncCallCount);
+            ClassicAssert.AreEqual(0, testStream.DisposeCallCount);
         }
 
         [Test]
@@ -115,9 +116,9 @@ namespace Eocron.Algorithms.Tests
                 .GZip(CompressionMode.Decompress)
                 .ToByteArray();
             CollectionAssert.AreEqual(TestData, actual);
-            Assert.AreEqual(1, testStream.CloseCallCount);
-            Assert.AreEqual(0, testStream.DisposeAsyncCallCount);
-            Assert.AreEqual(1, testStream.DisposeCallCount);
+            ClassicAssert.AreEqual(1, testStream.CloseCallCount);
+            ClassicAssert.AreEqual(0, testStream.DisposeAsyncCallCount);
+            ClassicAssert.AreEqual(1, testStream.DisposeCallCount);
         }
 
         [Test]
@@ -134,9 +135,9 @@ namespace Eocron.Algorithms.Tests
                 .GZip(CompressionMode.Decompress)
                 .ToByteArray();
             CollectionAssert.AreEqual(TestData, actual);
-            Assert.AreEqual(0, testStream.CloseCallCount);
-            Assert.AreEqual(0, testStream.DisposeAsyncCallCount);
-            Assert.AreEqual(0, testStream.DisposeCallCount);
+            ClassicAssert.AreEqual(0, testStream.CloseCallCount);
+            ClassicAssert.AreEqual(0, testStream.DisposeAsyncCallCount);
+            ClassicAssert.AreEqual(0, testStream.DisposeCallCount);
         }
 
         [Test]
@@ -153,9 +154,9 @@ namespace Eocron.Algorithms.Tests
                 .GZip(CompressionMode.Decompress)
                 .ToByteArrayAsync(CancellationToken.None);
             CollectionAssert.AreEqual(TestData, actual);
-            Assert.AreEqual(1, testStream.CloseCallCount);
-            Assert.AreEqual(1, testStream.DisposeAsyncCallCount);
-            Assert.AreEqual(1, testStream.DisposeCallCount);
+            ClassicAssert.AreEqual(1, testStream.CloseCallCount);
+            ClassicAssert.AreEqual(1, testStream.DisposeAsyncCallCount);
+            ClassicAssert.AreEqual(1, testStream.DisposeCallCount);
         }
 
         [Test]
@@ -172,9 +173,9 @@ namespace Eocron.Algorithms.Tests
                 .GZip(CompressionMode.Decompress)
                 .ToByteArrayAsync(CancellationToken.None);
             CollectionAssert.AreEqual(TestData, actual);
-            Assert.AreEqual(0, testStream.CloseCallCount);
-            Assert.AreEqual(0, testStream.DisposeAsyncCallCount);
-            Assert.AreEqual(0, testStream.DisposeCallCount);
+            ClassicAssert.AreEqual(0, testStream.CloseCallCount);
+            ClassicAssert.AreEqual(0, testStream.DisposeAsyncCallCount);
+            ClassicAssert.AreEqual(0, testStream.DisposeCallCount);
         }
 
         [Test]
@@ -188,7 +189,7 @@ namespace Eocron.Algorithms.Tests
                 .Convert(Encoding.Default)
                 .BuildString();
 
-            Assert.AreEqual(TestDataString, actual);
+            ClassicAssert.AreEqual(TestDataString, actual);
         }
 
         [Test]
@@ -202,7 +203,7 @@ namespace Eocron.Algorithms.Tests
                 .Convert(Encoding.Default)
                 .BuildStringAsync(CancellationToken.None);
 
-            Assert.AreEqual(TestDataString, actual);
+            ClassicAssert.AreEqual(TestDataString, actual);
         }
 
         private TestReadStream GetTestStream()
@@ -267,7 +268,7 @@ namespace Eocron.Algorithms.Tests
 
             public override void Flush()
             {
-                Assert.Fail(nameof(Flush));
+                ClassicAssert.Fail(nameof(Flush));
             }
 
             public override int Read(byte[] buffer, int offset, int count)
@@ -277,18 +278,18 @@ namespace Eocron.Algorithms.Tests
 
             public override long Seek(long offset, SeekOrigin origin)
             {
-                Assert.Fail(nameof(Seek));
+                ClassicAssert.Fail(nameof(Seek));
                 return -1;
             }
 
             public override void SetLength(long value)
             {
-                Assert.Fail(nameof(SetLength));
+                ClassicAssert.Fail(nameof(SetLength));
             }
 
             public override void Write(byte[] buffer, int offset, int count)
             {
-                Assert.Fail(nameof(Write));
+                ClassicAssert.Fail(nameof(Write));
             }
 
             protected override void Dispose(bool disposing)
@@ -309,7 +310,7 @@ namespace Eocron.Algorithms.Tests
             public override long Position
             {
                 get => _streamImplementation.Position;
-                set => Assert.Fail(nameof(Position));
+                set => ClassicAssert.Fail(nameof(Position));
             }
 
             private readonly Stream _streamImplementation;

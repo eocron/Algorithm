@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Eocron.Algorithms.EqualityComparers;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -22,7 +23,7 @@ namespace Eocron.Algorithms.Tests
         [TestCase(10000)]
         public void GetHashSelfCollisionsRnd(int size)
         {
-            Assert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentRndArrays(size), _cmp), 0.1d);
+            ClassicAssert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentRndArrays(size), _cmp), 0.1d);
         }
 
         [Test(Description =
@@ -34,30 +35,30 @@ namespace Eocron.Algorithms.Tests
         [TestCase(10000)]
         public void GetHashSelfCollisionsSparse(int size)
         {
-            Assert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentSparseArrays(size), _cmp, true), 0.1d);
+            ClassicAssert.LessOrEqual(CalculateCollisions(GetSlightlyDifferentSparseArrays(size), _cmp, true), 0.1d);
         }
 
         [Test(Description = "Guarantee that completely random array collision is lower than some percent")]
         [TestCase(123, 1000000)]
         public void GetHashCollisionsRnd(int size, int count)
         {
-            Assert.LessOrEqual(CalculateCollisions(GetCompletelyDifferentRndArrays(size, count), _cmp, true), 0.001d);
+            ClassicAssert.LessOrEqual(CalculateCollisions(GetCompletelyDifferentRndArrays(size, count), _cmp, true), 0.001d);
         }
 
         [Test]
         [TestCaseSource(nameof(GetAreEqualTests))]
         public void AreEqual(byte[] a, byte[] b)
         {
-            Assert.IsTrue(_cmp.Equals(a, b));
-            Assert.AreEqual(_cmp.GetHashCode(a), _cmp.GetHashCode(b));
+            ClassicAssert.IsTrue(_cmp.Equals(a, b));
+            ClassicAssert.AreEqual(_cmp.GetHashCode(a), _cmp.GetHashCode(b));
         }
 
         [Test]
         [TestCaseSource(nameof(GetAreNotEqualTests))]
         public void AreNotEqual(byte[] a, byte[] b)
         {
-            Assert.IsFalse(_cmp.Equals(a, b));
-            Assert.AreNotEqual(_cmp.GetHashCode(a), _cmp.GetHashCode(b));
+            ClassicAssert.IsFalse(_cmp.Equals(a, b));
+            ClassicAssert.AreNotEqual(_cmp.GetHashCode(a), _cmp.GetHashCode(b));
         }
 
         [Test]
@@ -71,16 +72,16 @@ namespace Eocron.Algorithms.Tests
             {
                 var aa = new ArraySegment<byte>(a, 0, i);
                 var bb = new ArraySegment<byte>(b, 0, i);
-                Assert.IsTrue(_cmp.Equals(aa, bb));
-                Assert.AreEqual(_cmp.GetHashCode(aa), _cmp.GetHashCode(bb));
+                ClassicAssert.IsTrue(_cmp.Equals(aa, bb));
+                ClassicAssert.AreEqual(_cmp.GetHashCode(aa), _cmp.GetHashCode(bb));
             }
 
             for (var i = 1; i < 40000; i += 149)
             {
                 var aa = new ArraySegment<byte>(a, i, 31);
                 var bb = new ArraySegment<byte>(b, i, 31);
-                Assert.IsTrue(_cmp.Equals(aa, bb));
-                Assert.AreEqual(_cmp.GetHashCode(aa), _cmp.GetHashCode(bb));
+                ClassicAssert.IsTrue(_cmp.Equals(aa, bb));
+                ClassicAssert.AreEqual(_cmp.GetHashCode(aa), _cmp.GetHashCode(bb));
             }
         }
 
@@ -95,8 +96,8 @@ namespace Eocron.Algorithms.Tests
             {
                 var aa = new ArraySegment<byte>(a, 0, i);
                 var bb = new ArraySegment<byte>(b, 0, i);
-                Assert.IsTrue(_cmp.Equals(aa, bb), i.ToString());
-                Assert.AreEqual(_cmp.GetHashCode(aa), _cmp.GetHashCode(bb), i.ToString());
+                ClassicAssert.IsTrue(_cmp.Equals(aa, bb), i.ToString());
+                ClassicAssert.AreEqual(_cmp.GetHashCode(aa), _cmp.GetHashCode(bb), i.ToString());
             }
         }
 

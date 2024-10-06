@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Eocron.Algorithms.Intervals;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -89,7 +90,7 @@ namespace Eocron.Algorithms.Tests
 
         private void AssertSets<T>(IEnumerable<Interval<T>> expected, IEnumerable<Interval<T>> actual)
         {
-            Assert.AreEqual(string.Join(",", expected), string.Join(",", actual));
+            ClassicAssert.AreEqual(string.Join(",", expected), string.Join(",", actual));
         }
 
         private static TestCaseData CreateSetTest(string input, string result, ref int counter)

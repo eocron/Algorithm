@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Eocron.Algorithms.Randoms;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -19,7 +20,7 @@ namespace Eocron.Algorithms.Tests
             var array = new byte[234];
             var result = stream.Read(array, 0, array.Length);
 
-            Assert.AreEqual(array.Length, result);
+            ClassicAssert.AreEqual(array.Length, result);
 
 
             stream.Seek(0, SeekOrigin.Begin);
@@ -27,8 +28,8 @@ namespace Eocron.Algorithms.Tests
             for (var i = 0; i < array.Length; i++)
             {
                 var readtmp = stream.Read(tmp, 0, tmp.Length);
-                Assert.AreEqual(tmp.Length, readtmp);
-                Assert.AreEqual(array[i], tmp[0]);
+                ClassicAssert.AreEqual(tmp.Length, readtmp);
+                ClassicAssert.AreEqual(array[i], tmp[0]);
             }
         }
 
@@ -41,7 +42,7 @@ namespace Eocron.Algorithms.Tests
             var count = 10000;
             for (var i = 0; i < count; i++) res[rnd.NextBool() ? 1 : 0]++;
             //almost 50/50 results, so distribution is linear.
-            Assert.AreEqual(res[0] / count, res[1] / count, 0.01d);
+            ClassicAssert.AreEqual(res[0] / count, res[1] / count, 0.01d);
         }
 
         [Test]
@@ -51,8 +52,8 @@ namespace Eocron.Algorithms.Tests
         {
             var rnd = new Random(42);
             var str = rnd.NextString(strSize, domain);
-            Assert.AreEqual(strSize, str.Length);
-            Assert.IsFalse(str.ToCharArray().Except(domain).Any());
+            ClassicAssert.AreEqual(strSize, str.Length);
+            ClassicAssert.IsFalse(str.ToCharArray().Except(domain).Any());
         }
 
         [Test]
@@ -65,7 +66,7 @@ namespace Eocron.Algorithms.Tests
             var array = new byte[234];
             var result = stream.Read(array, 0, array.Length);
 
-            Assert.AreEqual(streamSize, result);
+            ClassicAssert.AreEqual(streamSize, result);
 
 
             stream.Seek(0, SeekOrigin.Begin);
@@ -73,8 +74,8 @@ namespace Eocron.Algorithms.Tests
             for (var i = 0; i < streamSize; i++)
             {
                 var readtmp = stream.Read(tmp, 0, tmp.Length);
-                Assert.AreEqual(tmp.Length, readtmp);
-                Assert.AreEqual(array[i], tmp[0]);
+                ClassicAssert.AreEqual(tmp.Length, readtmp);
+                ClassicAssert.AreEqual(array[i], tmp[0]);
             }
         }
     }

@@ -1,5 +1,6 @@
 ﻿using Eocron.Algorithms.Levenstain;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -36,7 +37,7 @@ namespace Eocron.Algorithms.Tests
                         return "??";
                     }));
 
-            Assert.AreEqual(expected, actual);
+            ClassicAssert.AreEqual(expected, actual);
         }
     }
 }

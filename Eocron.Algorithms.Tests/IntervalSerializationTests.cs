@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Eocron.Algorithms.Intervals;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {

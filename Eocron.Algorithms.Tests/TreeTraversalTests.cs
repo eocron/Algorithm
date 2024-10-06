@@ -2,6 +2,7 @@
 using System.Linq;
 using Eocron.Algorithms.Tree;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -46,7 +47,7 @@ namespace Eocron.Algorithms.Tests
         public void Traversal(char root, TraversalKind kind, string expected)
         {
             var actual = new string(root.Traverse(GetChildren, kind).ToArray());
-            Assert.AreEqual(expected, actual);
+            ClassicAssert.AreEqual(expected, actual);
         }
     }
 }

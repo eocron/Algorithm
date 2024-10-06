@@ -3,6 +3,7 @@ using System.IO;
 using Eocron.Algorithms.EqualityComparers;
 using Eocron.Algorithms.Randoms;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -38,10 +39,10 @@ namespace Eocron.Algorithms.Tests
         {
             var cmp = FileContentEqualityComparer.Default;
 
-            Assert.IsTrue(cmp.Equals(_smallFile, _smallFile));
-            Assert.IsTrue(cmp.Equals(_bigFile, _bigFile));
-            Assert.AreEqual(cmp.GetHashCode(_smallFile), cmp.GetHashCode(_smallFile));
-            Assert.AreEqual(cmp.GetHashCode(_bigFile), cmp.GetHashCode(_bigFile));
+            ClassicAssert.IsTrue(cmp.Equals(_smallFile, _smallFile));
+            ClassicAssert.IsTrue(cmp.Equals(_bigFile, _bigFile));
+            ClassicAssert.AreEqual(cmp.GetHashCode(_smallFile), cmp.GetHashCode(_smallFile));
+            ClassicAssert.AreEqual(cmp.GetHashCode(_bigFile), cmp.GetHashCode(_bigFile));
         }
 
         [Test]
@@ -49,8 +50,8 @@ namespace Eocron.Algorithms.Tests
         {
             var cmp = FileContentEqualityComparer.Default;
 
-            Assert.IsFalse(cmp.Equals(_smallFile, _bigFile));
-            Assert.AreNotEqual(cmp.GetHashCode(_smallFile), cmp.GetHashCode(_bigFile));
+            ClassicAssert.IsFalse(cmp.Equals(_smallFile, _bigFile));
+            ClassicAssert.AreNotEqual(cmp.GetHashCode(_smallFile), cmp.GetHashCode(_bigFile));
         }
     }
 }

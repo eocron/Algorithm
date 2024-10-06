@@ -4,6 +4,7 @@ using System.Linq;
 using Eocron.Algorithms.Queues;
 using Eocron.Algorithms.Tests.Core;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -30,11 +31,11 @@ namespace Eocron.Algorithms.Tests
             queue.Enqueue(new KeyValuePair<int, Guid>(1, Guid.NewGuid()));
             queue.Enqueue(new KeyValuePair<int, Guid>(1, Guid.NewGuid()));
 
-            Assert.AreEqual(2, queue.Count);
+            ClassicAssert.AreEqual(2, queue.Count);
             queue.Dequeue();
-            Assert.AreEqual(1, queue.Count);
+            ClassicAssert.AreEqual(1, queue.Count);
             queue.Dequeue();
-            Assert.AreEqual(0, queue.Count);
+            ClassicAssert.AreEqual(0, queue.Count);
         }
     }
 }

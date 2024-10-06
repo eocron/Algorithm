@@ -1,6 +1,7 @@
 ﻿using System;
 using Eocron.Algorithms.Hex;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -26,7 +27,7 @@ namespace Eocron.Algorithms.Tests
         {
             var bytes = input.FromHexString(formatting);
             var actual = bytes.ToHexString(formatting);
-            Assert.AreEqual(expected, actual);
+            ClassicAssert.AreEqual(expected, actual);
         }
 
         [Test]
@@ -36,7 +37,7 @@ namespace Eocron.Algorithms.Tests
         [TestCase("0xfoobar", HexFormatting.Unix, "Invalid hex character.")]
         public void ConvertError(string input, HexFormatting formatting, string expectedError)
         {
-            Assert.That(() => input.FromHexString(formatting),
+            ClassicAssert.That(() => input.FromHexString(formatting),
                 Throws.Exception
                     .InstanceOf<ArgumentException>()
                     .With.Message.EqualTo(expectedError));

@@ -1,5 +1,6 @@
 ﻿using Eocron.Algorithms.Sorted;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -20,7 +21,7 @@ namespace Eocron.Algorithms.Tests
         public void BinarySearch(string list, char value, int expected_index)
         {
             var actual = list.ToCharArray().BinarySearchIndexOf(value);
-            Assert.AreEqual(expected_index, actual);
+            ClassicAssert.AreEqual(expected_index, actual);
         }
 
         [Test]
@@ -37,7 +38,7 @@ namespace Eocron.Algorithms.Tests
         public void UpperBound(string list, char value, int expected_index)
         {
             var actual = list.ToCharArray().UpperBoundIndexOf(value);
-            Assert.AreEqual(expected_index, actual);
+            ClassicAssert.AreEqual(expected_index, actual);
         }
 
         [Test]
@@ -54,7 +55,7 @@ namespace Eocron.Algorithms.Tests
         public void LowerBound(string list, char value, int expected_index)
         {
             var actual = list.ToCharArray().LowerBoundIndexOf(value);
-            Assert.AreEqual(expected_index, actual);
+            ClassicAssert.AreEqual(expected_index, actual);
         }
 
         [Test]
@@ -71,7 +72,7 @@ namespace Eocron.Algorithms.Tests
         public void BinarySearchDescending(string list, char value, int expected_index)
         {
             var actual = list.ToCharArray().BinarySearchIndexOf(value, descendingOrder: true);
-            Assert.AreEqual(expected_index, actual);
+            ClassicAssert.AreEqual(expected_index, actual);
         }
 
         [Test]
@@ -88,7 +89,7 @@ namespace Eocron.Algorithms.Tests
         public void UpperBoundDescending(string list, char value, int expected_index)
         {
             var actual = list.ToCharArray().UpperBoundIndexOf(value, descendingOrder: true);
-            Assert.AreEqual(expected_index, actual);
+            ClassicAssert.AreEqual(expected_index, actual);
         }
 
         [Test]
@@ -105,7 +106,7 @@ namespace Eocron.Algorithms.Tests
         public void LowerBoundDescending(string list, char value, int expected_index)
         {
             var actual = list.ToCharArray().LowerBoundIndexOf(value, descendingOrder: true);
-            Assert.AreEqual(expected_index, actual);
+            ClassicAssert.AreEqual(expected_index, actual);
         }
     }
 }

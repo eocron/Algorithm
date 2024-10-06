@@ -1,5 +1,6 @@
 ﻿using Eocron.Algorithms.ReadableBytes;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -19,7 +20,7 @@ namespace Eocron.Algorithms.Tests
         public void Check(long size, string expected)
         {
             var actual = size.ToReadableSizeString();
-            Assert.AreEqual(expected, actual);
+            ClassicAssert.AreEqual(expected, actual);
         }
     }
 }

@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Eocron.Algorithms.HashCode;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -22,7 +23,7 @@ namespace Eocron.Algorithms.Tests
 
                 var next = await ms.GetHashCodeAsync();
                 if (prev != null)
-                    Assert.AreNotEqual(prev.Value, next);
+                    ClassicAssert.AreNotEqual(prev.Value, next);
 
                 prev = next;
             }

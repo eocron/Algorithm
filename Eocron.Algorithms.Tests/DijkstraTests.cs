@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Eocron.Algorithms.Graphs;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using QuikGraph;
 using QuikGraph.Graphviz;
 using QuikGraph.Graphviz.Dot;
@@ -21,9 +22,9 @@ namespace Eocron.Algorithms.Tests
                 (x, y) => x.Weight + 1);
             result.Search(0);
 
-            Assert.AreEqual(0, result.GetWeight(0));
-            Assert.AreEqual(0, result.GetPathFromSourceToTarget().Count());
-            Assert.IsFalse(result.IsTargetFound);
+            ClassicAssert.AreEqual(0, result.GetWeight(0));
+            ClassicAssert.AreEqual(0, result.GetPathFromSourceToTarget().Count());
+            ClassicAssert.IsFalse(result.IsTargetFound);
         }
 
         [Test]
@@ -43,8 +44,8 @@ namespace Eocron.Algorithms.Tests
                 (x, y) => x.Weight + 1);
             result.Search(source);
             var pathToRome = result.GetPath(source, target).ToList();
-            Assert.AreEqual(1, result.GetWeight(target));
-            Assert.AreEqual(new[] { source, target }, pathToRome);
+            ClassicAssert.AreEqual(1, result.GetWeight(target));
+            ClassicAssert.AreEqual(new[] { source, target }, pathToRome);
             Print(graph, pathToRome);
         }
 
@@ -73,7 +74,7 @@ namespace Eocron.Algorithms.Tests
             var target = targets.OrderBy(x => result.GetWeight(x)).First();
             var pathToRome = result.GetPath(source, target).ToList();
             Print(graph, pathToRome);
-            Assert.AreEqual(expectedMinSteps, result.GetWeight(target));
+            ClassicAssert.AreEqual(expectedMinSteps, result.GetWeight(target));
         }
 
         [Test]
@@ -96,7 +97,7 @@ namespace Eocron.Algorithms.Tests
             var target = cities.Length - 1;
             var pathToRome = result.GetPath(source, target).ToList();
             Print(graph, pathToRome);
-            Assert.AreEqual(expectedMinSteps, result.GetWeight(target));
+            ClassicAssert.AreEqual(expectedMinSteps, result.GetWeight(target));
         }
 
         [Test]
@@ -140,7 +141,7 @@ namespace Eocron.Algorithms.Tests
             result.Search(source);
 
             var minDistance = result.GetWeight(target);
-            Assert.AreEqual(expectedMinDistance, minDistance);
+            ClassicAssert.AreEqual(expectedMinDistance, minDistance);
         }
 
         [Test]

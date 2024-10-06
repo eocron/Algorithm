@@ -7,6 +7,7 @@ using Eocron.Serialization;
 using Eocron.Serialization.Json;
 using FluentAssertions;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.NetCore.Serialization.Tests
 {
@@ -17,10 +18,17 @@ namespace Eocron.NetCore.Serialization.Tests
         private X509Certificate2 _publicCertificate;
 
         [OneTimeSetUp]
-        public void Setup()
+        public void SetUp()
         {
             _privateCertificate = TestCertificateHelper.CreateRsaSelfSignedCertificate();
             _publicCertificate = TestCertificateHelper.CreatePublicCertificate(_privateCertificate);
+        }
+        
+        [OneTimeTearDown]
+        public void TearDown()
+        {
+            _privateCertificate?.Dispose();
+            _publicCertificate?.Dispose();
         }
 
         public override ISerializationConverter GetConverter()
@@ -53,7 +61,7 @@ namespace Eocron.NetCore.Serialization.Tests
             
             var model = new JsonTestModel() { Guid = Guid.NewGuid(), FooBarString = "some_string"};
             var data = publicConverter.SerializeToBytes(model);
-            Assert.Throws<SecurityException>(()=> publicConverter.Deserialize<JsonTestModel>(data));
+            ClassicAssert.Throws<SecurityException>(()=> publicConverter.Deserialize<JsonTestModel>(data));
         }
     }
 }

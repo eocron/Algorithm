@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Eocron.Algorithms.Sorted;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {

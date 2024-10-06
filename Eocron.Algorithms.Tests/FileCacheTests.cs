@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Eocron.Algorithms.FileCache;
 using Eocron.Algorithms.Tests.Core;
 using NUnit.Framework;
+using NUnit.Framework.Legacy;
 
 namespace Eocron.Algorithms.Tests
 {
@@ -39,24 +40,24 @@ namespace Eocron.Algorithms.Tests
 
         private void AssertNoCachedFiles(FileCache<long> cache)
         {
-            Assert.IsEmpty(Directory.GetFiles(Path.Combine(cache.CurrentFolder, "cch")));
+            ClassicAssert.IsEmpty(Directory.GetFiles(Path.Combine(cache.CurrentFolder, "cch")));
         }
 
         private void AssertHasCachedFiles(FileCache<long> cache)
         {
-            Assert.IsNotEmpty(Directory.GetFiles(Path.Combine(cache.CurrentFolder, "cch")));
+            ClassicAssert.IsNotEmpty(Directory.GetFiles(Path.Combine(cache.CurrentFolder, "cch")));
         }
 
         private void AssertNoFiles(string path)
         {
-            if (Directory.Exists(path)) Assert.IsEmpty(Directory.GetFiles(path, "*", SearchOption.AllDirectories));
+            if (Directory.Exists(path)) ClassicAssert.IsEmpty(Directory.GetFiles(path, "*", SearchOption.AllDirectories));
         }
 
         private void AssertNoGarbageFiles(FileCache<long> cache)
         {
             AssertNoFiles(Path.Combine(cache.CurrentFolder, "bin"));
             AssertNoFiles(Path.Combine(cache.CurrentFolder, "tmp"));
-            Assert.IsEmpty(Directory.GetDirectories(cache.BaseFolder).Where(x => x != cache.CurrentFolder));
+            ClassicAssert.IsEmpty(Directory.GetDirectories(cache.BaseFolder).Where(x => x != cache.CurrentFolder));
         }
 
         [Test]
@@ -72,8 +73,8 @@ namespace Eocron.Algorithms.Tests
                 cachedStream.ReadByte();
             }
 
-            Assert.IsTrue(stream.Closed);
-            Assert.IsTrue(stream.Disposed);
+            ClassicAssert.IsTrue(stream.Closed);
+            ClassicAssert.IsTrue(stream.Disposed);
         }
 
         [Test]
@@ -85,8 +86,8 @@ namespace Eocron.Algorithms.Tests
             var stream = new AssertStream(fileSize, 42);
             cache.AddOrUpdateStream(123, stream, CancellationToken.None, null, false);
 
-            Assert.IsTrue(stream.Closed);
-            Assert.IsTrue(stream.Disposed);
+            ClassicAssert.IsTrue(stream.Closed);
+            ClassicAssert.IsTrue(stream.Disposed);
         }
 
         [Test]
@@ -98,8 +99,8 @@ namespace Eocron.Algorithms.Tests
             var stream = new AssertStream(fileSize, 42);
             cache.AddOrUpdateStream(123, stream, CancellationToken.None, null, true);
 
-            Assert.IsFalse(stream.Closed);
-            Assert.IsFalse(stream.Disposed);
+            ClassicAssert.IsFalse(stream.Closed);
+            ClassicAssert.IsFalse(stream.Disposed);
         }
 
         [Test]
@@ -139,7 +140,7 @@ namespace Eocron.Algorithms.Tests
             Console.WriteLine("Cache access time: {0}", accessTime);
             Console.WriteLine("Total access time: {0}", sw.Elapsed);
 
-            Assert.Greater(heatup, accessTime);
+            ClassicAssert.Greater(heatup, accessTime);
 
 
             cache.GarbageCollect(CancellationToken.None);
@@ -167,36 +168,36 @@ namespace Eocron.Algorithms.Tests
             var fileSize = 1 * 1024;
 
             var data = FullRead(cache, 123);
-            Assert.IsNull(data);
+            ClassicAssert.IsNull(data);
 
             cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None, null);
 
             data = FullRead(cache, 123);
-            Assert.IsNotNull(data);
-            Assert.AreEqual(fileSize, data.Length);
+            ClassicAssert.IsNotNull(data);
+            ClassicAssert.AreEqual(fileSize, data.Length);
 
             cache.GarbageCollect(CancellationToken.None);
 
             data = FullRead(cache, 123);
-            Assert.IsNotNull(data);
-            Assert.AreEqual(fileSize, data.Length);
+            ClassicAssert.IsNotNull(data);
+            ClassicAssert.AreEqual(fileSize, data.Length);
             //
             cache.Invalidate(CancellationToken.None);
             //
             data = FullRead(cache, 123);
-            Assert.IsNull(data);
+            ClassicAssert.IsNull(data);
 
             cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None, null);
 
             data = FullRead(cache, 123);
-            Assert.IsNotNull(data);
-            Assert.AreEqual(fileSize, data.Length);
+            ClassicAssert.IsNotNull(data);
+            ClassicAssert.AreEqual(fileSize, data.Length);
 
             cache.GarbageCollect(CancellationToken.None);
 
             data = FullRead(cache, 123);
-            Assert.IsNotNull(data);
-            Assert.AreEqual(fileSize, data.Length);
+            ClassicAssert.IsNotNull(data);
+            ClassicAssert.AreEqual(fileSize, data.Length);
 
             AssertNoGarbageFiles(cache);
         }
@@ -208,36 +209,36 @@ namespace Eocron.Algorithms.Tests
             var fileSize = 1 * 1024;
 
             var data = FullRead(cache, 123);
-            Assert.IsNull(data);
+            ClassicAssert.IsNull(data);
 
             cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None, null);
 
             data = FullRead(cache, 123);
-            Assert.IsNotNull(data);
-            Assert.AreEqual(fileSize, data.Length);
+            ClassicAssert.IsNotNull(data);
+            ClassicAssert.AreEqual(fileSize, data.Length);
 
             cache.GarbageCollect(CancellationToken.None);
 
             data = FullRead(cache, 123);
-            Assert.IsNotNull(data);
-            Assert.AreEqual(fileSize, data.Length);
+            ClassicAssert.IsNotNull(data);
+            ClassicAssert.AreEqual(fileSize, data.Length);
             //
             cache.Invalidate(123, CancellationToken.None);
             //
             data = FullRead(cache, 123);
-            Assert.IsNull(data);
+            ClassicAssert.IsNull(data);
 
             cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None, null);
 
             data = FullRead(cache, 123);
-            Assert.IsNotNull(data);
-            Assert.AreEqual(fileSize, data.Length);
+            ClassicAssert.IsNotNull(data);
+            ClassicAssert.AreEqual(fileSize, data.Length);
 
             cache.GarbageCollect(CancellationToken.None);
 
             data = FullRead(cache, 123);
-            Assert.IsNotNull(data);
-            Assert.AreEqual(fileSize, data.Length);
+            ClassicAssert.IsNotNull(data);
+            ClassicAssert.AreEqual(fileSize, data.Length);
 
             AssertNoGarbageFiles(cache);
         }
@@ -249,19 +250,19 @@ namespace Eocron.Algorithms.Tests
             var fileSize = 1 * 1024;
 
             var data = FullRead(cache, 123);
-            Assert.IsNull(data);
+            ClassicAssert.IsNull(data);
             //expired long time ago
             cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None,
                 CacheExpirationPolicy.AbsoluteUtc(DateTime.MinValue));
 
             data = FullRead(cache, 123);
-            Assert.IsNotNull(data);
-            Assert.AreEqual(fileSize, data.Length);
+            ClassicAssert.IsNotNull(data);
+            ClassicAssert.AreEqual(fileSize, data.Length);
 
             cache.GarbageCollect(CancellationToken.None); //here is expired one collected
 
             data = FullRead(cache, 123);
-            Assert.IsNull(data);
+            ClassicAssert.IsNull(data);
 
             AssertNoGarbageFiles(cache);
         }
@@ -273,11 +274,11 @@ namespace Eocron.Algorithms.Tests
             var cache = CreateCache();
             var fileSize = 10;
             var data = FullRead(cache, 123);
-            Assert.IsNull(data);
+            ClassicAssert.IsNull(data);
             cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None,
                 CacheExpirationPolicy.AbsoluteUtc(DateTime.MinValue));
             data = FullRead(cache, 123);
-            Assert.IsNotNull(data);
+            ClassicAssert.IsNotNull(data);
 
             var ms = new MemoryStream();
             using (var s = cache.TryGetStream(123, CancellationToken.None))
@@ -287,7 +288,7 @@ namespace Eocron.Algorithms.Tests
             }
 
             data = FullRead(cache, 123);
-            Assert.IsNull(data);
+            ClassicAssert.IsNull(data);
 
             AssertHasCachedFiles(cache);
 
@@ -305,7 +306,7 @@ namespace Eocron.Algorithms.Tests
                 var cache = CreateCache();
                 var fileSize = 1 * 1024;
                 var data = FullRead(cache, 123);
-                Assert.IsNull(data);
+                ClassicAssert.IsNull(data);
                 var tasks = Enumerable.Range(0, 20).Select(i =>
                 {
                     try
@@ -359,7 +360,7 @@ namespace Eocron.Algorithms.Tests
             var part = new TimeSpan(2 * slide.Ticks / calls);
 
             var data = FullRead(cache, 123);
-            Assert.IsNull(data);
+            ClassicAssert.IsNull(data);
             //expired long time ago
             cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None,
                 CacheExpirationPolicy.SlidingUtc(slide));
@@ -367,8 +368,8 @@ namespace Eocron.Algorithms.Tests
             for (var i = 0; i < calls; i++)
             {
                 data = FullRead(cache, 123);
-                Assert.IsNotNull(data);
-                Assert.AreEqual(fileSize, data.Length);
+                ClassicAssert.IsNotNull(data);
+                ClassicAssert.AreEqual(fileSize, data.Length);
                 cache.GarbageCollect(CancellationToken.None); //here is expired one collected
                 Thread.Sleep(part);
             }
@@ -377,7 +378,7 @@ namespace Eocron.Algorithms.Tests
             cache.GarbageCollect(CancellationToken.None); //here is expired one collected
 
             data = FullRead(cache, 123);
-            Assert.IsNull(data);
+            ClassicAssert.IsNull(data);
 
             AssertNoGarbageFiles(cache);
         }
@@ -448,7 +449,7 @@ namespace Eocron.Algorithms.Tests
                 Console.WriteLine("Cache access time: {0}", accessTime);
                 Console.WriteLine("Total access time: {0}", sw.Elapsed);
 
-                Assert.Greater(heatup, accessTime);
+                ClassicAssert.Greater(heatup, accessTime);
 
 
                 cache.GarbageCollect(CancellationToken.None);
@@ -463,8 +464,8 @@ namespace Eocron.Algorithms.Tests
 
         private void AssertFile(string filePath, long fileSize)
         {
-            Assert.IsTrue(File.Exists(filePath));
-            Assert.AreEqual(fileSize, new FileInfo(filePath).Length);
+            ClassicAssert.IsTrue(File.Exists(filePath));
+            ClassicAssert.AreEqual(fileSize, new FileInfo(filePath).Length);
             using (var s = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 s.ReadByte();
@@ -482,11 +483,11 @@ namespace Eocron.Algorithms.Tests
                 cache.AddOrUpdateStream(123, GetRandomFile(fileSize), CancellationToken.None,
                     CacheExpirationPolicy.AbsoluteUtc(DateTime.MinValue));
                 var data = FullRead(cache, 123);
-                Assert.IsNotNull(data);
+                ClassicAssert.IsNotNull(data);
 
 
                 var targetFilePath = GetRandomPath();
-                Assert.IsTrue(cache.TryGetFile(123, CancellationToken.None, targetFilePath));
+                ClassicAssert.IsTrue(cache.TryGetFile(123, CancellationToken.None, targetFilePath));
                 try
                 {
                     AssertFile(targetFilePath, fileSize);
@@ -495,14 +496,14 @@ namespace Eocron.Algorithms.Tests
                     using (var s = File.OpenRead(targetFilePath))
                     {
                         var bytes = new byte[8 * 1024];
-                        Assert.IsTrue(s.Read(bytes, 0, bytes.Length) > 0);
+                        ClassicAssert.IsTrue(s.Read(bytes, 0, bytes.Length) > 0);
                         cache.GarbageCollect(CancellationToken.None);
                     }
 
                     AssertFile(targetFilePath, fileSize); //item is expired, collected, but available to user
 
                     data = FullRead(cache, 123);
-                    Assert.IsNull(data);
+                    ClassicAssert.IsNull(data);
 
                     cache.GarbageCollect(CancellationToken.None); //trash collected if not collected on read.
 
