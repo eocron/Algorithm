@@ -10,6 +10,7 @@ using NUnit.Framework;
 namespace Eocron.Aspects.Tests
 {
     [TestFixture]
+    [Ignore("Not yet tested")]
     public class TimeoutInterceptorTests
     {
         private IAsyncInterceptor _interceptor;

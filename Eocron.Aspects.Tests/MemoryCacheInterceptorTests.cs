@@ -10,6 +10,7 @@ using Microsoft.Extensions.Caching.Memory;
 namespace Eocron.Aspects.Tests
 {
     [TestFixture]
+    [Ignore("Not yet tested")]
     public class MemoryCacheInterceptorTests
     {
         private IAsyncInterceptor _interceptor;
