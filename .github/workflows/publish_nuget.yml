@@ -29,7 +29,7 @@ jobs:
         with:
           name: nuget
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 1
           path: ${{ env.NuGetDirectory }}/*.nupkg
 
   validate_nuget:
@@ -53,7 +53,7 @@ jobs:
       - name: Validate package
         run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg")
 
-  deploy:
+  deploy-to-nuget-org:
     # Publish only when creating a GitHub Release
     # https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository
     # You can update this logic if you want to manage releases differently
@@ -69,6 +69,31 @@ jobs:
         uses: actions/setup-dotnet@v4
       - name: Publish NuGet package
         run: |
+          $username = "eocron"
+          $password = "${{ secrets.NUGET_APIKEY }}"
+          $target = "https://api.nuget.org/v3/index.json"
+          dotnet nuget add source --username $username --password "$password" --store-password-in-clear-text --name tmp "$target"
           foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
-              dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+              dotnet nuget push $file --api-key "$password" --source "tmp" --skip-duplicate
+          }
+
+  deploy-to-github-com:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    needs: [ validate_nuget ]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: nuget
+          path: ${{ env.NuGetDirectory }}
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v4
+      - name: Publish NuGet package
+        run: |
+          $username = "eocron"
+          $password = "${{ secrets.GITHUB_TOKEN }}"
+          $target = "https://nuget.pkg.github.com/eocron/index.json"
+          dotnet nuget add source --username $username --password "$password" --store-password-in-clear-text --name tmp "$target"
+          foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
+              dotnet nuget push $file --api-key "$password" --source "tmp" --skip-duplicate
           }
