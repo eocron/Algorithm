@@ -36,6 +36,7 @@ jobs:
             **/*Tests/bin/**
           if-no-files-found: error
           retention-days: 1
+          
   test:
     needs: build
     runs-on: ubuntu-latest
@@ -50,4 +51,17 @@ jobs:
         with:
           name: build-test-artifacts
       - name: Test
-        run: dotnet test "./build-test-artifacts/**/*Tests.dll" --no-build --verbosity normal --filter TestCategory!=FailOnNix 
+        run: |
+          status=0
+          for file in "./build-test-artifacts/**/*Tests.dll"
+          do
+              dotnet test "$file" --verbosity normal --logger trx --filter TestCategory!=FailOnNix --results-directory "./TestResults" || status=1
+          done
+          exit $status
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: Algorithm Tests            # Name of the check run which will be created
+          path: ./TestResults/*.xml    # Path to test results
+          reporter: dotnet-trx        # Format of test results
