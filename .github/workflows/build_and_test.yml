@@ -40,9 +40,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Setup .NET 8.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-test-artifacts
       - name: Test
-        run: dotnet test build-test-artifacts --no-build --verbosity normal --filter TestCategory!=FailOnNix 
+        run: dotnet test "./build-test-artifacts/**/*Tests.dll" --no-build --verbosity normal --filter TestCategory!=FailOnNix 
