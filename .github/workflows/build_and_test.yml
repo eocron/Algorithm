@@ -57,7 +57,7 @@ jobs:
           shopt -s globstar
           for file in $(ls ./to-test/**/*Tests.dll); do
               echo "Testing $file"
-              dotnet test "$file" --verbosity normal --logger trx --filter "cat != FailOnNix && cat != Performance" --results-directory "./TestResults" || status=1
+              dotnet test "$file" --verbosity normal --logger trx --filter TestCategory!=FailOnNix --results-directory "./TestResults" || status=1
           done
           exit $status
       - name: Test Report

@@ -5,6 +5,8 @@ using NUnit.Framework;
 
 namespace Eocron.Serialization.PerformanceTests
 {
+    [TestFixture]
+    [Explicit]
     public class AllPerformanceTests
     {
         public AllPerformanceTests()

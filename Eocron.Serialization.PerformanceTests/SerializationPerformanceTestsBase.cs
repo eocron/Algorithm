@@ -7,6 +7,8 @@ using NUnit.Framework;
 
 namespace Eocron.Serialization.PerformanceTests
 {
+    [TestFixture]
+    [Explicit]
     public abstract class SerializationPerformanceTestsBase<TTests, TModel>
     {
         protected SerializationPerformanceTestsBase(bool prepareText = true, bool prepareBinary = true)
