@@ -51,8 +51,6 @@ jobs:
         with:
           name: build-test-artifacts
           path: ./to-test
-      - name: Display structure of downloaded files
-        run: ls -R
       - name: Test
         run: |
           status=0
