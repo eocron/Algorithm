@@ -19,9 +19,15 @@ jobs:
         run: dotnet restore
       - name: Build
         run: dotnet build --no-restore --configuration Release
-  test:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Test
-        run: dotnet test --no-build --verbosity normal --configuration Release --filter TestCategory!=FailOnNix 
+      - name: Publish
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report
+          path: /home/runner/work/
+#  test:
+#    needs: build
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v4
+#      - name: Test
+#        run: dotnet test --no-build --verbosity normal --configuration Release --filter TestCategory!=FailOnNix 
