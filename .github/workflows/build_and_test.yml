@@ -43,6 +43,6 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
+          name: build-test-artifacts
       - name: Test
-        run: dotnet test --no-build --verbosity normal --configuration Release --filter TestCategory!=FailOnNix 
+        run: dotnet test build-test-artifacts --no-build --verbosity normal --filter TestCategory!=FailOnNix 
