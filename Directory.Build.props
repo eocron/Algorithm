@@ -13,11 +13,8 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>latest</LangVersion>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)'=='Release'">
-        <DebugSymbols>False</DebugSymbols>
-        <DebugType>None</DebugType>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PackageIcon>https://raw.githubusercontent.com/eocron/Algorithm/refs/heads/master/racoon.png</PackageIcon>
     </PropertyGroup>
     
     <ItemGroup>
