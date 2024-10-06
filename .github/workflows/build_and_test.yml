@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        path: 'src'
       - name: Setup .NET 8.0
         uses: actions/setup-dotnet@v4
         with:
@@ -18,16 +19,21 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build --no-restore --configuration Release --output bin
       - name: Publish
         uses: actions/upload-artifact@v4
         with:
-          name: code-coverage-report
-          path: /home/runner/work/
-#  test:
-#    needs: build
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - name: Test
-#        run: dotnet test --no-build --verbosity normal --configuration Release --filter TestCategory!=FailOnNix 
+          name: build-artifacts
+          path: /home/runner/work/Algorithm/bin
+          if-no-files-found: error
+          retention-days: 1
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      - name: Test
+        run: dotnet test --no-build --verbosity normal --configuration Release --filter TestCategory!=FailOnNix 
