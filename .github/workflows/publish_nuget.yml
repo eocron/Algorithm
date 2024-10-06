@@ -48,12 +48,8 @@ jobs:
         uses: actions/setup-dotnet@v4
       - name: Publish NuGet package
         run: |
-          $username = "eocron"
-          $password = "${{ secrets.NUGET_API_KEY }}"
-          $target = "https://api.nuget.org/v3/index.json"
-          dotnet nuget add source --username $username --password "$password" --store-password-in-clear-text --name tmp-nuget "$target"
           foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
-              dotnet nuget push $file --api-key "$password" --source "tmp-nuget" --skip-duplicate
+              dotnet nuget push $file --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
           }
 
   deploy-to-github-com:
