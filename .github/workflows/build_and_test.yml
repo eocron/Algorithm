@@ -53,7 +53,8 @@ jobs:
       - name: Test
         run: |
           status=0
-          for file in $(find ./build-test-artifacts -name "*Tests.dll" 2>/dev/null); do
+          shopt -s globstar
+          for file in $(ls ./build-test-artifacts/**/*Tests.dll); do
               echo "Testing $file"
               dotnet test "$file" --verbosity normal --logger trx --filter TestCategory!=FailOnNix --results-directory "./TestResults" || status=1
           done
