@@ -8,7 +8,6 @@
         <Description>
             This client library contains some basic and usefull serialization alghorithms for my work. Net core version. Faster.
         </Description>
-        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>

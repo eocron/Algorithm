@@ -9,11 +9,11 @@ namespace Eocron.Validation
     {
         public ValidationResultType ValidationResultType { get; set; } = ValidationResultType.Error;
         public Func<string> ValidationResultMessageProvider { get; set; }
-        public IEnumerable<ValidationResult>? ValidationResultPrefix { get; set; }
-        public Func<bool>? IgnoreCondition { get; set; }
-        public Func<bool> Condition { get; set; } = () => throw new NotImplementedException("Validation condition is not provided");
-        public Func<IEnumerable<ValidationResult>>? ThenValidations { get; set; }
-        public Func<IEnumerable<ValidationResult>>? ElseValidations { get; set; }
+        public IEnumerable<ValidationResult> ValidationResultPrefix { get; set; }
+        public Func<bool> IgnoreCondition { get; set; }
+        public Func<bool> Condition { get; set; } = () => throw new Exception("Validation condition is not provided");
+        public Func<IEnumerable<ValidationResult>> ThenValidations { get; set; }
+        public Func<IEnumerable<ValidationResult>> ElseValidations { get; set; }
 
         private IEnumerable<ValidationResult> GetInternalEnumerable()
         {
@@ -62,7 +62,7 @@ namespace Eocron.Validation
             return GetEnumerator();
         }
 
-        public static implicit operator ValidationResult?(ValidationResultBuilder builder)
+        public static implicit operator ValidationResult(ValidationResultBuilder builder)
         {
             return builder?.SingleOrDefault();
         }

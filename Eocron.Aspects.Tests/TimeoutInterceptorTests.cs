@@ -5,6 +5,7 @@ using Castle.DynamicProxy;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
+// ReSharper disable MethodSupportsCancellation
 
 namespace Eocron.Aspects.Tests
 {
@@ -141,8 +142,7 @@ namespace Eocron.Aspects.Tests
                 cts.Token.ThrowIfCancellationRequested();
                 Thread.Sleep(1);
             }
-
-            return 0;
+            // ReSharper disable once FunctionNeverReturns
         }
 
         private int PessimisticSleep()

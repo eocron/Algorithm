@@ -50,7 +50,7 @@ namespace Eocron.Aspects
             
             var key = CreateKey(invocation);
 
-            if (_cache.TryGetValue(key, out object? tmp))
+            if (_cache.TryGetValue(key, out object tmp))
             {
                 invocation.ReturnValue = ((AtomicLazy<object>)tmp).Value;
                 return;
@@ -82,7 +82,7 @@ namespace Eocron.Aspects
         {
             var key = CreateKey(invocation);
 
-            if (_cache.TryGetValue(key, out object? tmp))
+            if (_cache.TryGetValue(key, out object tmp))
             {
                 invocation.ReturnValue = ((AsyncAtomicLazy<TResult>)tmp).Value();
                 return;

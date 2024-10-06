@@ -19,15 +19,15 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
     private const int MacBitSize = MacByteSize * 8;
     
     private readonly ISerializationConverter _inner;
-    private readonly IRentedArrayPool<byte>? _pool;
+    private readonly IRentedArrayPool<byte> _pool;
     private readonly byte[] _key;
 
-    public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, string password, IRentedArrayPool<byte>? pool = null) :
+    public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, string password, IRentedArrayPool<byte> pool = null) :
         this(inner, PasswordDerivationHelper.GenerateKeyFrom(password, KeyByteSize), pool)
     {
     }
 
-    public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, byte[] key, IRentedArrayPool<byte>? pool = null)
+    public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, byte[] key, IRentedArrayPool<byte> pool = null)
     {
         if (key == null || key.Length == 0)
             throw new ArgumentNullException(nameof(key));

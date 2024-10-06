@@ -6,7 +6,7 @@ namespace Eocron.Aspects.Tests
     public sealed class TestConsoleLogger : ILogger
     {
         public static readonly ILogger Instance = new TestConsoleLogger();
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
             Console.WriteLine($"[{logLevel}]: {formatter(state, exception)}.{exception}");
         }
@@ -16,7 +16,7 @@ namespace Eocron.Aspects.Tests
             return true;
         }
 
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+        public IDisposable BeginScope<TState>(TState state) where TState : notnull
         {
             return null;
         }

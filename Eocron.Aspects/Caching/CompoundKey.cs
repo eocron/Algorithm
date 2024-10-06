@@ -13,7 +13,7 @@ namespace Eocron.Aspects.Caching
             _parts = parts ?? throw new ArgumentNullException();
         }
 
-        public bool Equals(CompoundKey? other)
+        public bool Equals(CompoundKey other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -22,7 +22,7 @@ namespace Eocron.Aspects.Caching
             return _parts.SequenceEqual(other._parts);
         }
 
-        public override bool Equals(object? obj)
+        public override bool Equals(object obj)
         {
             return ReferenceEquals(this, obj) || obj is CompoundKey other && Equals(other);
         }

@@ -78,8 +78,10 @@ namespace Eocron.Aspects
             }
 
             
+#pragma warning disable CS4014
             TimeoutJob();
             ProceedJob();
+#pragma warning restore CS4014
             return await tcs.Task.ConfigureAwait(false);
         }
 
