@@ -49,7 +49,7 @@ jobs:
       - name: Publish NuGet package
         run: |
           $username = "eocron"
-          $password = "${{ secrets.NUGET_APIKEY }}"
+          $password = "${{ secrets.NUGET_API_KEY }}"
           $target = "https://api.nuget.org/v3/index.json"
           dotnet nuget add source --username $username --password "$password" --store-password-in-clear-text --name tmp "$target"
           foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
