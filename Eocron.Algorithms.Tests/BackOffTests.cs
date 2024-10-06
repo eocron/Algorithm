@@ -32,6 +32,13 @@ namespace Eocron.Algorithms.Tests
                         .WithOffset(TimeSpan.FromMinutes(3))
                         .WithClamp(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10))
                         .Build()
+                },
+                {
+                    "jitter",
+                    new BackOffBuilder()
+                        .WithLinear(TimeSpan.FromMinutes(1))
+                        .WithJitter(new Random(42), TimeSpan.FromMinutes(1))
+                        .Build()
                 }
             };
         }
@@ -58,12 +65,17 @@ namespace Eocron.Algorithms.Tests
         [TestCase("exponentialOffsetClamped" ,4, "00:10:00")]
         [TestCase("exponentialOffsetClamped" ,5, "00:10:00")]
         [TestCase("exponentialOffsetClamped" ,6, "00:10:00")]
+        [TestCase("jitter" ,0, "00:00:10.0860000")]
+        [TestCase("jitter" ,1, "00:00:38.4550000")]
+        [TestCase("jitter" ,2, "00:01:37.5320000")]
+        [TestCase("jitter" ,3, "00:03:01.3650000")]
         public void Test(string providerStr, int n, string timespanStr)
         {
             var timespan = TimeSpan.Parse(timespanStr);
             var provider = _providers[providerStr];
 
-            provider.GetNext(new BackOffContext() { N = n }).Should().Be(timespan);
+            var actual = provider.GetNext(new BackOffContext() { N = n });
+            actual.Should().Be(timespan, $"{actual} != {timespan}");
         }
     }
 }

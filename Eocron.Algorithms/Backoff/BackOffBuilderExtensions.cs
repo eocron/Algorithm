@@ -27,5 +27,11 @@ namespace Eocron.Algorithms.Backoff
             builder._provider = new OffsetBackOffIntervalProvider(builder._provider, offset);
             return builder;
         }
+        
+        public static BackOffBuilder WithJitter(this BackOffBuilder builder, Random random, TimeSpan jitter)
+        {
+            builder._provider = new JitterBackOffIntervalProvider(builder._provider, random, jitter);
+            return builder;
+        }
     }
 }
