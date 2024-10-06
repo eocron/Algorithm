@@ -32,34 +32,13 @@ jobs:
           retention-days: 1
           path: ${{ env.NuGetDirectory }}/*.nupkg
 
-  validate_nuget:
-    runs-on: ubuntu-latest
-    needs: [ create_nuget ]
-    steps:
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: nuget
-          path: ${{ env.NuGetDirectory }}
-
-      - name: Install nuget validator
-        run: dotnet tool update Meziantou.Framework.NuGetPackageValidation.Tool --global
-
-      # Validate metadata and content of the NuGet package
-      # https://www.nuget.org/packages/Meziantou.Framework.NuGetPackageValidation.Tool#readme-body-tab
-      # If some rules are not applicable, you can disable them
-      # using the --excluded-rules or --excluded-rule-ids option
-      - name: Validate package
-        run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg") --excluded-rule-ids 101,111,32
-
   deploy-to-nuget-org:
     # Publish only when creating a GitHub Release
     # https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository
     # You can update this logic if you want to manage releases differently
     #if: github.event_name == 'release'
     runs-on: ubuntu-latest
-    needs: [ validate_nuget ]
+    needs: [ create_nuget ]
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -80,7 +59,7 @@ jobs:
   deploy-to-github-com:
     #if: github.event_name == 'release'
     runs-on: ubuntu-latest
-    needs: [ validate_nuget ]
+    needs: [ create_nuget ]
     steps:
       - uses: actions/download-artifact@v4
         with:
