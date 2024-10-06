@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Security;
 
-namespace Eocron.NetCore.Serialization.Security.Helpers
+namespace Eocron.Serialization.Security.Helpers
 {
     internal static class SecureBinaryReaderExtensions
     {

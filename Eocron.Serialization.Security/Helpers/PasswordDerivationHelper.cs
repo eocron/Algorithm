@@ -3,7 +3,7 @@ using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 
-namespace Eocron.NetCore.Serialization.Security.Helpers
+namespace Eocron.Serialization.Security.Helpers
 {
     public static class PasswordDerivationHelper
     {

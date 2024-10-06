@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Buffers;
 
-namespace Eocron.NetCore.Serialization.Security.Helpers
+namespace Eocron.Serialization.Security.Helpers
 {
     public sealed class MemoryRentedArrayPool<T> : IRentedArrayPool<T>
     {

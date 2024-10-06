@@ -2,7 +2,7 @@
 using System.IO;
 using Eocron.Serialization;
 
-namespace Eocron.NetCore.Serialization.Security
+namespace Eocron.Serialization.Security
 {
     public abstract class BinarySerializationConverterBase : ISerializationConverter
     {

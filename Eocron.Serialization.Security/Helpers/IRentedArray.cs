@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Eocron.NetCore.Serialization.Security.Helpers
+namespace Eocron.Serialization.Security.Helpers
 {
     public interface IRentedArray<T> : IDisposable
     {

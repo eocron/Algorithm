@@ -1,12 +1,12 @@
 ﻿using System;
 using System.IO;
-using Eocron.NetCore.Serialization.Security.Helpers;
 using Eocron.Serialization;
+using Eocron.Serialization.Security.Helpers;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Modes;
 using Org.BouncyCastle.Crypto.Parameters;
 
-namespace Eocron.NetCore.Serialization.Security;
+namespace Eocron.Serialization.Security;
 
 /// <summary>
 /// Symmetric encryption identical to AES256-GCM cipher suit.

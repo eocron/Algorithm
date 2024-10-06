@@ -1,4 +1,4 @@
-﻿namespace Eocron.NetCore.Serialization.Security.Helpers
+﻿namespace Eocron.Serialization.Security.Helpers
 {
     public static class RentedArrayPool<T>
     {

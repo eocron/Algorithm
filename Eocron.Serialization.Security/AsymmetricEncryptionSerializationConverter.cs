@@ -3,11 +3,11 @@ using System.IO;
 using System.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Eocron.NetCore.Serialization.Security.Helpers;
 using Eocron.Serialization;
+using Eocron.Serialization.Security.Helpers;
 using Org.BouncyCastle.Crypto.Parameters;
 
-namespace Eocron.NetCore.Serialization.Security
+namespace Eocron.Serialization.Security
 {
     /// <summary>
     /// Asymmetric encryption identical to RSA-AES256-GCM-SHA512 cipher suit.
