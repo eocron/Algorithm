@@ -73,10 +73,10 @@ namespace Eocron.Algorithms.Streams
             return new StreamEnumerable(
                 () => mode == CryptoStreamMode.Read
                     ? new CryptoStream(new EnumerableStream(stream), transform, mode, false)
-                    : (Stream)new WriteToReadStream<CryptoStream>(
+                    : new WriteToReadStream<CryptoStream>(
                         () => new EnumerableStream(stream),
                         x => new CryptoStream(x, transform, mode, false),
-                        BufferingConstants<byte>.DefaultMemoryPool, (x, ct) =>
+                        BufferingConstants<byte>.DefaultMemoryPool, (x, _) =>
                         {
                             x.FlushFinalBlock();
                             return Task.CompletedTask;
@@ -94,10 +94,10 @@ namespace Eocron.Algorithms.Streams
             return new StreamEnumerable(
                 () => mode == CryptoStreamMode.Read
                     ? new CryptoStream(new EnumerableStream(stream), transform, mode, false)
-                    : (Stream)new WriteToReadStream<CryptoStream>(
+                    : new WriteToReadStream<CryptoStream>(
                         () => new EnumerableStream(stream),
                         x => new CryptoStream(x, transform, mode, false),
-                        BufferingConstants<byte>.DefaultMemoryPool, (x, ct) =>
+                        BufferingConstants<byte>.DefaultMemoryPool, (x, _) =>
                         {
                             x.FlushFinalBlock();
                             return Task.CompletedTask;
@@ -112,7 +112,7 @@ namespace Eocron.Algorithms.Streams
             return new StreamEnumerable(
                 () => mode == CompressionMode.Decompress
                     ? new GZipStream(new EnumerableStream(stream), mode, false)
-                    : (Stream)new WriteToReadStream<GZipStream>(
+                    : new WriteToReadStream<GZipStream>(
                         () => new EnumerableStream(stream),
                         x => new GZipStream(x, mode, false)));
         }
@@ -125,7 +125,7 @@ namespace Eocron.Algorithms.Streams
             return new StreamEnumerable(
                 () => mode == CompressionMode.Decompress
                     ? new GZipStream(new EnumerableStream(stream), mode, false)
-                    : (Stream)new WriteToReadStream<GZipStream>(
+                    : new WriteToReadStream<GZipStream>(
                         () => new EnumerableStream(stream),
                         x => new GZipStream(x, mode, false)));
         }

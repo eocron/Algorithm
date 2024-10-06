@@ -17,9 +17,9 @@ namespace Eocron.Algorithms.Tests
         public void Empty()
         {
             var result = new InfiniteDijkstraAlgorithm<int, int>(
-                x => null,
-                x => 0,
-                (x, y) => x.Weight + 1);
+                _ => null,
+                _ => 0,
+                (x, _) => x.Weight + 1);
             result.Search(0);
 
             ClassicAssert.AreEqual(0, result.GetWeight(0));
@@ -40,8 +40,8 @@ namespace Eocron.Algorithms.Tests
             var target = count - 1;
             var result = new InfiniteDijkstraAlgorithm<int, int>(
                 x => graph.OutEdges(x).Select(y => y.Target),
-                x => 0,
-                (x, y) => x.Weight + 1);
+                _ => 0,
+                (x, _) => x.Weight + 1);
             result.Search(source);
             var pathToRome = result.GetPath(source, target).ToList();
             ClassicAssert.AreEqual(1, result.GetWeight(target));
@@ -68,8 +68,8 @@ namespace Eocron.Algorithms.Tests
                 .ToList();
             var result = new InfiniteDijkstraAlgorithm<int, int>(
                 x => graph.OutEdges(x).Select(y => y.Target),
-                x => 0,
-                (x, y) => x.Weight + 1);
+                _ => 0,
+                (x, _) => x.Weight + 1);
             result.Search(source);
             var target = targets.OrderBy(x => result.GetWeight(x)).First();
             var pathToRome = result.GetPath(source, target).ToList();
@@ -90,8 +90,8 @@ namespace Eocron.Algorithms.Tests
             var source = 0;
             var result = new InfiniteDijkstraAlgorithm<int, int>(
                 x => graph.OutEdges(x).Select(y => y.Target),
-                x => 0,
-                (x, y) => x.Weight + 1,
+                _ => 0,
+                (x, _) => x.Weight + 1,
                 buildShortestPathTree: true);
             result.Search(source);
             var target = cities.Length - 1;
@@ -124,7 +124,7 @@ namespace Eocron.Algorithms.Tests
                         list.Add(Tuple.Create(x.Item1 + 1, x.Item2 + 1));
                     return list;
                 },
-                x => 0,
+                _ => 0,
                 (xw, y) =>
                 {
                     var x = xw.Vertex;
@@ -149,7 +149,7 @@ namespace Eocron.Algorithms.Tests
         public void Debug()
         {
             var rnd = new Random(42);
-            var cities = Enumerable.Range(0, 30).Select(x => rnd.Next(0, 10)).ToList();
+            var cities = Enumerable.Range(0, 30).Select(_ => rnd.Next(0, 10)).ToList();
             var graph = ParsePathToRome(cities);
             var source = 0;
             var targets = cities
@@ -160,8 +160,8 @@ namespace Eocron.Algorithms.Tests
                 .ToList();
             var result = new InfiniteDijkstraAlgorithm<int, int>(
                 x => graph.OutEdges(x).Select(y => y.Target),
-                x => 0,
-                (x, y) => x.Weight + 1,
+                _ => 0,
+                (x, _) => x.Weight + 1,
                 buildShortestPathTree: true);
             result.Search(source);
 

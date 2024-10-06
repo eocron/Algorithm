@@ -21,9 +21,7 @@ namespace Eocron.Algorithms.Disposing
         /// <param name="onDispose"></param>
         public Disposable(Action onDispose)
         {
-            if (onDispose == null)
-                throw new ArgumentNullException(nameof(onDispose));
-            _onDispose = onDispose;
+            _onDispose = onDispose ?? throw new ArgumentNullException(nameof(onDispose));
             _other = null;
             _disposed = false;
         }

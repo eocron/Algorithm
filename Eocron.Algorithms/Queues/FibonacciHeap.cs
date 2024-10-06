@@ -151,9 +151,7 @@ namespace Eocron.Algorithms.Queues
 
                     if (_comparer.Compare(x.Priority, y.Priority) > 0)
                     {
-                        var temp = y;
-                        y = x;
-                        x = temp;
+                        (y, x) = (x, y);
                     }
 
                     Link(y, x);

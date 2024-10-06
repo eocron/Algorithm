@@ -28,11 +28,9 @@ namespace Eocron.Algorithms.Sorted
 
         protected override void SerializeToStream(IReadOnlyCollection<T> data, Stream outputStream)
         {
-            using (var writer = new StreamWriter(outputStream, Encoding.UTF8, _bufferSize))
-            using (var jwriter = new JsonTextWriter(writer))
-            {
-                foreach (var d in data) _serializer.Serialize(jwriter, new ObjectHolder { Value = d });
-            }
+            using var writer = new StreamWriter(outputStream, Encoding.UTF8, _bufferSize);
+            using var jwriter = new JsonTextWriter(writer);
+            foreach (var d in data) _serializer.Serialize(jwriter, new ObjectHolder { Value = d });
         }
 
         private readonly int _bufferSize;

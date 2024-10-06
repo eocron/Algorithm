@@ -64,7 +64,7 @@ namespace Eocron.Algorithms.Tests
             var items = GetTestItems();
             var dict = new RedBlackTree<int, string>(items);
 
-            var toDelete = Enumerable.Range(0, 200).Select(x => items[rnd.Next(items.Count)]).ToList();
+            var toDelete = Enumerable.Range(0, 200).Select(_ => items[rnd.Next(items.Count)]).ToList();
             items.RemoveAll(x => toDelete.Contains(x));
             foreach (var keyValuePair in toDelete) dict.Remove(keyValuePair.Key);
 

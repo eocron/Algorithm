@@ -133,12 +133,12 @@ namespace Eocron.Algorithms.Tests
                     DataNotEqualAsString = Convert.ToBase64String(DataNotEqual);
                 }
 
-                public byte[] Data;
-                public byte[] DataEqual;
-                public byte[] DataNotEqual;
-                public string DataAsString;
-                public string DataEqualAsString;
-                public string DataNotEqualAsString;
+                public readonly byte[] Data;
+                public readonly byte[] DataEqual;
+                public readonly byte[] DataNotEqual;
+                public readonly string DataAsString;
+                public readonly string DataEqualAsString;
+                public readonly string DataNotEqualAsString;
             }
 
             private IEqualityComparer<byte[]> _fastComparer;

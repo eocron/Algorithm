@@ -11,7 +11,7 @@ namespace Eocron.Algorithms.Tests
     [TestFixture]
     public class ByteArrayEqualityComparerTests
     {
-        private static readonly Random _rnd = new(42);
+        private static readonly Random Rnd = new(42);
         private readonly ByteArrayEqualityComparer _cmp = new();
 
         [Test(Description =
@@ -66,7 +66,7 @@ namespace Eocron.Algorithms.Tests
         {
             var a = new byte[40000];
             var b = new byte[40000];
-            _rnd.NextBytes(a);
+            Rnd.NextBytes(a);
             Array.Copy(a, b, a.Length);
             for (var i = 1; i < 40000; i += 149)
             {
@@ -90,7 +90,7 @@ namespace Eocron.Algorithms.Tests
         {
             var a = new byte[8 * 1024];
             var b = new byte[8 * 1024];
-            _rnd.NextBytes(a);
+            Rnd.NextBytes(a);
             Array.Copy(a, b, a.Length);
             for (var i = 1; i < 8 * 1024; i += 149)
             {
@@ -213,7 +213,7 @@ namespace Eocron.Algorithms.Tests
         private static byte[] GetBytes(int size)
         {
             var res = new byte[size];
-            _rnd.NextBytes(res);
+            Rnd.NextBytes(res);
             return res;
         }
     }

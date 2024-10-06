@@ -6,31 +6,31 @@ namespace Eocron.Algorithms.Backoff
     {
         public static BackOffBuilder WithExponential(this BackOffBuilder builder, TimeSpan initial, float exponent, int maxCount = Int32.MaxValue)
         {
-            builder._provider = new ExponentialBackOffIntervalProvider(initial, exponent, maxCount);
+            builder.Provider = new ExponentialBackOffIntervalProvider(initial, exponent, maxCount);
             return builder;
         }
         
         public static BackOffBuilder WithLinear(this BackOffBuilder builder, TimeSpan step, int maxCount = Int32.MaxValue)
         {
-            builder._provider = new LinearBackOffIntervalProvider(step, maxCount);
+            builder.Provider = new LinearBackOffIntervalProvider(step, maxCount);
             return builder;
         }
         
         public static BackOffBuilder WithClamp(this BackOffBuilder builder, TimeSpan min, TimeSpan max)
         {
-            builder._provider = new ClampBackOffIntervalProvider(builder._provider, min, max);
+            builder.Provider = new ClampBackOffIntervalProvider(builder.Provider, min, max);
             return builder;
         }
         
         public static BackOffBuilder WithOffset(this BackOffBuilder builder, TimeSpan offset)
         {
-            builder._provider = new OffsetBackOffIntervalProvider(builder._provider, offset);
+            builder.Provider = new OffsetBackOffIntervalProvider(builder.Provider, offset);
             return builder;
         }
         
         public static BackOffBuilder WithJitter(this BackOffBuilder builder, Random random, TimeSpan jitter)
         {
-            builder._provider = new JitterBackOffIntervalProvider(builder._provider, random, jitter);
+            builder.Provider = new JitterBackOffIntervalProvider(builder.Provider, random, jitter);
             return builder;
         }
     }

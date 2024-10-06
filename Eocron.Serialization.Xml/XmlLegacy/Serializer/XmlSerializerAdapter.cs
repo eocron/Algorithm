@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Xml;
 using System.Xml.Serialization;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace Eocron.Serialization.Xml.XmlLegacy.Serializer
 {

@@ -19,12 +19,10 @@ namespace Eocron.Algorithms.FileCache.Async
         /// <param name="disableGc">Check if you will manage garbage collection yourself.</param>
         public FileCacheAsync(string baseFolder, IFileSystemAsync fileSystem = null, bool disableGc = false)
         {
-            if (baseFolder == null)
-                throw new ArgumentNullException(nameof(baseFolder));
             _perKeyLock = new PerKeySemaphoreSlim();
             _cacheLock = new AsyncReaderWriterLock();
             _fs = fileSystem ?? FileSystemAsync.Instance;
-            BaseFolder = baseFolder;
+            BaseFolder = baseFolder ?? throw new ArgumentNullException(nameof(baseFolder));
             _invalid = true;
 
             if (!disableGc)
@@ -39,13 +37,11 @@ namespace Eocron.Algorithms.FileCache.Async
         {
             NotNull(sourceFilePath, nameof(sourceFilePath));
             NotNull(key, nameof(key));
-            using (var cfs = new CFileSource(sourceFilePath, _fs))
+            using var cfs = new CFileSource(sourceFilePath, _fs);
+            await EnsureInitializedAsync(token);
+            using (await GlobalReadLock(token))
             {
-                await EnsureInitializedAsync(token);
-                using (await GlobalReadLock(token))
-                {
-                    await InternalAddOrUpdate(key, cfs, token, policy);
-                }
+                await InternalAddOrUpdate(key, cfs, token, policy);
             }
         }
 
@@ -55,13 +51,11 @@ namespace Eocron.Algorithms.FileCache.Async
             NotNull(stream, nameof(stream));
             NotNull(key, nameof(key));
 
-            using (var cfs = new CFileSource(stream, leaveOpen, _fs))
+            using var cfs = new CFileSource(stream, leaveOpen, _fs);
+            await EnsureInitializedAsync(token);
+            using (await GlobalReadLock(token))
             {
-                await EnsureInitializedAsync(token);
-                using (await GlobalReadLock(token))
-                {
-                    await InternalAddOrUpdate(key, cfs, token, policy);
-                }
+                await InternalAddOrUpdate(key, cfs, token, policy);
             }
         }
 
@@ -395,7 +389,6 @@ namespace Eocron.Algorithms.FileCache.Async
 
         private sealed class CFileCacheEntry : AnyExpirationPolicy
         {
-            public DateTime Created { get; set; }
             public string FilePath { get; set; }
         }
 
@@ -404,31 +397,27 @@ namespace Eocron.Algorithms.FileCache.Async
             public CFileSource(string filePath, IFileSystemAsync fs)
             {
                 if (string.IsNullOrWhiteSpace(filePath))
-                    throw new ArgumentNullException("Source path is null or empty.");
+                    throw new ArgumentNullException(nameof(filePath), "Source path is null or empty.");
                 _fs = fs;
                 FilePath = filePath;
             }
 
             public CFileSource(Stream stream, bool leaveOpen, IFileSystemAsync fs)
             {
-                if (stream == null)
-                    throw new ArgumentNullException("Stream is null.");
                 _leaveOpen = leaveOpen;
                 _fs = fs;
-                Stream = stream;
+                Stream = stream ?? throw new ArgumentNullException(nameof(stream), "Stream is null.");
             }
 
             public async Task CopyToAsync(string path, CancellationToken token, bool createHardLink)
             {
                 if (string.IsNullOrWhiteSpace(path))
-                    throw new ArgumentNullException("Target path is null or empty.");
+                    throw new ArgumentNullException(nameof(path), "Target path is null or empty.");
 
                 if (Stream != null)
                 {
-                    using (var fstream = await _fs.OpenCreateAsync(path, token))
-                    {
-                        await Stream.CopyToAsync(fstream, _uploadBufferSize, token);
-                    }
+                    await using var fstream = await _fs.OpenCreateAsync(path, token);
+                    await Stream.CopyToAsync(fstream, _uploadBufferSize, token);
                 }
                 else
                 {
@@ -451,6 +440,7 @@ namespace Eocron.Algorithms.FileCache.Async
                     }
                     catch
                     {
+                        // ignored
                     }
 
                     try
@@ -459,6 +449,7 @@ namespace Eocron.Algorithms.FileCache.Async
                     }
                     catch
                     {
+                        // ignored
                     }
                 }
             }
@@ -517,7 +508,6 @@ namespace Eocron.Algorithms.FileCache.Async
                 var tempFolder = Path.Combine(currentFolder, "tmp");
                 var cacheFolder = Path.Combine(currentFolder, "cch");
                 var trashFolder = Path.Combine(currentFolder, "bin");
-                var transactionLogPath = Path.Combine(currentFolder, "journal.txt");
                 var entries = new ConcurrentDictionary<TKey, CFileCacheEntry>();
                 var actions = new ConcurrentBag<CancellableAction>();
 
@@ -546,6 +536,7 @@ namespace Eocron.Algorithms.FileCache.Async
             }
             catch
             {
+                // ignored
             }
 
             _actions.Add(action);
@@ -583,7 +574,6 @@ namespace Eocron.Algorithms.FileCache.Async
         {
             token.ThrowIfCancellationRequested();
             await Ensure(folder, token);
-            var i = 0;
             do
             {
                 token.ThrowIfCancellationRequested();
@@ -591,8 +581,6 @@ namespace Eocron.Algorithms.FileCache.Async
                 var path = Path.Combine(folder, "fs" + GetUniqueFileName());
                 if (!await _fs.FileExistAsync(path, token) && !await _fs.DirectoryExistAsync(path, token))
                     return path;
-
-                i++;
             } while (true);
         }
 
@@ -667,7 +655,6 @@ namespace Eocron.Algorithms.FileCache.Async
             var path = await UploadToCacheAsync(src, token);
             _entries[key] = new CFileCacheEntry
             {
-                Created = DateTime.UtcNow,
                 FilePath = path
             }.Pulse(policy);
         }
@@ -696,7 +683,6 @@ namespace Eocron.Algorithms.FileCache.Async
                     var path = await UploadToCacheAsync(src, token);
                     cacheEntry = new CFileCacheEntry
                     {
-                        Created = DateTime.UtcNow,
                         FilePath = path
                     };
                     //######
@@ -709,10 +695,7 @@ namespace Eocron.Algorithms.FileCache.Async
 
         private Task<CFileCacheEntry> InternalGetEntry(TKey key, CancellationToken token)
         {
-            CFileCacheEntry cacheEntry;
-            if (_entries.TryGetValue(key, out cacheEntry))
-                return Task.FromResult(cacheEntry.Pulse(null));
-            return Task.FromResult((CFileCacheEntry)null);
+            return _entries.TryGetValue(key, out var cacheEntry) ? Task.FromResult(cacheEntry.Pulse(null)) : Task.FromResult((CFileCacheEntry)null);
         }
 
 
@@ -724,6 +707,7 @@ namespace Eocron.Algorithms.FileCache.Async
             }
             catch
             {
+                // ignored
             }
         }
 
@@ -760,6 +744,7 @@ namespace Eocron.Algorithms.FileCache.Async
                 }
                 catch
                 {
+                    // ignored
                 }
             }
         }

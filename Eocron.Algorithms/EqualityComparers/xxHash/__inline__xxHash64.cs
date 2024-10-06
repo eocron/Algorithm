@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace Eocron.Algorithms.EqualityComparers.xxHash
 {
-    public partial class xxHash64
+    public partial class XxHash64
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe ulong __inline__XXH64(byte* input, int len, ulong seed)
@@ -138,7 +138,6 @@ namespace Eocron.Algorithms.EqualityComparers.xxHash
             fixed (byte* pData = &input[0])
             {
                 var ptr = pData;
-                var end = pData + len;
                 ulong h64;
 
                 if (length >= 32)

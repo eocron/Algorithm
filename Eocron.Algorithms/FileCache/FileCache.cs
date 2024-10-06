@@ -19,12 +19,10 @@ namespace Eocron.Algorithms.FileCache
         /// <param name="disableGc">Check if you will manage garbage collection yourself.</param>
         public FileCache(string baseFolder, IFileSystem fileSystem = null, bool disableGc = false)
         {
-            if (baseFolder == null)
-                throw new ArgumentNullException(nameof(baseFolder));
             _perKeyLock = new PerKeySemaphoreSlim();
             _cacheLock = new ReaderWriterLockSlim();
             _fs = fileSystem ?? FileSystem.Instance;
-            BaseFolder = baseFolder;
+            BaseFolder = baseFolder ?? throw new ArgumentNullException(nameof(baseFolder));
             _invalid = true;
 
             if (!disableGc)
@@ -40,13 +38,11 @@ namespace Eocron.Algorithms.FileCache
         {
             NotNull(sourceFilePath, nameof(sourceFilePath));
             NotNull(key, nameof(key));
-            using (var cfs = new CFileSource(sourceFilePath, _fs))
+            using var cfs = new CFileSource(sourceFilePath, _fs);
+            EnsureInitialized(token);
+            using (GlobalReadLock(token))
             {
-                EnsureInitialized(token);
-                using (GlobalReadLock(token))
-                {
-                    InternalAddOrUpdate(key, cfs, token, policy);
-                }
+                InternalAddOrUpdate(key, cfs, token, policy);
             }
         }
 
@@ -56,13 +52,11 @@ namespace Eocron.Algorithms.FileCache
             NotNull(stream, nameof(stream));
             NotNull(key, nameof(key));
 
-            using (var cfs = new CFileSource(stream, leaveOpen, _fs))
+            using var cfs = new CFileSource(stream, leaveOpen, _fs);
+            EnsureInitialized(token);
+            using (GlobalReadLock(token))
             {
-                EnsureInitialized(token);
-                using (GlobalReadLock(token))
-                {
-                    InternalAddOrUpdate(key, cfs, token, policy);
-                }
+                InternalAddOrUpdate(key, cfs, token, policy);
             }
         }
 
@@ -390,7 +384,6 @@ namespace Eocron.Algorithms.FileCache
 
         private sealed class CFileCacheEntry : AnyExpirationPolicy
         {
-            public DateTime Created { get; set; }
             public string FilePath { get; set; }
         }
 
@@ -399,32 +392,31 @@ namespace Eocron.Algorithms.FileCache
             public CFileSource(string filePath, IFileSystem fs)
             {
                 if (string.IsNullOrWhiteSpace(filePath))
-                    throw new ArgumentNullException("Source path is null or empty.");
+                    throw new ArgumentNullException(nameof(filePath), "Source path is null or empty.");
                 _fs = fs;
                 FilePath = filePath;
             }
 
             public CFileSource(Stream stream, bool leaveOpen, IFileSystem fs)
             {
-                if (stream == null)
-                    throw new ArgumentNullException("Stream is null.");
                 _leaveOpen = leaveOpen;
                 _fs = fs;
-                Stream = stream;
+                Stream = stream ?? throw new ArgumentNullException(nameof(stream), "Stream is null.");
             }
 
             public void CopyTo(string path, CancellationToken token, bool createHardLink)
             {
                 if (string.IsNullOrWhiteSpace(path))
-                    throw new ArgumentNullException("Target path is null or empty.");
+                    throw new ArgumentNullException(nameof(path), "Target path is null or empty.");
 
                 if (Stream != null)
                 {
-                    using (var fstream = _fs.OpenCreate(path, token))
-                    {
-                        Task.Run(async () => await Stream.CopyToAsync(fstream, _uploadBufferSize, token), token)
-                            .GetAwaiter().GetResult();
-                    }
+                    Task.Run(async () =>
+                        {
+                            using var fstream = _fs.OpenCreate(path, token);
+                            await Stream.CopyToAsync(fstream, _uploadBufferSize, token);
+                        }, token)
+                        .GetAwaiter().GetResult();
                 }
                 else
                 {
@@ -447,6 +439,7 @@ namespace Eocron.Algorithms.FileCache
                     }
                     catch
                     {
+                        // ignored
                     }
 
                     try
@@ -455,6 +448,7 @@ namespace Eocron.Algorithms.FileCache
                     }
                     catch
                     {
+                        // ignored
                     }
                 }
             }
@@ -543,6 +537,7 @@ namespace Eocron.Algorithms.FileCache
             }
             catch
             {
+                // ignored
             }
 
             _actions.Add(action);
@@ -580,16 +575,12 @@ namespace Eocron.Algorithms.FileCache
         {
             token.ThrowIfCancellationRequested();
             Ensure(folder, token);
-            var i = 0;
             do
             {
                 token.ThrowIfCancellationRequested();
-
                 var path = Path.Combine(folder, "fs" + GetUniqueFileName());
                 if (!_fs.FileExist(path, token) && !_fs.DirectoryExist(path, token))
                     return path;
-
-                i++;
             } while (true);
         }
 
@@ -664,7 +655,6 @@ namespace Eocron.Algorithms.FileCache
             var path = UploadToCache(src, token);
             _entries[key] = new CFileCacheEntry
             {
-                Created = DateTime.UtcNow,
                 FilePath = path
             }.Pulse(policy);
         }
@@ -693,7 +683,6 @@ namespace Eocron.Algorithms.FileCache
                     var path = UploadToCache(src, token);
                     cacheEntry = new CFileCacheEntry
                     {
-                        Created = DateTime.UtcNow,
                         FilePath = path
                     };
                     //######
@@ -706,10 +695,7 @@ namespace Eocron.Algorithms.FileCache
 
         private CFileCacheEntry InternalGetEntry(TKey key, CancellationToken token)
         {
-            CFileCacheEntry cacheEntry;
-            if (_entries.TryGetValue(key, out cacheEntry))
-                return cacheEntry.Pulse(null);
-            return null;
+            return _entries.TryGetValue(key, out var cacheEntry) ? cacheEntry.Pulse(null) : null;
         }
 
 
@@ -721,6 +707,7 @@ namespace Eocron.Algorithms.FileCache
             }
             catch
             {
+                // ignored
             }
         }
 
@@ -757,6 +744,7 @@ namespace Eocron.Algorithms.FileCache
                 }
                 catch
                 {
+                    // ignored
                 }
             }
         }

@@ -51,7 +51,7 @@ namespace Eocron.Serialization.Protobuf
                 _model.Serialize(targetStream.BaseStream, obj);
         }
 
-        public static RuntimeTypeModel DefaultRuntimeTypeModel = RuntimeTypeModel.Default;
+        public static readonly RuntimeTypeModel DefaultRuntimeTypeModel = RuntimeTypeModel.Default;
         private readonly bool _addLengthPrefix;
         private readonly int _fieldNumber;
         private readonly PrefixStyle _prefixStyle;

@@ -50,7 +50,7 @@ namespace Eocron.Algorithms.Randoms
         /// <summary>
         ///     Creates file with random content or appends to existing.
         /// </summary>
-        /// <param name="random">The given random instance</param>
+        /// <param name="rnd">The given random instance</param>
         /// <param name="size">File size</param>
         public static void NextFile(this Random rnd, string filePath, long size, ArrayPool<byte> pool = null)
         {
@@ -59,10 +59,8 @@ namespace Eocron.Algorithms.Randoms
             if (size < 0)
                 throw new ArgumentOutOfRangeException(nameof(size), size, "Invalid random file size.");
             using var rs = rnd.NextStream(size, pool: pool);
-            using (var fs = File.OpenWrite(filePath))
-            {
-                rs.CopyTo(fs);
-            }
+            using var fs = File.OpenWrite(filePath);
+            rs.CopyTo(fs);
         }
 
         /// <summary>

@@ -17,7 +17,7 @@ namespace Eocron.Algorithms.Tests
         public void SetUp()
         {
             var rnd = new Random(42);
-            _graph = DijkstraTests.ParsePathToRome(Enumerable.Range(0, 100).Select(x => rnd.Next(0, 10)).ToList());
+            _graph = DijkstraTests.ParsePathToRome(Enumerable.Range(0, 100).Select(_ => rnd.Next(0, 10)).ToList());
         }
 
         private AdjacencyGraph<int, Edge<int>> _graph;
@@ -31,8 +31,8 @@ namespace Eocron.Algorithms.Tests
             {
                 var result = new InfiniteDijkstraAlgorithm<int, int>(
                     x => _graph.OutEdges(x).Select(y => y.Target),
-                    x => 0,
-                    (x, y) => x.Weight + 1,
+                    _ => 0,
+                    (x, _) => x.Weight + 1,
                     count: _graph.VertexCount);
                 result.Search(source);
                 ctx.Increment();

@@ -92,7 +92,7 @@ namespace Eocron.Algorithms.Graphs
                             SetWeight(v, alternativeWeightOfV);
                             SetPath(v, u.Vertex);
                             var item = new KeyValuePair<TWeight, TVertex>(alternativeWeightOfV, v);
-                            EnqueueOrUpdate(item, x => item); //decrease or add priority
+                            EnqueueOrUpdate(item, _ => item); //decrease or add priority
                         }
                     }
                 }

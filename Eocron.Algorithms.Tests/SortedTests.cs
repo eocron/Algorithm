@@ -18,10 +18,10 @@ namespace Eocron.Algorithms.Tests
         [TestCase("aa", 'a', 0)]
         [TestCase("a", 'a', 0)]
         [TestCase("", 'a', -1)]
-        public void BinarySearch(string list, char value, int expected_index)
+        public void BinarySearch(string list, char value, int expectedIndex)
         {
             var actual = list.ToCharArray().BinarySearchIndexOf(value);
-            ClassicAssert.AreEqual(expected_index, actual);
+            ClassicAssert.AreEqual(expectedIndex, actual);
         }
 
         [Test]
@@ -35,10 +35,10 @@ namespace Eocron.Algorithms.Tests
         [TestCase("aa", 'a', 2)]
         [TestCase("a", 'a', 1)]
         [TestCase("", 'a', 0)]
-        public void UpperBound(string list, char value, int expected_index)
+        public void UpperBound(string list, char value, int expectedIndex)
         {
             var actual = list.ToCharArray().UpperBoundIndexOf(value);
-            ClassicAssert.AreEqual(expected_index, actual);
+            ClassicAssert.AreEqual(expectedIndex, actual);
         }
 
         [Test]
@@ -52,10 +52,10 @@ namespace Eocron.Algorithms.Tests
         [TestCase("aa", 'a', -1)]
         [TestCase("a", 'a', -1)]
         [TestCase("", 'a', -1)]
-        public void LowerBound(string list, char value, int expected_index)
+        public void LowerBound(string list, char value, int expectedIndex)
         {
             var actual = list.ToCharArray().LowerBoundIndexOf(value);
-            ClassicAssert.AreEqual(expected_index, actual);
+            ClassicAssert.AreEqual(expectedIndex, actual);
         }
 
         [Test]
@@ -69,10 +69,10 @@ namespace Eocron.Algorithms.Tests
         [TestCase("aa", 'a', 0)]
         [TestCase("a", 'a', 0)]
         [TestCase("", 'a', -1)]
-        public void BinarySearchDescending(string list, char value, int expected_index)
+        public void BinarySearchDescending(string list, char value, int expectedIndex)
         {
             var actual = list.ToCharArray().BinarySearchIndexOf(value, descendingOrder: true);
-            ClassicAssert.AreEqual(expected_index, actual);
+            ClassicAssert.AreEqual(expectedIndex, actual);
         }
 
         [Test]
@@ -86,10 +86,10 @@ namespace Eocron.Algorithms.Tests
         [TestCase("aa", 'a', 2)]
         [TestCase("a", 'a', 1)]
         [TestCase("", 'a', 0)]
-        public void UpperBoundDescending(string list, char value, int expected_index)
+        public void UpperBoundDescending(string list, char value, int expectedIndex)
         {
             var actual = list.ToCharArray().UpperBoundIndexOf(value, descendingOrder: true);
-            ClassicAssert.AreEqual(expected_index, actual);
+            ClassicAssert.AreEqual(expectedIndex, actual);
         }
 
         [Test]
@@ -103,10 +103,10 @@ namespace Eocron.Algorithms.Tests
         [TestCase("aa", 'a', -1)]
         [TestCase("a", 'a', -1)]
         [TestCase("", 'a', -1)]
-        public void LowerBoundDescending(string list, char value, int expected_index)
+        public void LowerBoundDescending(string list, char value, int expectedIndex)
         {
             var actual = list.ToCharArray().LowerBoundIndexOf(value, descendingOrder: true);
-            ClassicAssert.AreEqual(expected_index, actual);
+            ClassicAssert.AreEqual(expectedIndex, actual);
         }
     }
 }

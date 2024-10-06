@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace Eocron.Serialization.Xml.XmlLegacy.Document
 {

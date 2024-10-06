@@ -48,15 +48,13 @@ namespace Eocron.Algorithms.EqualityComparers
                 return 0;
             if (obj.Count == 0)
                 return 1;
-            if (_hashWithLoss && obj.Count > _hashLoss)
+            if (_hashWithLoss && obj.Count > HashLoss)
                 return Squash(GetHashCodeLoss(obj));
-            return Squash(xxHash64.ComputeHash(obj, HashSeed));
+            return Squash(XxHash64.ComputeHash(obj, HashSeed));
         }
 
         public int GetHashCode(byte[] obj)
         {
-            if (obj == null)
-                return 0;
             return GetHashCode(new ArraySegment<byte>(obj));
         }
 
@@ -134,7 +132,7 @@ namespace Eocron.Algorithms.EqualityComparers
         private static unsafe ulong GetHashCodeLoss(ArraySegment<byte> source)
         {
             var hash = HashSeed;
-            var step = source.Count >> _hashLossPow;
+            var step = source.Count >> HashLossPow;
             var stepSize = sizeof(ulong) * step;
             fixed (byte* pSource = source.Array)
             {
@@ -167,8 +165,8 @@ namespace Eocron.Algorithms.EqualityComparers
             return x.GetHashCode();
         }
 
-        private const int _hashLossPow = 10;
-        private const int _hashLoss = (1 << _hashLossPow) * sizeof(long);
+        private const int HashLossPow = 10;
+        private const int HashLoss = (1 << HashLossPow) * sizeof(long);
         private const ulong HashSeed = 0x9e3779b97f4a7c15UL;
 
         private static readonly UInt128[] UInt128Masks =

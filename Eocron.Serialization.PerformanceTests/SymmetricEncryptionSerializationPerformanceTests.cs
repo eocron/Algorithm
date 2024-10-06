@@ -28,11 +28,11 @@ namespace Eocron.Serialization.PerformanceTests
             SerializeBinary();
         }
 
-        private static ISerializationConverter Converter =
+        private static ISerializationConverter _converter =
             new SymmetricEncryptionSerializationConverter(SerializationConverterProtobuf.Protobuf, "foobar");
         public override ISerializationConverter GetConverter()
         {
-            return Converter;
+            return _converter;
         }
 
         public override ProtobufTestModel GetTestModel()

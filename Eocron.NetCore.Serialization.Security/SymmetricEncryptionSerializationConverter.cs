@@ -30,24 +30,19 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
 
     public SymmetricEncryptionSerializationConverter(ISerializationConverter inner, byte[] key, IRentedArrayPool<byte> pool = null)
     {
-        if (inner == null)
-            throw new ArgumentNullException(nameof(inner));
         if (key == null || key.Length == 0)
             throw new ArgumentNullException(nameof(key));
         if (key.Length != KeyByteSize)
             throw new ArgumentOutOfRangeException(nameof(key), $"Key should be of size: {KeyByteSize}");
         
-        _inner = inner;
+        _inner = inner ?? throw new ArgumentNullException(nameof(inner));
         _pool = pool ?? RentedArrayPool<byte>.Shared;
         _key = new KeyParameter(key);
     }
     
     internal SymmetricEncryptionSerializationConverter(ISerializationConverter inner, KeyParameter keyParameter, IRentedArrayPool<byte> pool = null)
     {
-        if (inner == null)
-            throw new ArgumentNullException(nameof(inner));
-        
-        _inner = inner;
+        _inner = inner ?? throw new ArgumentNullException(nameof(inner));
         _pool = pool ?? RentedArrayPool<byte>.Shared;
         _key = keyParameter;
     }

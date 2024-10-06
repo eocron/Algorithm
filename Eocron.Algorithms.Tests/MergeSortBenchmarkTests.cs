@@ -72,7 +72,7 @@ namespace Eocron.Algorithms.Tests
             public void Setup()
             {
                 var rnd = new Random(42);
-                _data = Enumerable.Range(0, 1000000).Select(x => rnd.Next()).ToArray();
+                _data = Enumerable.Range(0, 1000000).Select(_ => rnd.Next()).ToArray();
                 _cmp = Comparer<int>.Default;
                 _storage = new InMemoryEnumerableStorage<int>();
                 _chunkSize = 100000;
@@ -106,7 +106,7 @@ namespace Eocron.Algorithms.Tests
             public void Setup()
             {
                 var rnd = new Random(42);
-                _data = Enumerable.Range(0, 1000000).Select(x => rnd.Next()).ToArray();
+                _data = Enumerable.Range(0, 1000000).Select(_ => rnd.Next()).ToArray();
                 _cmp = Comparer<int>.Default;
                 _storage = new JsonStreamEnumerableStorage<int>();
                 _chunkSize = 100000;

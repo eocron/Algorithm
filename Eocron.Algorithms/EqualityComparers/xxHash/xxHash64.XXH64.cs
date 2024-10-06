@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Eocron.Algorithms.EqualityComparers.xxHash
 {
-    public static partial class xxHash64
+    public static partial class XxHash64
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static ulong XXH64_round(ulong acc, ulong input)

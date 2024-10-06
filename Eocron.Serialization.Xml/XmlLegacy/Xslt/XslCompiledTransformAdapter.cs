@@ -3,6 +3,7 @@ using System.IO;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Xsl;
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace Eocron.Serialization.Xml.XmlLegacy.Xslt
 {

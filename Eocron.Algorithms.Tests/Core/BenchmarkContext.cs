@@ -28,6 +28,6 @@ namespace Eocron.Algorithms.Tests.Core
         }
 
         public int TotalCount;
-        public Stopwatch Stopwatch;
+        public readonly Stopwatch Stopwatch;
     }
 }

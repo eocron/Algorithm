@@ -11,22 +11,22 @@ namespace Eocron.Serialization.PerformanceTests
     {
         protected SerializationPerformanceTestsBase(bool prepareText = true, bool prepareBinary = true)
         {
-            _converter = GetConverter();
-            _model = GetTestModel();
+            Converter = GetConverter();
+            Model = GetTestModel();
             if (prepareText)
-                _serializedText = _converter.SerializeToString(_model);
+                SerializedText = Converter.SerializeToString(Model);
             if (prepareBinary)
-                _serializedBytes = _converter.SerializeToBytes(_model);
+                SerializedBytes = Converter.SerializeToBytes(Model);
         }
 
         public void DeserializeBinary()
         {
-            _converter.Deserialize<TModel>(_serializedBytes);
+            Converter.Deserialize<TModel>(SerializedBytes);
         }
 
         public void DeserializeText()
         {
-            _converter.Deserialize<TModel>(_serializedText);
+            Converter.Deserialize<TModel>(SerializedText);
         }
 
         public abstract ISerializationConverter GetConverter();
@@ -59,18 +59,18 @@ namespace Eocron.Serialization.PerformanceTests
 
         public void SerializeBinary()
         {
-            _converter.SerializeToBytes(_model);
+            Converter.SerializeToBytes(Model);
         }
 
         public void SerializeText()
         {
-            _converter.SerializeToString(_model);
+            Converter.SerializeToString(Model);
         }
 
-        protected readonly byte[] _serializedBytes;
+        protected readonly byte[] SerializedBytes;
 
-        protected readonly ISerializationConverter _converter;
-        protected readonly string _serializedText;
-        protected readonly TModel _model;
+        protected readonly ISerializationConverter Converter;
+        protected readonly string SerializedText;
+        protected readonly TModel Model;
     }
 }

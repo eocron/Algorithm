@@ -18,7 +18,7 @@ namespace Eocron.Algorithms.HashCode
         public static int GetHashCode(this Stream stream, CancellationToken cancellationToken = default,
             ArrayPool<byte> pool = null)
         {
-            return xxHash64.ComputeHashAsync(stream, 8192, 0, cancellationToken, pool ?? ArrayPool<byte>.Shared).Result
+            return XxHash64.ComputeHashAsync(stream, 8192, 0, cancellationToken, pool ?? ArrayPool<byte>.Shared).Result
                 .GetHashCode();
         }
 
@@ -32,7 +32,7 @@ namespace Eocron.Algorithms.HashCode
         public static async ValueTask<long> GetHashCodeAsync(this Stream stream,
             CancellationToken cancellationToken = default, ArrayPool<byte> pool = null)
         {
-            return (await xxHash64.ComputeHashAsync(stream, 8192, 0, cancellationToken, pool ?? ArrayPool<byte>.Shared))
+            return (await XxHash64.ComputeHashAsync(stream, 8192, 0, cancellationToken, pool ?? ArrayPool<byte>.Shared))
                 .GetHashCode();
         }
     }

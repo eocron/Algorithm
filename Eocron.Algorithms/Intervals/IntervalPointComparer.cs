@@ -24,7 +24,7 @@ namespace Eocron.Algorithms.Intervals
             return _comparer.Compare(x.Value, y.Value);
         }
 
-        public static IntervalPointComparer<T> Default = new IntervalPointComparer<T>(Comparer<T>.Default);
+        public static readonly IntervalPointComparer<T> Default = new IntervalPointComparer<T>(Comparer<T>.Default);
 
         private readonly IComparer<T> _comparer;
     }

@@ -126,7 +126,7 @@ namespace Eocron.Algorithms.Hex
         private static IEnumerable<string> GetFilteredPrefixes(HexFormatting formatting)
         {
             var bitMap = (uint)formatting;
-            return PossiblePrefixes.Where((x, i) => (bitMap & (1 << (i + 1))) != 0);
+            return PossiblePrefixes.Where((_, i) => (bitMap & (1 << (i + 1))) != 0);
         }
 
         private static int GetNibble(char c)

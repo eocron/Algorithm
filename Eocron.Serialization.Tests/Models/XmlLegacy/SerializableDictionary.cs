@@ -41,7 +41,9 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
         ///     associated with the
         ///     <see cref="T:System.Collections.Generic.Dictionary`2" />.
         /// </param>
+#pragma warning disable SYSLIB0051
         protected SerializableDictionary(SerializationInfo info, StreamingContext context) : base(info, context)
+#pragma warning restore SYSLIB0051
         {
         }
 
@@ -115,7 +117,7 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
             reader.ReadStartElement(KeyTagName);
             try
             {
-                return (TKey)keySerializer.Deserialize(reader);
+                return (TKey)KeySerializer.Deserialize(reader);
             }
             finally
             {
@@ -133,7 +135,7 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
             reader.ReadStartElement(ValueTagName);
             try
             {
-                return (TValue)valueSerializer.Deserialize(reader);
+                return (TValue)ValueSerializer.Deserialize(reader);
             }
             finally
             {
@@ -170,7 +172,7 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
             writer.WriteStartElement(KeyTagName);
             try
             {
-                keySerializer.Serialize(writer, key);
+                KeySerializer.Serialize(writer, key);
             }
             finally
             {
@@ -188,7 +190,7 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
             writer.WriteStartElement(ValueTagName);
             try
             {
-                valueSerializer.Serialize(writer, value);
+                ValueSerializer.Serialize(writer, value);
             }
             finally
             {
@@ -229,11 +231,11 @@ namespace Eocron.Serialization.Tests.Models.XmlLegacy
         /// <summary>
         ///     The XML serializer for the key type.
         /// </summary>
-        private static readonly XmlSerializer keySerializer = new XmlSerializer(typeof(TKey));
+        private static readonly XmlSerializer KeySerializer = new XmlSerializer(typeof(TKey));
 
         /// <summary>
         ///     The XML serializer for the value type.
         /// </summary>
-        private static readonly XmlSerializer valueSerializer = new XmlSerializer(typeof(TValue));
+        private static readonly XmlSerializer ValueSerializer = new XmlSerializer(typeof(TValue));
     }
 }

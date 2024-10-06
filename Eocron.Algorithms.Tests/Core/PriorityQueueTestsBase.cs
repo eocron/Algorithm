@@ -82,7 +82,7 @@ namespace Eocron.Algorithms.Tests.Core
                     .Select(x => x.Last())
                     .ToList();
                 foreach (var keyValuePair in distinctOrderedTestCase)
-                    queue.EnqueueOrUpdate(keyValuePair, x => keyValuePair);
+                    queue.EnqueueOrUpdate(keyValuePair, _ => keyValuePair);
 
                 ClassicAssert.AreEqual(distinctOrderedTestCase.Count, queue.Count);
 

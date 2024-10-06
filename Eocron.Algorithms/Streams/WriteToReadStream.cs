@@ -20,7 +20,7 @@ namespace Eocron.Algorithms.Streams
             _transferStream = new MemoryStream();
             _targetStream = new Lazy<T>(() => targetStreamProvider(_transferStream));
             _transferBufferLeftover = null;
-            _onEosAsync = onEosAsync ?? ((x, ct) => x.FlushAsync());
+            _onEosAsync = onEosAsync ?? ((x, _) => x.FlushAsync());
             _onEos = onEos ?? (x => x.Flush());
             _pool = pool ?? BufferingConstants<byte>.DefaultMemoryPool;
         }

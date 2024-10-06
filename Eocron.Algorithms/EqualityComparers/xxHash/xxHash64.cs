@@ -10,12 +10,13 @@ using System.Threading.Tasks;
 
 namespace Eocron.Algorithms.EqualityComparers.xxHash
 {
-    public static partial class xxHash64
+    public static partial class XxHash64
     {
         /// <summary>
         ///     Compute xxHash for the data byte array
         /// </summary>
         /// <param name="data">The source of data</param>
+        /// <param name="offset">Offset in data</param>
         /// <param name="length">The length of the data for hashing</param>
         /// <param name="seed">The seed number</param>
         /// <returns>hash</returns>
@@ -52,6 +53,7 @@ namespace Eocron.Algorithms.EqualityComparers.xxHash
         /// <param name="bufferSize">The buffer size</param>
         /// <param name="seed">The seed number</param>
         /// <param name="cancellationToken">The cancelation token</param>
+        /// <param name="pool">Array pool to use</param>
         /// <returns>The hash</returns>
         public static async ValueTask<ulong> ComputeHashAsync(Stream stream, int bufferSize, ulong seed,
             CancellationToken cancellationToken, ArrayPool<byte> pool)

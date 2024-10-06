@@ -19,7 +19,7 @@ namespace Eocron.Algorithms.Tests
         protected override IEnumerable<KeyValuePair<int, Guid>> CreateTestCase()
         {
             return Enumerable.Range(0, 10000)
-                .Select(x => new KeyValuePair<int, Guid>(Rnd.Next(-100, 100), Guid.NewGuid()));
+                .Select(_ => new KeyValuePair<int, Guid>(Rnd.Next(-100, 100), Guid.NewGuid()));
         }
 
         protected override bool IsStable => false;

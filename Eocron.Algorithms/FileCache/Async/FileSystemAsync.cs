@@ -1,8 +1,6 @@
 ﻿using System;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -111,10 +109,6 @@ namespace Eocron.Algorithms.FileCache.Async
             return Task.CompletedTask;
         }
 
-        [DllImport("Kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        private static extern bool CreateHardLink(string lpFileName, string lpExistingFileName,
-            IntPtr lpSecurityAttributes);
-
         private Task DeleteDirectoryNonRecursiveAsync(DirectoryInfo targetDir, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
@@ -135,19 +129,9 @@ namespace Eocron.Algorithms.FileCache.Async
             return Task.CompletedTask;
         }
 
-        private static void InternalCreateHardLink(string src, string tgt)
-        {
-            var res = CreateHardLink(tgt, src, IntPtr.Zero);
-            if (!res)
-            {
-                var ex = new Win32Exception(Marshal.GetLastWin32Error());
-                throw ex;
-            }
-        }
+        public static IFileSystemAsync Instance => InternalIntance.Value;
 
-        public static IFileSystemAsync Instance => _intance.Value;
-
-        private static readonly Lazy<IFileSystemAsync> _intance =
+        private static readonly Lazy<IFileSystemAsync> InternalIntance =
             new Lazy<IFileSystemAsync>(() => new FileSystemAsync(), true);
     }
 }

@@ -60,15 +60,15 @@ namespace Eocron.Algorithms.Tests
             public void Setup()
             {
                 var rnd = new Random();
-                _array = Enumerable.Range(0, _size).Select(_ => rnd.Next()).OrderBy(x => x).ToArray();
+                _array = Enumerable.Range(0, Size).Select(_ => rnd.Next()).OrderBy(x => x).ToArray();
             }
 
-            [Params(0, _size - 1, _size / 2, _size / 4, _size - _size / 4)]
+            [Params(0, Size - 1, Size / 2, Size / 4, Size - Size / 4)]
             public int TestDataId;
 
             private int[] _array;
 
-            private const int _size = 1 << 20; //20 hops
+            private const int Size = 1 << 20; //20 hops
 
             #endregion
         }

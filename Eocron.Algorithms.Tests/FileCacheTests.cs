@@ -307,12 +307,12 @@ namespace Eocron.Algorithms.Tests
                 var fileSize = 1 * 1024;
                 var data = FullRead(cache, 123);
                 ClassicAssert.IsNull(data);
-                var tasks = Enumerable.Range(0, 20).Select(i =>
+                var tasks = Enumerable.Range(0, 20).Select(_ =>
                 {
                     try
                     {
                         var filePath = GetRandomPath();
-                        cache.GetFileOrAddStream(123, x => GetRandomFile(fileSize), CancellationToken.None, filePath,
+                        cache.GetFileOrAddStream(123, _ => GetRandomFile(fileSize), CancellationToken.None, filePath,
                             CacheExpirationPolicy.AbsoluteUtc(DateTime.MinValue));
                         cache.GarbageCollect(CancellationToken.None);
                         while (true)
@@ -393,18 +393,18 @@ namespace Eocron.Algorithms.Tests
 
 
             for (var i = 0; i < calls; i++)
-                using (var cts = new CancellationTokenSource())
+            {
+                using var cts = new CancellationTokenSource();
+                cts.CancelAfter(10);
+                try
                 {
-                    cts.CancelAfter(10);
-                    try
-                    {
-                        cache.AddOrUpdateStream(123, GetRandomFile(fileSize), cts.Token, null);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        //good.
-                    }
+                    cache.AddOrUpdateStream(123, GetRandomFile(fileSize), cts.Token, null);
                 }
+                catch (OperationCanceledException)
+                {
+                    //good.
+                }
+            }
 
             cache.GarbageCollect(CancellationToken.None);
 
@@ -466,10 +466,8 @@ namespace Eocron.Algorithms.Tests
         {
             ClassicAssert.IsTrue(File.Exists(filePath));
             ClassicAssert.AreEqual(fileSize, new FileInfo(filePath).Length);
-            using (var s = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                s.ReadByte();
-            }
+            using var s = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            s.ReadByte();
         }
 
         [Test]

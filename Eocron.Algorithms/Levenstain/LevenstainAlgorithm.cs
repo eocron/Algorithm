@@ -116,7 +116,7 @@ namespace Eocron.Algorithms.Levenstain
             if (matrix == null)
                 throw new ArgumentNullException(nameof(matrix));
             if (matrix.M != source.Count + 1 || matrix.N != target.Count + 1)
-                throw new ArgumentOutOfRangeException("Invalid matrix size.");
+                throw new ArgumentOutOfRangeException(nameof(matrix), "Invalid matrix size.");
             if (Options == null)
                 throw new ArgumentNullException(nameof(Options));
             var i = matrix.M - 1;
