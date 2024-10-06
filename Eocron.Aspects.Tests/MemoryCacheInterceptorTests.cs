@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
 using FluentAssertions;
-using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using NUnit.Framework;
 
