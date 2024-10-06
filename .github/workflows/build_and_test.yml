@@ -50,13 +50,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-test-artifacts
+          path: ./to-test
       - name: Display structure of downloaded files
         run: ls -R
       - name: Test
         run: |
           status=0
           shopt -s globstar
-          for file in $(ls ./build-test-artifacts/**/*Tests.dll); do
+          for file in $(ls ./to-test/**/*Tests.dll); do
               echo "Testing $file"
               dotnet test "$file" --verbosity normal --logger trx --filter TestCategory!=FailOnNix --results-directory "./TestResults" || status=1
           done
