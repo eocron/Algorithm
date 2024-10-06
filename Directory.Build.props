@@ -14,7 +14,7 @@
         <LangVersion>latest</LangVersion>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <PackageIcon>https://raw.githubusercontent.com/eocron/Algorithm/refs/heads/master/racoon.png</PackageIcon>
+        <PackageIcon>racoon.png</PackageIcon>
     </PropertyGroup>
     
     <ItemGroup>
@@ -22,5 +22,9 @@
     </ItemGroup>
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="."/>
+        <Content Include="..\racoon.png" Link="racoon.png" Pack="true" PackagePath="\" >
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
+    
 </Project>
