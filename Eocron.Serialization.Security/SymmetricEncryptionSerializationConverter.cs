@@ -65,11 +65,12 @@ public sealed class SymmetricEncryptionSerializationConverter : BinarySerializat
         using var ms = new MemoryStream();
         _inner.SerializeTo(type, obj, ms);
         using var nonce = PasswordDerivationHelper.CreateRandomBytes(_pool, NonceByteSize);
-        using var encrypted = _pool.RentExact((int)ms.Position + MacByteSize);
+        var cipher = CreateAeadCipher(nonce, true);
+        using var encrypted = _pool.RentExact(cipher.GetOutputSize((int)ms.Position));
         using var body = new RentedAesGcmData(nonce, encrypted);
-        var cipher = CreateAeadCipher(body.Nonce, true);
+        
         var len = cipher.ProcessBytes(
-            ms.GetBuffer(),
+            new Span<byte>(ms.GetBuffer(), 0, (int)ms.Position),
             body.EncryptedPayload.Data);
         cipher.DoFinal(body.EncryptedPayload.Data.Slice(len));
         
