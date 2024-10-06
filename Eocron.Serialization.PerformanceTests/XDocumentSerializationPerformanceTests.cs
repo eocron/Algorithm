@@ -25,7 +25,7 @@ namespace Eocron.Serialization.PerformanceTests
         {
             return new XmlTestModelFooBar
             {
-                Dictionary = new SerializableDictionary<string, string>
+                Dictionary = new Dictionary<string, string>
                 {
                     { "key1", "value1" },
                     { "key2", "value2" }
