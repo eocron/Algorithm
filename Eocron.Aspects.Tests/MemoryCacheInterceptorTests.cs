@@ -5,6 +5,7 @@ using Castle.DynamicProxy;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Eocron.Aspects.Tests
 {
