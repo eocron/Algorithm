@@ -51,9 +51,9 @@ jobs:
           $username = "eocron"
           $password = "${{ secrets.NUGET_API_KEY }}"
           $target = "https://api.nuget.org/v3/index.json"
-          dotnet nuget add source --username $username --password "$password" --store-password-in-clear-text --name tmp "$target"
+          dotnet nuget add source --username $username --password "$password" --store-password-in-clear-text --name tmp-nuget "$target"
           foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
-              dotnet nuget push $file --api-key "$password" --source "tmp" --skip-duplicate
+              dotnet nuget push $file --api-key "$password" --source "tmp-nuget" --skip-duplicate
           }
 
   deploy-to-github-com:
@@ -72,7 +72,7 @@ jobs:
           $username = "eocron"
           $password = "${{ secrets.GITHUB_TOKEN }}"
           $target = "https://nuget.pkg.github.com/eocron/index.json"
-          dotnet nuget add source --username $username --password "$password" --store-password-in-clear-text --name tmp "$target"
+          dotnet nuget add source --username $username --password "$password" --store-password-in-clear-text --name tmp-github "$target"
           foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg)) {
-              dotnet nuget push $file --api-key "$password" --source "tmp" --skip-duplicate
+              dotnet nuget push $file --api-key "$password" --source "tmp-github" --skip-duplicate
           }
