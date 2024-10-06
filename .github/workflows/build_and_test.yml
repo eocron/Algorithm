@@ -46,10 +46,12 @@ jobs:
         with:
           dotnet-version: |
             8.0.x
-      - name: Download build artifacts
+      - name: Download build test artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-test-artifacts
+      - name: Display structure of downloaded files
+        run: ls -R
       - name: Test
         run: |
           status=0
