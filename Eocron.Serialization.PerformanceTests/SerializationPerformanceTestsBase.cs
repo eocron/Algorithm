@@ -33,7 +33,7 @@ namespace Eocron.Serialization.PerformanceTests
 
         public abstract TModel GetTestModel();
 
-        [Test]
+        [Test, Category("Performance")]
         [Explicit]
         public void Run()
         {

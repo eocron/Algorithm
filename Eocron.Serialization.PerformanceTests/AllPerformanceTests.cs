@@ -54,7 +54,7 @@ namespace Eocron.Serialization.PerformanceTests
             _protobuf.Serialize();
         }
 
-        [Test]
+        [Test, Category("Performance")]
         [Explicit]
         public void Run()
         {
