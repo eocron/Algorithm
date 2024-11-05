@@ -9,6 +9,15 @@ public static class HashAlgorithmFactoryExtensions
     {
         return new HashBytesStream(stream, factory, leaveOpen);
     }
+    
+    public static HashBytes Compute(this IHashAlgorithmFactory factory, Stream stream) 
+    {
+        return new HashBytes()
+        {
+            Source = factory.Name, 
+            Value = factory.GetCachedInstance().ComputeHash(stream)
+        };
+    }
 
     public static HashBytes Compute(this IHashAlgorithmFactory factory, byte[] data) 
     {
