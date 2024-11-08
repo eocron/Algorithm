@@ -4,12 +4,14 @@ namespace Eocron.EncryptedStreams
 {
     public static class ArraySegmentExtensions
     {
-        public static ArraySegment<byte> Write(this ArraySegment<byte> destination, ArraySegment<byte> source)
+        public static void Copy(this ArraySegment<byte> src, byte[] dst, int dstOffset, int count)
         {
-            Array.Copy(source.Array, source.Offset, destination.Array, destination.Offset, source.Count);
-            var newOffset = destination.Offset + source.Count;
-            var newCount = destination.Count - source.Count;
-            return new ArraySegment<byte>(destination.Array, newOffset, newCount);
+            Buffer.BlockCopy(src.Array, src.Offset, dst, dstOffset, count);
+        }
+        
+        public static void Copy(this ArraySegment<byte> src, int srcOffset, byte[] dst, int dstOffset, int count)
+        {
+            Buffer.BlockCopy(src.Array, src.Offset + srcOffset, dst, dstOffset, count);
         }
     }
 }

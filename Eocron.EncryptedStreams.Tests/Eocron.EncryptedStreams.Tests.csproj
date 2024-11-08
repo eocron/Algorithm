@@ -21,4 +21,8 @@
         <None Remove="README.md" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Eocron.EncryptedStreams\Eocron.EncryptedStreams.csproj" />
+    </ItemGroup>
+
 </Project>
