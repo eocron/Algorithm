@@ -61,8 +61,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eocron.Aspects", "Eocron.As
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eocron.Aspects.Tests", "Eocron.Aspects.Tests\Eocron.Aspects.Tests.csproj", "{C8D6A178-0029-4515-B6C8-9073CE7C2439}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Encryption", "Encryption", "{B720719C-A68B-4C35-992F-0111DC9F2212}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
