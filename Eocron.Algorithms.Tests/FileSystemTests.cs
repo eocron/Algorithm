@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Eocron.Algorithms.FileCache;
+using Eocron.Algorithms.IO;
 using Eocron.Algorithms.Tests.Core;
 using FluentAssertions;
 using Newtonsoft.Json;
