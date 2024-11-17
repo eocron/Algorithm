@@ -34,8 +34,9 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
 
     public async Task CopyFileAsync(string sourceFilePath, string targetFilePath, CancellationToken ct = default)
     {
-        var srcInfo = await GetPhysicalFile(sourceFilePath, ct).ConfigureAwait(false);
-        var tgtInfo = await GetPhysicalFile(targetFilePath, ct).ConfigureAwait(false);
+        await EnsureInitializedAsync(ct).ConfigureAwait(false);
+        var srcInfo = GetPhysicalFile(sourceFilePath);
+        var tgtInfo = GetPhysicalFile(targetFilePath);
 
         srcInfo.CopyTo(tgtInfo.FullName, false);
         await WaitUntilCreated(tgtInfo, ct).ConfigureAwait(false);
@@ -66,49 +67,52 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         SearchOption option,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        var dir = await GetPhysicalDirectory(folderPath, ct).ConfigureAwait(false);
-        yield return await Task
-            .WhenAll(dir.GetDirectories(pattern, option).Select(async x => await GetVirtualPath(x.FullName, ct)))
-            .ConfigureAwait(false);
+        await EnsureInitializedAsync(ct).ConfigureAwait(false);
+        var dir = GetPhysicalDirectory(folderPath);
+        yield return dir.GetDirectories(pattern, option).Select( x => GetVirtualPath(x.FullName)).ToArray();
     }
 
     public async Task<FileAttributes> GetFileAttributesAsync(string filePath, CancellationToken ct = default)
     {
-        return (await GetPhysicalFile(filePath, ct).ConfigureAwait(false)).Attributes;
+        await EnsureInitializedAsync(ct).ConfigureAwait(false);
+        return GetPhysicalFile(filePath).Attributes;
     }
 
     public async IAsyncEnumerable<string[]> GetFilesAsync(string folderPath, string pattern, SearchOption option,
         [EnumeratorCancellation] CancellationToken ct = default)
     {
-        var dir = await GetPhysicalDirectory(folderPath, ct).ConfigureAwait(false);
-        yield return await Task
-            .WhenAll(dir.GetFiles(pattern, option).Select(async x => await GetVirtualPath(x.FullName, ct)))
-            .ConfigureAwait(false);
+        await EnsureInitializedAsync(ct).ConfigureAwait(false);
+        var dir = GetPhysicalDirectory(folderPath);
+        yield return dir.GetFiles(pattern, option).Select( x => GetVirtualPath(x.FullName)).ToArray();
     }
 
     public async Task<bool> IsDirectoryExistAsync(string folderPath, CancellationToken ct = default)
     {
-        return (await GetPhysicalDirectory(folderPath, ct).ConfigureAwait(false)).Exists;
+        await EnsureInitializedAsync(ct).ConfigureAwait(false);
+        return GetPhysicalDirectory(folderPath).Exists;
     }
 
     public async Task<bool> IsFileExistAsync(string filePath, CancellationToken ct = default)
     {
-        return (await GetPhysicalFile(filePath, ct).ConfigureAwait(false)).Exists;
+        await EnsureInitializedAsync(ct).ConfigureAwait(false);
+        return GetPhysicalFile(filePath).Exists;
     }
 
     public async Task MoveDirectoryAsync(string sourceFolderPath, string targetFolderPath,
         CancellationToken ct = default)
     {
-        var src = await GetPhysicalDirectory(sourceFolderPath, ct).ConfigureAwait(false);
-        var tgt = await GetPhysicalDirectory(targetFolderPath, ct).ConfigureAwait(false);
+        await EnsureInitializedAsync(ct).ConfigureAwait(false);
+        var src = GetPhysicalDirectory(sourceFolderPath);
+        var tgt = GetPhysicalDirectory(targetFolderPath);
         src.MoveTo(tgt.FullName);
         await Task.WhenAll(WaitUntilCreated(tgt, ct), WaitUntilDeleted(src, ct)).ConfigureAwait(false);
     }
 
     public async Task MoveFileAsync(string sourceFilePath, string targetFilePath, CancellationToken ct = default)
     {
-        var src = await GetPhysicalFile(sourceFilePath, ct).ConfigureAwait(false);
-        var tgt = await GetPhysicalFile(targetFilePath, ct).ConfigureAwait(false);
+        await EnsureInitializedAsync(ct).ConfigureAwait(false);
+        var src = GetPhysicalFile(sourceFilePath);
+        var tgt = GetPhysicalFile(targetFilePath);
         src.MoveTo(tgt.FullName);
 
         await Task.WhenAll(WaitUntilCreated(tgt, ct), WaitUntilDeleted(src, ct)).ConfigureAwait(false);
@@ -116,20 +120,23 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
 
     public async Task<Stream> OpenFileAsync(string filePath, FileMode mode, CancellationToken ct = default)
     {
-        var file = await GetPhysicalFile(filePath, ct).ConfigureAwait(false);
+        await EnsureInitializedAsync(ct).ConfigureAwait(false);
+        var file = GetPhysicalFile(filePath);
         return file.Open(mode);
     }
 
     public async Task SetFileAttributesAsync(string filePath, FileAttributes attributes,
         CancellationToken ct = default)
     {
-        var file = await GetPhysicalFile(filePath, ct).ConfigureAwait(false);
+        await EnsureInitializedAsync(ct).ConfigureAwait(false);
+        var file = GetPhysicalFile(filePath);
         file.Attributes = attributes;
     }
 
     public async Task<bool> TryCreateDirectoryAsync(string folderPath, CancellationToken ct = default)
     {
-        var dir = await GetPhysicalDirectory(folderPath, ct).ConfigureAwait(false);
+        await EnsureInitializedAsync(ct).ConfigureAwait(false);
+        var dir = GetPhysicalDirectory(folderPath);
         if (dir.Exists) return false;
         dir.Create();
         await WaitUntilCreated(dir, ct).ConfigureAwait(false);
@@ -138,7 +145,8 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
 
     public async Task<bool> TryDeleteDirectoryAsync(string folderPath, CancellationToken ct = default)
     {
-        var dir = await GetPhysicalDirectory(folderPath, ct).ConfigureAwait(false);
+        await EnsureInitializedAsync(ct).ConfigureAwait(false);
+        var dir = GetPhysicalDirectory(folderPath);
         if (!dir.Exists) return false;
 
         await TryFillWithJunkAsync(dir, ct).ConfigureAwait(false);
@@ -149,7 +157,8 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
 
     public async Task<bool> TryDeleteFileAsync(string filePath, CancellationToken ct = default)
     {
-        var file = await GetPhysicalFile(filePath, ct).ConfigureAwait(false);
+        await EnsureInitializedAsync(ct).ConfigureAwait(false);
+        var file = GetPhysicalFile(filePath);
         if (!file.Exists) return false;
         await TryFillWithJunkAsync(file, ct).ConfigureAwait(false);
         file.Delete();
@@ -157,49 +166,61 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         return true;
     }
         
-    public async Task<DirectoryInfo> GetPhysicalDirectory(string virtualPath, CancellationToken ct)
+    public DirectoryInfo GetPhysicalDirectory(string virtualPath)
     {
-        return new DirectoryInfo(await GetPhysicalPath(virtualPath, ct).ConfigureAwait(false));
+        return new DirectoryInfo(GetPhysicalPath(virtualPath));
     }
 
-    public async Task<FileInfo> GetPhysicalFile(string virtualPath, CancellationToken ct)
+    public FileInfo GetPhysicalFile(string virtualPath)
     {
-        return new FileInfo(await GetPhysicalPath(virtualPath, ct).ConfigureAwait(false));
+        return new FileInfo(GetPhysicalPath(virtualPath));
     }
 
-    private async Task<string> GetBaseDirectory(CancellationToken ct)
+    private string GetBaseDirectory()
     {
-        if (!_initialized)
-        {
-            await _sync.WaitAsync(ct).ConfigureAwait(false);
-            try
-            {
-                if (!_initialized)
-                {
-                    if (_features.HasFlag(FileSystemFeature.CreateBaseDirectoryIfNotExists) &&
-                        !Directory.Exists(_baseFolder)) Directory.CreateDirectory(_baseFolder);
-                    await ValidateReadWriteAccessAsync(_baseFolder, ct).ConfigureAwait(false);
-                    _initialized = true;
-                }
-            }
-            finally
-            {
-                _sync.Release();
-            }
-        }
-
         return _baseFolder;
     }
 
-    private async Task<string> GetPhysicalPath(string virtualPath, CancellationToken ct)
+    private async Task EnsureInitializedAsync(CancellationToken ct)
     {
-        var baseFolder = await GetBaseDirectory(ct).ConfigureAwait(false);
+        if (_initialized)
+            return;
+        
+        await _sync.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            if (_initialized)
+                return;
+
+            await InitializeAsync(ct).ConfigureAwait(false);
+            _initialized = true;
+        }
+        finally
+        {
+            _sync.Release();
+        }
+    }
+
+    private async Task InitializeAsync(CancellationToken ct)
+    {
+        var dir = new DirectoryInfo(_baseFolder);
+        if (_features.HasFlag(FileSystemFeature.CreateBaseDirectoryIfNotExists) && !dir.Exists)
+        {
+            dir.Create();
+            await WaitUntilCreated(dir, ct).ConfigureAwait(false);
+        }
+        await ValidateReadWriteAccessAsync(_baseFolder, ct).ConfigureAwait(false);
+    }
+
+    private string GetPhysicalPath(string virtualPath)
+    {
+        var baseFolder = GetBaseDirectory();
         return string.IsNullOrWhiteSpace(virtualPath) ? baseFolder : Path.Combine(baseFolder, virtualPath);
     }
 
-    private async Task<string> GetVirtualPath(string physicalPath, CancellationToken ct)
+    private string GetVirtualPath(string physicalPath)
     {
-        var baseFolder = await GetBaseDirectory(ct).ConfigureAwait(false);
+        var baseFolder = GetBaseDirectory();
         physicalPath = Path.GetFullPath(physicalPath);
         if (!physicalPath.StartsWith(baseFolder, StringComparison.OrdinalIgnoreCase))
             throw new AccessViolationException($"Base folder is {baseFolder}, but tried to access {physicalPath}");
@@ -306,6 +327,10 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
 
     private static async Task WaitWhileAsync(Func<bool> predicate, CancellationToken ct)
     {
+        if (!IsLinux())
+        {
+            return;
+        }
         do
         {
             if (!predicate())
@@ -316,6 +341,12 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
             ct.ThrowIfCancellationRequested();
             await Task.Delay(10, ct).ConfigureAwait(false);
         } while (true);
+    }
+
+    private static bool IsLinux()
+    {
+        int p = (int) Environment.OSVersion.Platform;
+        return (p == 4) || (p == 6) || (p == 128);
     }
         
     public string BaseFolder => _baseFolder;
