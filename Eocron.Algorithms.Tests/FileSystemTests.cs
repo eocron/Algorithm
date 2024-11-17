@@ -38,10 +38,11 @@ namespace Eocron.Algorithms.Tests
         [Test]
         public void SanityCheck()
         {
-            Directory.CreateDirectory("t");
-            Directory.Exists("t").Should().BeTrue();
-            Directory.Delete("t");
-            Directory.Exists("t").Should().BeFalse();
+            var dir = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "t"));
+            Directory.CreateDirectory(dir);
+            Directory.Exists(dir).Should().BeTrue();
+            Directory.Delete(dir);
+            Directory.Exists(dir).Should().BeFalse();
         }
         
         [Test]
