@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -131,6 +132,8 @@ namespace Eocron.Algorithms.Tests
             (await _fs.TryCreateDirectoryAsync("test1", Ct)).Should().BeTrue();
             (await _fs.TryCreateDirectoryAsync("test2", Ct)).Should().BeTrue();
             (await _fs.TryDeleteDirectoryAsync("test1", Ct)).Should().BeTrue();
+            await ValidateDirectoryNotExists([Path.Combine(_baseFolder, "test1")], ["test1"]);
+            await ValidateDirectoryExists([Path.Combine(_baseFolder, "test2")], ["test2"]);
             ValidateSchema("delete_directory.json");
         }
         
@@ -200,11 +203,19 @@ namespace Eocron.Algorithms.Tests
             foreach (var vp in virtualSubPaths)
             {
                 (await _fs.IsDirectoryExistAsync(vp, Ct)).Should().BeFalse(because: vp);
-                var a = () => Task.FromResult(_fs.GetDirectoriesAsync(vp, "*", SearchOption.AllDirectories, Ct));
-                await a.Should().ThrowAsync<FileNotFoundException>();
+                var a = async () => await Flush(_fs.GetDirectoriesAsync(vp, "*", SearchOption.AllDirectories, Ct));
+                await a.Should().ThrowAsync<DirectoryNotFoundException>();
                 
-                a = () => Task.FromResult(_fs.GetFilesAsync(vp, "*", SearchOption.AllDirectories, Ct));
-                await a.Should().ThrowAsync<FileNotFoundException>();
+                a = async () => await Flush(_fs.GetFilesAsync(vp, "*", SearchOption.AllDirectories, Ct));
+                await a.Should().ThrowAsync<DirectoryNotFoundException>();
+            }
+        }
+
+        private async Task Flush<T>(IAsyncEnumerable<T> items)
+        {
+            await foreach (var i in items)
+            {
+                
             }
         }
 
