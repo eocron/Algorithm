@@ -38,6 +38,7 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         var tgtInfo = await GetPhysicalFile(targetFilePath, ct).ConfigureAwait(false);
 
         srcInfo.CopyTo(tgtInfo.FullName, false);
+        await WaitUntilCreated(tgtInfo, ct).ConfigureAwait(false);
         await SetFileAttributesAsync(targetFilePath, FileAttributes.Normal, ct).ConfigureAwait(false);
     }
 
@@ -101,6 +102,7 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         var src = await GetPhysicalDirectory(sourceFolderPath, ct).ConfigureAwait(false);
         var tgt = await GetPhysicalDirectory(targetFolderPath, ct).ConfigureAwait(false);
         src.MoveTo(tgt.FullName);
+        await Task.WhenAll(WaitUntilCreated(tgt, ct), WaitUntilDeleted(src, ct)).ConfigureAwait(false);
     }
 
     public async Task MoveFileAsync(string sourceFilePath, string targetFilePath, CancellationToken ct = default)
@@ -108,6 +110,8 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         var src = await GetPhysicalFile(sourceFilePath, ct).ConfigureAwait(false);
         var tgt = await GetPhysicalFile(targetFilePath, ct).ConfigureAwait(false);
         src.MoveTo(tgt.FullName);
+
+        await Task.WhenAll(WaitUntilCreated(tgt, ct), WaitUntilDeleted(src, ct)).ConfigureAwait(false);
     }
 
     public async Task<Stream> OpenFileAsync(string filePath, FileMode mode, CancellationToken ct = default)
@@ -128,6 +132,7 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         var dir = await GetPhysicalDirectory(folderPath, ct).ConfigureAwait(false);
         if (dir.Exists) return false;
         dir.Create();
+        await WaitUntilCreated(dir, ct).ConfigureAwait(false);
         return true;
     }
 
@@ -138,6 +143,7 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
 
         await TryFillWithJunkAsync(dir, ct).ConfigureAwait(false);
         dir.Delete(true);
+        await WaitUntilDeleted(dir, ct).ConfigureAwait(false);
         return true;
     }
 
@@ -147,6 +153,7 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         if (!file.Exists) return false;
         await TryFillWithJunkAsync(file, ct).ConfigureAwait(false);
         file.Delete();
+        await WaitUntilDeleted(file, ct).ConfigureAwait(false);
         return true;
     }
         
@@ -275,6 +282,40 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         {
             File.Delete(tmpFile);
         }
+    }
+    
+    private static async Task WaitUntilCreated(DirectoryInfo info, CancellationToken ct)
+    {
+        await WaitWhileAsync(() => !info.Exists, ct).ConfigureAwait(false);
+    }
+    
+    private static async Task WaitUntilDeleted(DirectoryInfo info, CancellationToken ct)
+    {
+        await WaitWhileAsync(() => info.Exists, ct).ConfigureAwait(false);
+    }
+
+    private static async Task WaitUntilCreated(FileInfo info, CancellationToken ct)
+    {
+        await WaitWhileAsync(() => !info.Exists, ct).ConfigureAwait(false);
+    }
+    
+    private static async Task WaitUntilDeleted(FileInfo info, CancellationToken ct)
+    {
+        await WaitWhileAsync(() => info.Exists, ct).ConfigureAwait(false);
+    }
+
+    private static async Task WaitWhileAsync(Func<bool> predicate, CancellationToken ct)
+    {
+        do
+        {
+            if (!predicate())
+            {
+                return;
+
+            }
+            ct.ThrowIfCancellationRequested();
+            await Task.Delay(10, ct).ConfigureAwait(false);
+        } while (true);
     }
         
     public string BaseFolder => _baseFolder;
