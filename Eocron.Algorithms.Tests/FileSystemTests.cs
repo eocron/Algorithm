@@ -81,6 +81,24 @@ namespace Eocron.Algorithms.Tests
         }
         
         [Test]
+        public async Task CopyFile()
+        {
+            var expectedContent = _rnd.Next().ToString();
+            await _fs.WriteAllTextAsync("test1.txt", expectedContent);
+            await _fs.CopyFileAsync("test1.txt", "test2.txt");
+            ValidateSchema("copy_file.json");
+        }
+        
+        [Test]
+        public async Task MoveFile()
+        {
+            var expectedContent = _rnd.Next().ToString();
+            await _fs.WriteAllTextAsync("test1.txt", expectedContent);
+            await _fs.MoveFileAsync("test1.txt", "test2.txt");
+            ValidateSchema("move_file.json");
+        }
+        
+        [Test]
         public async Task CreateDirectory()
         {
             var virtualPath = "test";

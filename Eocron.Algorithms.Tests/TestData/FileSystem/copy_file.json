@@ -1,0 +1,13 @@
+﻿{
+  "dirs": [],
+  "files": [
+    {
+      "path": "root/test1.txt",
+      "content": "1434747710"
+    },
+    {
+      "path": "root/test2.txt",
+      "content": "1434747710"
+    }
+  ]
+}
