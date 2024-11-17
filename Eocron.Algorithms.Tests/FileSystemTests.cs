@@ -47,7 +47,7 @@ namespace Eocron.Algorithms.Tests
             await _fs.WriteAllTextAsync(virtualPath, expectedContent);
 
             await ValidateFileExists(physicalPath, virtualPath, expectedContent);
-            ValidateSchema(_baseFolder, "create_file.json");
+            ValidateSchema("create_file.json");
         }
         
         [Test]
@@ -63,7 +63,7 @@ namespace Eocron.Algorithms.Tests
             (await _fs.TryDeleteFileAsync(virtualPath)).Should().BeFalse();
             await ValidateFileNotExists(physicalPath, virtualPath);
             
-            ValidateSchema(_baseFolder, "delete_file.json");
+            ValidateSchema("delete_file.json");
         }
         
         [Test]
@@ -80,7 +80,7 @@ namespace Eocron.Algorithms.Tests
             await _fs.WriteAllTextAsync(virtualPath, expectedContent);
             await ValidateFileExists(physicalPath, virtualPath, expectedContent);
             
-            ValidateSchema(_baseFolder, "update_file.json");
+            ValidateSchema("update_file.json");
         }
         
         [Test]
@@ -95,10 +95,10 @@ namespace Eocron.Algorithms.Tests
             await ValidateDirectoryExists([physicalPath], [virtualPath]);
         }
 
-        private static void ValidateSchema(string folderPath, string expectedSchemaPath)
+        private void ValidateSchema(string expectedSchemaPath)
         {
             var schema = TestResourceHelper.ReadAllText(expectedSchemaPath).Replace("\n\r", "\n").Trim();
-            var actualSchema = SerializeSchema(folderPath).Replace("\n\r", "\n").Trim();
+            var actualSchema = SerializeSchema(_baseFolder, _baseFolder).Replace("\n\r", "\n").Trim();
             try
             {
                 actualSchema.Should().Be(schema);
@@ -113,12 +113,13 @@ namespace Eocron.Algorithms.Tests
             }
 
         }
-        private static string SerializeSchema(string folderPath)
+        private static string SerializeSchema(string basePath, string folderPath)
         {
-            var directories = Directory.GetDirectories(folderPath, "*", SearchOption.AllDirectories);
+            var directories = Directory.GetDirectories(folderPath, "*", SearchOption.AllDirectories)
+                .Select(x=> x.Replace(basePath, "root").Replace(Path.DirectorySeparatorChar, '/').Replace(Path.AltDirectorySeparatorChar, '/'));
             var files = Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories).Select(x=> new
             {
-                path = x,
+                path = x.Replace(basePath, "root").Replace(Path.DirectorySeparatorChar, '/').Replace(Path.AltDirectorySeparatorChar, '/'),
                 content = File.ReadAllText(x)
             }).ToList();
 
