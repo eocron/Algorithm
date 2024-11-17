@@ -326,6 +326,7 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
 
     private static async Task WaitWhileAsync(Func<bool> predicate, CancellationToken ct)
     {
+        return;
         if (!IsLinux())
         {
             return;
