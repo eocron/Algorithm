@@ -34,6 +34,15 @@ namespace Eocron.Algorithms.Tests
             _fs?.Dispose();
             _cts?.Dispose();
         }
+
+        [Test]
+        public void SanityCheck()
+        {
+            Directory.CreateDirectory("t");
+            Directory.Exists("t").Should().BeTrue();
+            Directory.Delete("t");
+            Directory.Exists("t").Should().BeFalse();
+        }
         
         [Test]
         public async Task CreateFile()
