@@ -12,14 +12,14 @@ namespace Eocron.Algorithms.FileCache
     {
         public static async Task WriteAllTextAsync(this IFileSystem fs, string filePath, string content, CancellationToken ct = default, Encoding encoding = null)
         {
-            await using var s = await fs.OpenFileAsync(filePath, FileMode.OpenOrCreate, ct).ConfigureAwait(false);
+            await using var s = await fs.OpenFileAsync(filePath, FileMode.Create, ct).ConfigureAwait(false);
             await using var sw = new StreamWriter(s, encoding ?? DefaultEncoding);
             await sw.WriteAsync(content).ConfigureAwait(false);
         }
         
         public static async Task WriteAllBytesAsync(this IFileSystem fs, string filePath, ReadOnlyMemory<byte> content, CancellationToken ct = default)
         {
-            await using var s = await fs.OpenFileAsync(filePath, FileMode.OpenOrCreate, ct).ConfigureAwait(false);
+            await using var s = await fs.OpenFileAsync(filePath, FileMode.Create, ct).ConfigureAwait(false);
             await s.WriteAsync(content, ct).ConfigureAwait(false);
         }
 
@@ -71,7 +71,7 @@ namespace Eocron.Algorithms.FileCache
                 var renames = dirBatch.Select(x => new
                 {
                     src = x,
-                    tgt = x.Replace(sourceFolderPath, targetFolderPath)
+                    tgt = ChangeRoot(sourceFolderPath, targetFolderPath, x)
                 });
                 await Parallel.ForEachAsync(renames, ct,
                         async (d, nct) => await targetFileSystem.TryCreateDirectoryAsync(d.tgt, nct).ConfigureAwait(false))
@@ -83,12 +83,17 @@ namespace Eocron.Algorithms.FileCache
                 var renames = fileBatch.Select(x => new
                 {
                     src = x,
-                    tgt = x.Replace(sourceFolderPath, targetFolderPath)
+                    tgt = ChangeRoot(sourceFolderPath, targetFolderPath, x)
                 });
                 await Parallel.ForEachAsync(renames, ct,
                         async (d, nct) => await CopyFileToOtherFileSystemAsync(sourceFileSystem, targetFileSystem, d.src, d.tgt, nct).ConfigureAwait(false))
                     .ConfigureAwait(false);
             }
+        }
+
+        private static string ChangeRoot(string sourceBasePath, string targetBasePath, string sourcePath)
+        {
+            return targetBasePath + sourcePath.Substring(sourceBasePath.Length);
         }
 
         public static Encoding DefaultEncoding = Encoding.UTF8;
