@@ -44,7 +44,7 @@ namespace Eocron.Algorithms.Tests
             
             await _fs.WriteAllTextAsync(virtualPath, expectedContent, ct: Ct);
 
-            await ValidateFileExists(physicalPath, virtualPath, expectedContent);
+            //await ValidateFileExists(physicalPath, virtualPath, expectedContent);
             ValidateSchema("create_file.json");
         }
         
@@ -73,11 +73,11 @@ namespace Eocron.Algorithms.Tests
             var expectedContent = _rnd.Next().ToString();
             
             await _fs.WriteAllTextAsync(virtualPath, expectedContent, ct: Ct);
-            //await ValidateFileExists(physicalPath, virtualPath, expectedContent);
+            await ValidateFileExists(physicalPath, virtualPath, expectedContent);
             
             expectedContent = _rnd.Next().ToString();
             await _fs.WriteAllTextAsync(virtualPath, expectedContent, ct: Ct);
-            //await ValidateFileExists(physicalPath, virtualPath, expectedContent);
+            await ValidateFileExists(physicalPath, virtualPath, expectedContent);
             
             ValidateSchema("update_file.json");
         }
