@@ -1,127 +1,289 @@
 ﻿using System;
+using System.Buffers;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Eocron.Algorithms.FileCache
 {
-    public class FileSystem : IFileSystem
+    public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
     {
-        public void CopyFile(string src, string tgt, CancellationToken token)
+        public FileSystem(
+            string baseFolder = "",
+            FileSystemFeature features = FileSystemFeature.CreateBaseDirectoryIfNotExists,
+            MemoryPool<byte> pool = null,
+            int? maxDegreeOfParallelism = null)
         {
-            var srcInfo = new FileInfo(src);
-            var tgtInfo = new FileInfo(tgt);
+            maxDegreeOfParallelism ??= Environment.ProcessorCount * 2;
+            baseFolder = Path.GetFullPath(baseFolder ?? "").Trim(Path.PathSeparator, Path.AltDirectorySeparatorChar);
+            
+            if (!features.HasFlag(FileSystemFeature.CreateBaseDirectoryIfNotExists) && !Directory.Exists(baseFolder))
+                throw new DirectoryNotFoundException(baseFolder);
+            if (maxDegreeOfParallelism <= 0)
+                throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
+            
+            _baseFolder = baseFolder;
+            _features = features;
+            _pool = pool ?? MemoryPool<byte>.Shared;
+            _maxDegreeOfParallelism = maxDegreeOfParallelism.Value;
+        }
+
+        public async Task CopyFileAsync(string sourceFilePath, string targetFilePath, CancellationToken ct = default)
+        {
+            var srcInfo = await GetPhysicalFile(sourceFilePath, ct).ConfigureAwait(false);
+            var tgtInfo = await GetPhysicalFile(targetFilePath, ct).ConfigureAwait(false);
 
             srcInfo.CopyTo(tgtInfo.FullName, false);
-            SetAttributes(tgtInfo.FullName, FileAttributes.Normal, token);
+            await SetFileAttributesAsync(targetFilePath, FileAttributes.Normal, ct).ConfigureAwait(false);
         }
 
-        public void CreateDirectory(string path, CancellationToken token)
+        public async Task CreateFileHardLinkAsync(string sourceFilePath, string targetFilePath,
+            CancellationToken ct = default)
         {
-            new DirectoryInfo(path).Create();
+            throw new NotImplementedException();
         }
 
-        public void CreateHardLink(string src, string tgt, CancellationToken token)
+        public void Dispose()
         {
-            //hard links possible only on same drive
-            //also hard links is very hardcore because of their problems with Access denied behavior, so it is disabled.
-            //var possible = Path.GetPathRoot(src) ==
-            //               Path.GetPathRoot(tgt);
-            //if (possible)
-            //{
-            //    InternalCreateHardLink(src, tgt);
-            //    return;
-            //}
-            CopyFile(src, tgt, token);
+            _sync?.Dispose();
+            if (_features.HasFlag(FileSystemFeature.DeleteBaseDirectoryOnDispose))
+                TryDeleteDirectoryAsync(string.Empty, CancellationToken.None).Wait();
         }
 
-        public virtual void DeleteDirectoryNonRecursive(string path, CancellationToken token)
+        public async ValueTask DisposeAsync()
         {
-            DeleteDirectoryNonRecursive(new DirectoryInfo(path), token);
+            await SafeDisposeAsync(_sync).ConfigureAwait(false);
+            if (_features.HasFlag(FileSystemFeature.DeleteBaseDirectoryOnDispose))
+                await TryDeleteDirectoryAsync(string.Empty, CancellationToken.None).ConfigureAwait(false);
         }
 
-        public virtual void DeleteFile(string path, CancellationToken token)
+        public async IAsyncEnumerable<string[]> GetDirectoriesAsync(string folderPath, string pattern,
+            SearchOption option,
+            [EnumeratorCancellation] CancellationToken ct = default)
         {
-            DeleteFile(new FileInfo(path), token);
+            var dir = await GetPhysicalDirectory(folderPath, ct).ConfigureAwait(false);
+            yield return await Task
+                .WhenAll(dir.GetDirectories(pattern, option).Select(async x => await GetVirtualPath(x.FullName, ct)))
+                .ConfigureAwait(false);
         }
 
-        public virtual bool DirectoryExist(string path, CancellationToken token)
+        public async Task<FileAttributes> GetFileAttributesAsync(string filePath, CancellationToken ct = default)
         {
-            return new DirectoryInfo(path).Exists;
+            return (await GetPhysicalFile(filePath, ct).ConfigureAwait(false)).Attributes;
         }
 
-        public bool Equals(string firstPath, string secondPath, CancellationToken token)
+        public async IAsyncEnumerable<string[]> GetFilesAsync(string folderPath, string pattern, SearchOption option,
+            [EnumeratorCancellation] CancellationToken ct = default)
         {
-            return Path.GetFullPath(firstPath).Equals(Path.GetFullPath(secondPath));
+            var dir = await GetPhysicalDirectory(folderPath, ct).ConfigureAwait(false);
+            yield return await Task
+                .WhenAll(dir.GetFiles(pattern, option).Select(async x => await GetVirtualPath(x.FullName, ct)))
+                .ConfigureAwait(false);
         }
 
-        public virtual bool FileExist(string path, CancellationToken token)
+        public async Task<bool> IsDirectoryExistAsync(string folderPath, CancellationToken ct = default)
         {
-            return new FileInfo(path).Exists;
+            return (await GetPhysicalDirectory(folderPath, ct).ConfigureAwait(false)).Exists;
         }
 
-        public virtual string[] GetDirectories(string path, string pattern, SearchOption option,
-            CancellationToken token)
+        public async Task<bool> IsFileExistAsync(string filePath, CancellationToken ct = default)
         {
-            return new DirectoryInfo(path).GetDirectories(pattern, option).Select(x => x.FullName).ToArray();
+            return (await GetPhysicalFile(filePath, ct).ConfigureAwait(false)).Exists;
         }
 
-        public virtual string[] GetFiles(string path, string pattern, SearchOption option, CancellationToken token)
+        public async Task MoveDirectoryAsync(string sourceFolderPath, string targetFolderPath,
+            CancellationToken ct = default)
         {
-            return new DirectoryInfo(path).GetFiles(pattern, option).Select(x => x.FullName).ToArray();
+            var src = await GetPhysicalDirectory(sourceFolderPath, ct).ConfigureAwait(false);
+            var tgt = await GetPhysicalDirectory(targetFolderPath, ct).ConfigureAwait(false);
+            src.MoveTo(tgt.FullName);
         }
 
-        public virtual void Move(string src, string tgt, CancellationToken token)
+        public async Task MoveFileAsync(string sourceFilePath, string targetFilePath, CancellationToken ct = default)
         {
-            var file = new FileInfo(src);
-            var dir = new DirectoryInfo(src);
-
-            if (file.Exists)
-                file.MoveTo(tgt);
-            else if (dir.Exists) dir.MoveTo(tgt);
+            var src = await GetPhysicalFile(sourceFilePath, ct).ConfigureAwait(false);
+            var tgt = await GetPhysicalFile(targetFilePath, ct).ConfigureAwait(false);
+            src.MoveTo(tgt.FullName);
         }
 
-        public Stream OpenCreate(string path, CancellationToken token)
+        public async Task<Stream> OpenFileAsync(string filePath, FileMode mode, CancellationToken ct = default)
         {
-            return new FileInfo(path).OpenWrite();
+            var file = await GetPhysicalFile(filePath, ct).ConfigureAwait(false);
+            return file.Open(mode);
         }
 
-        public Stream OpenRead(string path, CancellationToken token)
+        public async Task SetFileAttributesAsync(string filePath, FileAttributes attributes,
+            CancellationToken ct = default)
         {
-            return new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var file = await GetPhysicalFile(filePath, ct).ConfigureAwait(false);
+            file.Attributes = attributes;
         }
 
-        public Stream OpenWrite(string path, CancellationToken token)
+        public async Task<bool> TryCreateDirectoryAsync(string folderPath, CancellationToken ct = default)
         {
-            return new FileInfo(path).OpenWrite();
+            var dir = await GetPhysicalDirectory(folderPath, ct).ConfigureAwait(false);
+            if (dir.Exists) return false;
+            dir.Create();
+            return true;
         }
 
-        public void SetAttributes(string filePath, FileAttributes attr, CancellationToken token)
+        public async Task<bool> TryDeleteDirectoryAsync(string folderPath, CancellationToken ct = default)
         {
-            if (File.Exists(filePath))
-                new FileInfo(filePath).Attributes = attr;
-            else if (Directory.Exists(filePath)) new DirectoryInfo(filePath).Attributes = attr;
+            var dir = await GetPhysicalDirectory(folderPath, ct).ConfigureAwait(false);
+            if (!dir.Exists) return false;
+
+            await TryFillWithJunkAsync(dir, ct).ConfigureAwait(false);
+            dir.Delete(true);
+            return true;
         }
 
-        private void DeleteDirectoryNonRecursive(DirectoryInfo targetDir, CancellationToken token)
+        public async Task<bool> TryDeleteFileAsync(string filePath, CancellationToken ct = default)
         {
-            token.ThrowIfCancellationRequested();
-            if (!targetDir.Exists)
-                return;
-            targetDir.Attributes = FileAttributes.Normal;
-            targetDir.Delete(false);
-        }
-
-        private void DeleteFile(FileInfo file, CancellationToken token)
-        {
-            token.ThrowIfCancellationRequested();
-            if (!file.Exists)
-                return;
-            file.Attributes = FileAttributes.Normal;
+            var file = await GetPhysicalFile(filePath, ct).ConfigureAwait(false);
+            if (!file.Exists) return false;
+            await TryFillWithJunkAsync(file, ct).ConfigureAwait(false);
             file.Delete();
+            return true;
         }
 
-        public static IFileSystem Instance => InternalIntance.Value;
-        private static readonly Lazy<IFileSystem> InternalIntance = new Lazy<IFileSystem>(() => new FileSystem(), true);
+        private async Task<string> GetBaseDirectory(CancellationToken ct)
+        {
+            if (!_initialized)
+            {
+                await _sync.WaitAsync(ct).ConfigureAwait(false);
+                try
+                {
+                    if (!_initialized)
+                    {
+                        if (_features.HasFlag(FileSystemFeature.CreateBaseDirectoryIfNotExists) &&
+                            !Directory.Exists(_baseFolder)) Directory.CreateDirectory(_baseFolder);
+                        await ValidateReadWriteAccessAsync(_baseFolder, ct).ConfigureAwait(false);
+                        _initialized = true;
+                    }
+                }
+                finally
+                {
+                    _sync.Release();
+                }
+            }
+
+            return _baseFolder;
+        }
+
+        private async Task<DirectoryInfo> GetPhysicalDirectory(string virtualPath, CancellationToken ct)
+        {
+            return new DirectoryInfo(await GetPhysicalPath(virtualPath, ct).ConfigureAwait(false));
+        }
+
+        private async Task<FileInfo> GetPhysicalFile(string virtualPath, CancellationToken ct)
+        {
+            return new FileInfo(await GetPhysicalPath(virtualPath, ct).ConfigureAwait(false));
+        }
+
+        private async Task<string> GetPhysicalPath(string virtualPath, CancellationToken ct)
+        {
+            var baseFolder = await GetBaseDirectory(ct).ConfigureAwait(false);
+            return string.IsNullOrWhiteSpace(virtualPath) ? baseFolder : Path.Combine(baseFolder, virtualPath);
+        }
+
+        private async Task<string> GetVirtualPath(string physicalPath, CancellationToken ct)
+        {
+            var baseFolder = await GetBaseDirectory(ct).ConfigureAwait(false);
+            physicalPath = Path.GetFullPath(physicalPath);
+            if (!physicalPath.StartsWith(baseFolder, StringComparison.OrdinalIgnoreCase))
+                throw new AccessViolationException($"Base folder is {baseFolder}, but tried to access {physicalPath}");
+
+            return physicalPath
+                .Substring(0, baseFolder.Length)
+                .Trim(Path.PathSeparator, Path.AltDirectorySeparatorChar)
+                .Replace(Path.PathSeparator, Path.AltDirectorySeparatorChar);
+        }
+
+        private async ValueTask SafeDisposeAsync(object obj)
+        {
+            if (obj == null)
+                return;
+
+            switch (obj)
+            {
+                case IAsyncDisposable ad:
+                    await ad.DisposeAsync().ConfigureAwait(false);
+                    return;
+                case IDisposable d:
+                    d.Dispose();
+                    return;
+            }
+        }
+
+        private async Task TryFillWithJunkAsync(DirectoryInfo dir, CancellationToken ct)
+        {
+            if (!_features.HasFlag(FileSystemFeature.FillDeletedFilesWithJunk)) return;
+
+            var files = dir.GetFiles("*", SearchOption.AllDirectories);
+            if (!files.Any()) return;
+
+            await Parallel.ForEachAsync(files,
+                new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = _maxDegreeOfParallelism,
+                    CancellationToken = ct
+                },
+                async (file, nct) =>
+                {
+                    await TryFillWithJunkAsync(file, nct).ConfigureAwait(false);
+                    file.Delete();
+                }).ConfigureAwait(false);
+        }
+
+        private async Task TryFillWithJunkAsync(FileInfo file, CancellationToken ct)
+        {
+            if (!_features.HasFlag(FileSystemFeature.FillDeletedFilesWithJunk)) return;
+
+            const int bufferSize = 1 << 16;
+            var fileSize = file.Length;
+            var buff = _pool.Rent(bufferSize);
+            try
+            {
+                await using var fs = file.OpenWrite();
+                while (fileSize > 0)
+                {
+                    CryptoRandom.GetNonZeroBytes(buff.Memory.Span);
+                    var sliced = buff.Memory.Slice(0, (int)Math.Min(fileSize, buff.Memory.Length));
+                    await fs.WriteAsync(sliced, ct).ConfigureAwait(false);
+                    fileSize -= buff.Memory.Length;
+                }
+            }
+            finally
+            {
+                buff.Dispose();
+            }
+        }
+
+        private static async Task ValidateReadWriteAccessAsync(string folder, CancellationToken ct)
+        {
+            var tmpFile = Path.Combine(folder, Guid.NewGuid().ToString("N"));
+            await File.WriteAllTextAsync(tmpFile, nameof(ValidateReadWriteAccessAsync), ct).ConfigureAwait(false);
+            try
+            {
+                await File.ReadAllTextAsync(tmpFile, ct).ConfigureAwait(false);
+            }
+            finally
+            {
+                File.Delete(tmpFile);
+            }
+        }
+
+        private static readonly RandomNumberGenerator CryptoRandom = RandomNumberGenerator.Create();
+        private readonly FileSystemFeature _features;
+        private readonly int _maxDegreeOfParallelism;
+        private readonly MemoryPool<byte> _pool;
+        private readonly SemaphoreSlim _sync = new(1);
+        private readonly string _baseFolder;
+
+        private volatile bool _initialized;
     }
 }

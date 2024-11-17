@@ -1,54 +1,26 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Eocron.Algorithms.FileCache
 {
     public interface IFileSystem
     {
-        void CopyFile(string src, string tgt, CancellationToken token);
-
-        void CreateDirectory(string path, CancellationToken token);
-
-        void CreateHardLink(string src, string tgt, CancellationToken token);
-
-        /// <summary>
-        ///     Deletes directory. Non recursive. If file or dir inside - it will throw exception.
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        void DeleteDirectoryNonRecursive(string path, CancellationToken token);
-
-        /// <summary>
-        ///     Deletes file
-        /// </summary>
-        /// <param name="path"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        void DeleteFile(string path, CancellationToken token);
-
-        bool DirectoryExist(string path, CancellationToken token);
-
-        bool Equals(string firstPath, string secondPath, CancellationToken token);
-        bool FileExist(string path, CancellationToken token);
-        string[] GetDirectories(string path, string pattern, SearchOption option, CancellationToken token);
-
-        string[] GetFiles(string path, string pattern, SearchOption option, CancellationToken token);
-
-        /// <summary>
-        ///     Moves file/directory from target to source
-        /// </summary>
-        /// <param name="src"></param>
-        /// <param name="tgt"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        void Move(string src, string tgt, CancellationToken token);
-
-        Stream OpenCreate(string path, CancellationToken token);
-
-        Stream OpenRead(string path, CancellationToken token);
-
-        Stream OpenWrite(string path, CancellationToken token);
-        void SetAttributes(string filePath, FileAttributes normal, CancellationToken t);
+        Task CopyFileAsync(string sourcePath, string targetPath, CancellationToken ct = default);
+        Task CreateFileHardLinkAsync(string sourceFilePath, string targetFilePath, CancellationToken ct = default);
+        Task<bool> TryDeleteFileAsync(string filePath, CancellationToken ct = default);
+        Task<bool> IsFileExistAsync(string filePath, CancellationToken ct = default);
+        Task MoveFileAsync(string sourceFilePath, string targetFilePath, CancellationToken ct = default);
+        Task<Stream> OpenFileAsync(string filePath, FileMode mode, CancellationToken ct = default);
+        Task SetFileAttributesAsync(string filePath, FileAttributes attributes, CancellationToken ct = default);
+        Task<FileAttributes> GetFileAttributesAsync(string filePath, CancellationToken ct = default);
+        
+        Task<bool> TryCreateDirectoryAsync(string folderPath, CancellationToken ct = default);
+        Task<bool> TryDeleteDirectoryAsync(string folderPath, CancellationToken ct = default);
+        Task<bool> IsDirectoryExistAsync(string folderPath, CancellationToken ct = default);
+        IAsyncEnumerable<string[]> GetDirectoriesAsync(string folderPath, string pattern, SearchOption option, CancellationToken ct = default);
+        IAsyncEnumerable<string[]> GetFilesAsync(string folderPath, string pattern, SearchOption option, CancellationToken ct = default);
+        Task MoveDirectoryAsync(string sourceFolderPath, string targetFolderPath, CancellationToken ct = default);
     }
 }
