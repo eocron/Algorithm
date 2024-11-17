@@ -122,6 +122,7 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
     {
         await EnsureInitializedAsync(ct).ConfigureAwait(false);
         var file = GetPhysicalFile(filePath);
+        Console.WriteLine("DEBUG:"+file.FullName);
         return file.Open(mode);
     }
 

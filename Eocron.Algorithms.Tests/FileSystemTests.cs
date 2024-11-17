@@ -53,8 +53,7 @@ namespace Eocron.Algorithms.Tests
             var expectedContent = _rnd.Next().ToString();
             
             await _fs.WriteAllTextAsync(virtualPath, expectedContent, ct: Ct);
-            await Task.Delay(1000);
-            //await ValidateFileExists(physicalPath, virtualPath, expectedContent);
+            await ValidateFileExists(physicalPath, virtualPath, expectedContent);
             ValidateSchema("create_file.json");
         }
         
