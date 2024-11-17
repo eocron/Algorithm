@@ -93,6 +93,8 @@ namespace Eocron.Algorithms.Tests
             await ValidateDirectoryExists([physicalPath], [virtualPath]);
             (await _fs.TryCreateDirectoryAsync(virtualPath)).Should().BeFalse();
             await ValidateDirectoryExists([physicalPath], [virtualPath]);
+            
+            ValidateSchema("create_directory.json");
         }
 
         private void ValidateSchema(string expectedSchemaPath)
