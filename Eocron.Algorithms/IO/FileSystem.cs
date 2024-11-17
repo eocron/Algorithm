@@ -19,14 +19,18 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         int? maxDegreeOfParallelism = null)
     {
         maxDegreeOfParallelism ??= Environment.ProcessorCount * 2;
-        baseFolder = Path.GetFullPath(baseFolder ?? "").Trim(Path.PathSeparator, Path.AltDirectorySeparatorChar);
-            
-        if (!features.HasFlag(FileSystemFeature.CreateBaseDirectoryIfNotExists) && !Directory.Exists(baseFolder))
-            throw new DirectoryNotFoundException(baseFolder);
+        var tmpBaseFolder = Path.GetFullPath(baseFolder ?? "").Trim(Path.PathSeparator, Path.AltDirectorySeparatorChar);
+        if (tmpBaseFolder != baseFolder)
+        {
+            throw new ArgumentException(
+                $"Base folder path should be absolute. Expected {tmpBaseFolder}, but got {baseFolder}");
+        }
+        if (!features.HasFlag(FileSystemFeature.CreateBaseDirectoryIfNotExists) && !Directory.Exists(tmpBaseFolder))
+            throw new DirectoryNotFoundException(tmpBaseFolder);
         if (maxDegreeOfParallelism <= 0)
             throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
             
-        _baseFolder = baseFolder;
+        _baseFolder = tmpBaseFolder;
         _features = features;
         _pool = pool ?? MemoryPool<byte>.Shared;
         _maxDegreeOfParallelism = maxDegreeOfParallelism.Value;
@@ -122,7 +126,6 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
     {
         await EnsureInitializedAsync(ct).ConfigureAwait(false);
         var file = GetPhysicalFile(filePath);
-        Console.WriteLine("DEBUG:"+file.FullName);
         return file.Open(mode);
     }
 

@@ -43,6 +43,8 @@ namespace Eocron.Algorithms.Tests
             Directory.Exists(dir).Should().BeTrue();
             Directory.Delete(dir);
             Directory.Exists(dir).Should().BeFalse();
+            Path.GetFullPath(Path.Combine(Path.GetTempPath(), "t")).Should()
+                .Be(Path.GetFullPath(Path.GetFullPath(Path.Combine(Path.GetTempPath(), "t"))));
         }
         
         [Test]
