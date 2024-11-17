@@ -1,4 +1,9 @@
 {
   "dirs": [],
-  "files": []
+  "files": [
+    {
+      "path": "root/test2.txt",
+      "content": "foobar"
+    }
+  ]
 }

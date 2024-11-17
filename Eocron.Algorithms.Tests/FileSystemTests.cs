@@ -56,7 +56,8 @@ namespace Eocron.Algorithms.Tests
             var virtualPath = "test.txt";
             var physicalPath = Path.Combine(_baseFolder, virtualPath);
             var expectedContent = _rnd.Next().ToString();
-            
+
+            await _fs.WriteAllTextAsync("test2.txt", "foobar");
             await _fs.WriteAllTextAsync(virtualPath, expectedContent);
             (await _fs.TryDeleteFileAsync(virtualPath)).Should().BeTrue();
             await ValidateFileNotExists(physicalPath, virtualPath);
@@ -95,6 +96,15 @@ namespace Eocron.Algorithms.Tests
             await ValidateDirectoryExists([physicalPath], [virtualPath]);
             
             ValidateSchema("create_directory.json");
+        }
+        
+        [Test]
+        public async Task DeleteDirectory()
+        {
+            (await _fs.TryCreateDirectoryAsync("test1")).Should().BeTrue();
+            (await _fs.TryCreateDirectoryAsync("test2")).Should().BeTrue();
+            (await _fs.TryDeleteDirectoryAsync("test1")).Should().BeTrue();
+            ValidateSchema("delete_directory.json");
         }
 
         private void ValidateSchema(string expectedSchemaPath)
