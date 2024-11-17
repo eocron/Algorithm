@@ -19,18 +19,13 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         int? maxDegreeOfParallelism = null)
     {
         maxDegreeOfParallelism ??= Environment.ProcessorCount * 2;
-        var tmpBaseFolder = Path.GetFullPath(baseFolder ?? "").Trim(Path.PathSeparator, Path.AltDirectorySeparatorChar);
-        if (tmpBaseFolder != baseFolder)
-        {
-            throw new ArgumentException(
-                $"Base folder path should be absolute. Expected {tmpBaseFolder}, but got {baseFolder}");
-        }
-        if (!features.HasFlag(FileSystemFeature.CreateBaseDirectoryIfNotExists) && !Directory.Exists(tmpBaseFolder))
-            throw new DirectoryNotFoundException(tmpBaseFolder);
+        baseFolder = Path.GetFullPath(baseFolder ?? "").TrimEnd(Path.PathSeparator, Path.AltDirectorySeparatorChar);
+        if (!features.HasFlag(FileSystemFeature.CreateBaseDirectoryIfNotExists) && !Directory.Exists(baseFolder))
+            throw new DirectoryNotFoundException(baseFolder);
         if (maxDegreeOfParallelism <= 0)
             throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
             
-        _baseFolder = tmpBaseFolder;
+        _baseFolder = baseFolder;
         _features = features;
         _pool = pool ?? MemoryPool<byte>.Shared;
         _maxDegreeOfParallelism = maxDegreeOfParallelism.Value;
@@ -231,7 +226,7 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
 
         return physicalPath
             .Substring(0, baseFolder.Length)
-            .Trim(Path.PathSeparator, Path.AltDirectorySeparatorChar)
+            .TrimEnd(Path.PathSeparator, Path.AltDirectorySeparatorChar)
             .Replace(Path.PathSeparator, Path.AltDirectorySeparatorChar);
     }
 
