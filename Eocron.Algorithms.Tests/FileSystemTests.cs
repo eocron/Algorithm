@@ -160,12 +160,12 @@ namespace Eocron.Algorithms.Tests
         {
             foreach (var pp in physicalPaths)
             {
-                Directory.Exists(pp).Should().BeTrue();
+                Directory.Exists(pp).Should().BeTrue(because: pp);
             }
 
             foreach (var vp in virtualSubPaths)
             {
-                (await _fs.IsDirectoryExistAsync(vp)).Should().BeTrue();
+                (await _fs.IsDirectoryExistAsync(vp)).Should().BeTrue(because: vp);
             }
         }
         
@@ -173,12 +173,12 @@ namespace Eocron.Algorithms.Tests
         {
             foreach (var pp in physicalPaths)
             {
-                Directory.Exists(pp).Should().BeFalse();
+                Directory.Exists(pp).Should().BeFalse(because: pp);
             }
 
             foreach (var vp in virtualSubPaths)
             {
-                (await _fs.IsDirectoryExistAsync(vp)).Should().BeFalse();
+                (await _fs.IsDirectoryExistAsync(vp)).Should().BeFalse(because: vp);
                 var a = () => Task.FromResult(_fs.GetDirectoriesAsync(vp, "*", SearchOption.AllDirectories, CancellationToken.None));
                 await a.Should().ThrowAsync<FileNotFoundException>();
                 
@@ -189,17 +189,17 @@ namespace Eocron.Algorithms.Tests
 
         private async Task ValidateFileExists(string physicalPath, string virtualPath, string content)
         {
-            File.Exists(physicalPath).Should().BeTrue();
-            (await File.ReadAllTextAsync(physicalPath)).Should().Be(content);
+            File.Exists(physicalPath).Should().BeTrue(because: physicalPath);
+            (await File.ReadAllTextAsync(physicalPath)).Should().Be(content, because: physicalPath);
             
-            (await _fs.IsFileExistAsync(virtualPath)).Should().BeTrue();
-            (await _fs.ReadAllTextAsync(virtualPath)).Should().Be(content);
+            (await _fs.IsFileExistAsync(virtualPath)).Should().BeTrue(because: physicalPath);
+            (await _fs.ReadAllTextAsync(virtualPath)).Should().Be(content, because: physicalPath);
         }
 
         private async Task ValidateFileNotExists(string physicalPath, string virtualPath)
         {
-            File.Exists(physicalPath).Should().BeFalse();
-            (await _fs.IsFileExistAsync(virtualPath)).Should().BeFalse();
+            File.Exists(physicalPath).Should().BeFalse(because: physicalPath);
+            (await _fs.IsFileExistAsync(virtualPath)).Should().BeFalse(because: physicalPath);
             var a = async () => await _fs.ReadAllTextAsync(virtualPath);
             await a.Should().ThrowAsync<FileNotFoundException>();
         }
