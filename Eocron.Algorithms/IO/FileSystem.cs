@@ -38,7 +38,6 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         var tgtInfo = GetPhysicalFile(targetFilePath);
 
         srcInfo.CopyTo(tgtInfo.FullName, false);
-        await WaitUntilCreated(tgtInfo, ct).ConfigureAwait(false);
         await SetFileAttributesAsync(targetFilePath, FileAttributes.Normal, ct).ConfigureAwait(false);
     }
 
@@ -104,7 +103,6 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         var src = GetPhysicalDirectory(sourceFolderPath);
         var tgt = GetPhysicalDirectory(targetFolderPath);
         src.MoveTo(tgt.FullName);
-        await Task.WhenAll(WaitUntilCreated(tgt, ct), WaitUntilDeleted(src, ct)).ConfigureAwait(false);
     }
 
     public async Task MoveFileAsync(string sourceFilePath, string targetFilePath, CancellationToken ct = default)
@@ -113,8 +111,6 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         var src = GetPhysicalFile(sourceFilePath);
         var tgt = GetPhysicalFile(targetFilePath);
         src.MoveTo(tgt.FullName);
-
-        await Task.WhenAll(WaitUntilCreated(tgt, ct), WaitUntilDeleted(src, ct)).ConfigureAwait(false);
     }
 
     public async Task<Stream> OpenFileAsync(string filePath, FileMode mode, CancellationToken ct = default)
@@ -138,7 +134,6 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         var dir = GetPhysicalDirectory(folderPath);
         if (dir.Exists) return false;
         dir.Create();
-        await WaitUntilCreated(dir, ct).ConfigureAwait(false);
         return true;
     }
 
@@ -150,7 +145,6 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
 
         await TryFillWithJunkAsync(dir, ct).ConfigureAwait(false);
         dir.Delete(true);
-        await WaitUntilDeleted(dir, ct).ConfigureAwait(false);
         return true;
     }
 
@@ -161,7 +155,6 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         if (!file.Exists) return false;
         await TryFillWithJunkAsync(file, ct).ConfigureAwait(false);
         file.Delete();
-        await WaitUntilDeleted(file, ct).ConfigureAwait(false);
         return true;
     }
         
@@ -206,7 +199,6 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         if (_features.HasFlag(FileSystemFeature.CreateBaseDirectoryIfNotExists) && !dir.Exists)
         {
             dir.Create();
-            await WaitUntilCreated(dir, ct).ConfigureAwait(false);
         }
         await ValidateReadWriteAccessAsync(_baseFolder, ct).ConfigureAwait(false);
     }
@@ -302,51 +294,6 @@ public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
         {
             File.Delete(tmpFile);
         }
-    }
-    
-    private static async Task WaitUntilCreated(DirectoryInfo info, CancellationToken ct)
-    {
-        await WaitWhileAsync(() => !info.Exists, ct).ConfigureAwait(false);
-    }
-    
-    private static async Task WaitUntilDeleted(DirectoryInfo info, CancellationToken ct)
-    {
-        await WaitWhileAsync(() => info.Exists, ct).ConfigureAwait(false);
-    }
-
-    private static async Task WaitUntilCreated(FileInfo info, CancellationToken ct)
-    {
-        await WaitWhileAsync(() => !info.Exists, ct).ConfigureAwait(false);
-    }
-    
-    private static async Task WaitUntilDeleted(FileInfo info, CancellationToken ct)
-    {
-        await WaitWhileAsync(() => info.Exists, ct).ConfigureAwait(false);
-    }
-
-    private static async Task WaitWhileAsync(Func<bool> predicate, CancellationToken ct)
-    {
-        return;
-        if (!IsLinux())
-        {
-            return;
-        }
-        do
-        {
-            if (!predicate())
-            {
-                return;
-
-            }
-            ct.ThrowIfCancellationRequested();
-            await Task.Delay(10, ct).ConfigureAwait(false);
-        } while (true);
-    }
-
-    private static bool IsLinux()
-    {
-        int p = (int) Environment.OSVersion.Platform;
-        return (p == 4) || (p == 6) || (p == 128);
     }
         
     public string BaseFolder => _baseFolder;
