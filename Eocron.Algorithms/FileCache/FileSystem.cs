@@ -149,6 +149,16 @@ namespace Eocron.Algorithms.FileCache
             file.Delete();
             return true;
         }
+        
+        public async Task<DirectoryInfo> GetPhysicalDirectory(string virtualPath, CancellationToken ct)
+        {
+            return new DirectoryInfo(await GetPhysicalPath(virtualPath, ct).ConfigureAwait(false));
+        }
+
+        public async Task<FileInfo> GetPhysicalFile(string virtualPath, CancellationToken ct)
+        {
+            return new FileInfo(await GetPhysicalPath(virtualPath, ct).ConfigureAwait(false));
+        }
 
         private async Task<string> GetBaseDirectory(CancellationToken ct)
         {
@@ -172,16 +182,6 @@ namespace Eocron.Algorithms.FileCache
             }
 
             return _baseFolder;
-        }
-
-        private async Task<DirectoryInfo> GetPhysicalDirectory(string virtualPath, CancellationToken ct)
-        {
-            return new DirectoryInfo(await GetPhysicalPath(virtualPath, ct).ConfigureAwait(false));
-        }
-
-        private async Task<FileInfo> GetPhysicalFile(string virtualPath, CancellationToken ct)
-        {
-            return new FileInfo(await GetPhysicalPath(virtualPath, ct).ConfigureAwait(false));
         }
 
         private async Task<string> GetPhysicalPath(string virtualPath, CancellationToken ct)
@@ -276,6 +276,9 @@ namespace Eocron.Algorithms.FileCache
                 File.Delete(tmpFile);
             }
         }
+        
+        public string BaseFolder => _baseFolder;
+        public FileSystemFeature Features => _features;
 
         private static readonly RandomNumberGenerator CryptoRandom = RandomNumberGenerator.Create();
         private readonly FileSystemFeature _features;
