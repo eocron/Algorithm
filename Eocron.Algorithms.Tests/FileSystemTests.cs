@@ -14,10 +14,6 @@ namespace Eocron.Algorithms.Tests
     [TestFixture]
     public class FileSystemTests
     {
-        private string _baseFolder;
-        private FileSystem _fs;
-        private Random _rnd;
-
         [SetUp]
         public void Setup()
         {
@@ -189,5 +185,9 @@ namespace Eocron.Algorithms.Tests
             var a = async () => await _fs.ReadAllTextAsync(virtualPath);
             await a.Should().ThrowAsync<FileNotFoundException>();
         }
+        
+        private string _baseFolder;
+        private FileSystem _fs;
+        private Random _rnd;
     }
 }
