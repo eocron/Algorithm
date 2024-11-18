@@ -13,7 +13,7 @@ using Eocron.Algorithms.IO;
 
 namespace Eocron.Algorithms.Caching
 {
-    [Obsolete("Still need TODO: thread synchronization, testing")]
+    [Obsolete("Still need TODO: thread synchronization, testing, file hardlinks")]
     public sealed class FileCache : IFileCache, IDisposable, IAsyncDisposable
     {
         public FileCache(IFileSystem fs)
