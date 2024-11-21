@@ -23,3 +23,9 @@ public interface IFileSystem
     IAsyncEnumerable<string[]> GetFilesAsync(string folderPath, string pattern, SearchOption option, CancellationToken ct = default);
     Task MoveDirectoryAsync(string sourceFolderPath, string targetFolderPath, CancellationToken ct = default);
 }
+
+public interface IExposedFileSystem
+{
+    DirectoryInfo GetPhysicalDirectory(string virtualPath);
+    FileInfo GetPhysicalFile(string virtualPath);
+}

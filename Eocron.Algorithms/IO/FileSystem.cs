@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Eocron.Algorithms.IO;
 
-public sealed class FileSystem : IFileSystem, IDisposable, IAsyncDisposable
+public sealed class FileSystem : IFileSystem, IExposedFileSystem, IDisposable, IAsyncDisposable
 {
     public FileSystem(
         string baseFolder = "",

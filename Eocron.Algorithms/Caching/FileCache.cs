@@ -1,201 +1,198 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Eocron.Algorithms.HashCode.Algorithms;
-using Eocron.Algorithms.Hex;
 using Eocron.Algorithms.IO;
 
 namespace Eocron.Algorithms.Caching
 {
-    [Obsolete("Still need TODO: thread synchronization, testing, file hardlinks")]
-    public sealed class FileCache : IFileCache, IDisposable, IAsyncDisposable
+    [Obsolete("TODO: file name rw lock")]
+    public sealed class FileCache : IFileCache
     {
-        public FileCache(IFileSystem fs)
+        public FileCache(FileSystem fs, HashAlgorithm hashAlgorithm)
         {
             _fs = fs ?? throw new ArgumentNullException(nameof(fs));
-            _keyHash = new SHA1HashAlgorithmFactory().Create();
+            _hashAlgorithm = hashAlgorithm ?? throw new ArgumentNullException(nameof(hashAlgorithm));
         }
 
-        public void Dispose()
+        public async Task<bool> ContainsKeyAsync(string key, CancellationToken ct)
         {
-            _sync?.Dispose();
+            var entry = CreateActiveFileEntry(key, null);
+            await using var _ = await ReadLock(entry.Hash, ct).ConfigureAwait(false);
+            return await _fs.IsDirectoryExistAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false);
         }
 
-        public async ValueTask DisposeAsync()
+        public async Task<IFileCacheLink> GetOrAddFileAsync(string key, FilePathProviderDelegate filePathProvider,
+            CancellationToken ct = default)
         {
-            if (_sync is IAsyncDisposable syncAsyncDisposable)
-                await syncAsyncDisposable.DisposeAsync();
-            else if (_sync != null)
-                _sync.Dispose();
+            return await GetOrAddFileAsync(key, FileCacheShortNameHelper.GetRandom(), filePathProvider, ct).ConfigureAwait(false);
         }
 
-        public async Task<Stream> GetOrAddAsync(string key,
-            Func<string, CancellationToken, Task<Stream>> streamProvider, CancellationToken ct = default)
+        public async Task<IFileCacheLink> GetOrAddFileAsync(string key, string fileName,
+            FilePathProviderDelegate filePathProvider,
+            CancellationToken ct = default)
         {
-            await EnsureInitializedAsync(ct).ConfigureAwait(false);
-            var pKey = GetPhysicalKey(key);
-            if (_entries[FileEntryState.Active].TryGetValue(pKey, out var entry))
-                return await _fs.OpenFileAsync(entry.FilePath, FileMode.Open, ct).ConfigureAwait(false);
-
-            FileEntry tmpEntry;
-            await using (var srcStream = await streamProvider(key, ct).ConfigureAwait(false))
-            {
-                var tmp = await OpenTemporalFileEntry(pKey, ct).ConfigureAwait(false);
-                tmpEntry = tmp.Item1;
-                await using (var tgtStream = tmp.Item2)
-                {
-                    await srcStream.CopyToAsync(tgtStream, ct).ConfigureAwait(false);
-                }
-            }
-
-            await SwitchStateAsync(tmpEntry, FileEntryState.Active, ct).ConfigureAwait(false);
-            return await _fs.OpenFileAsync(tmpEntry.FilePath, FileMode.Open, ct).ConfigureAwait(false);
+            return await InternalGetOrAddAsync(key, fileName, ct, entry => MoveFromFile(entry, key, filePathProvider, ct))
+                .ConfigureAwait(false);
         }
 
-        public async Task<Stream> TryGetAsync(string key, CancellationToken ct = default)
+        public async Task<IFileCacheLink> GetOrAddStreamAsync(string key, StreamProviderDelegate streamProvider,
+            CancellationToken ct = default)
         {
-            await EnsureInitializedAsync(ct).ConfigureAwait(false);
-            var pKey = GetPhysicalKey(key);
-            if (!_entries[FileEntryState.Active].TryGetValue(pKey, out var entry)) return null;
-
-            return await _fs.OpenFileAsync(entry.FilePath, FileMode.Open, ct).ConfigureAwait(false);
+            return await GetOrAddStreamAsync(key, FileCacheShortNameHelper.GetRandom(), streamProvider, ct).ConfigureAwait(false);
         }
 
-        public async Task<bool> TryRemoveAsync(string key, CancellationToken ct = default)
+        public async Task<IFileCacheLink> GetOrAddStreamAsync(string key, string fileName,
+            StreamProviderDelegate streamProvider,
+            CancellationToken ct = default)
         {
-            await EnsureInitializedAsync(ct).ConfigureAwait(false);
-            var pKey = GetPhysicalKey(key);
-            if (!_entries[FileEntryState.Active].TryGetValue(pKey, out var entry)) return false;
-            await entry.SwitchStateAsync(FileEntryState.Deleted, ct).ConfigureAwait(false);
-            _entries[FileEntryState.Active].TryRemove(pKey, out _);
-            return true;
+            return await InternalGetOrAddAsync(key, fileName, ct, entry => UploadFromStream(entry, key, streamProvider, ct))
+                .ConfigureAwait(false);
         }
 
-        private async Task EnsureInitializedAsync(CancellationToken ct)
+        public async Task<bool> TryRemoveAsync(string key, CancellationToken ct)
         {
-            if (_initialized) return;
+            var entry = CreateActiveFileEntry(key, null);
+            await using var _ = await ReadLock(entry.Hash, ct).ConfigureAwait(false);
+            if (!await _fs.IsDirectoryExistAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false))
+                return false;
 
-            await _sync.WaitAsync(ct).ConfigureAwait(false);
+            await using var __ = await WriteLock(entry.Hash, ct).ConfigureAwait(false);
+            return await _fs.TryDeleteDirectoryAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false);
+        }
+
+        private async Task<IFileCacheLink> InternalGetOrAddAsync(string key, string fileName, CancellationToken ct,
+            Func<FileEntry, Task> writeAction)
+        {
+            var entry = CreateActiveFileEntry(key, fileName);
+            var rl = await ReadLock(entry.Hash, ct).ConfigureAwait(false);
             try
             {
-                if (_initialized) return;
+                try
+                {
+                    if (await _fs.IsDirectoryExistAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false))
+                        return await CreateFileCacheLink(entry, rl, ct).ConfigureAwait(false);
+                }
+                catch
+                {
+                    await rl.DisposeAsync().ConfigureAwait(false);
+                    rl = null;
+                    throw;
+                }
 
-                await InitializeAsync(ct).ConfigureAwait(false);
-                _initialized = true;
+                await using var wl = await UpgradeToWriteLock(entry.Hash, ct).ConfigureAwait(false);
+                if (await _fs.IsDirectoryExistAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false))
+                    return await CreateFileCacheLink(entry, rl, ct).ConfigureAwait(false);
+
+                await writeAction(entry).ConfigureAwait(false);
+                return await CreateFileCacheLink(entry, rl, ct).ConfigureAwait(false);
+            }
+            catch
+            {
+                await (rl?.DisposeAsync() ?? ValueTask.CompletedTask).ConfigureAwait(false);
+                throw;
+            }
+        }
+
+        private FileEntry CreateActiveFileEntry(string virtualKey, string fileName)
+        {
+            var hash = GetHash(virtualKey);
+            return new FileEntry(FileEntryState.Active, hash, fileName);
+        }
+
+        private async Task<IFileCacheLink> CreateFileCacheLink(FileEntry entry, IAsyncDisposable readLock, CancellationToken ct)
+        {
+            var hardLinkEntry = entry.CreateActiveHardLink();
+            var hardLinkPhysicalFilePath = _fs.GetPhysicalFile(hardLinkEntry.GetFilePath()).FullName;
+            await _fs.TryCreateDirectoryAsync(hardLinkEntry.GetDirectoryPath(), ct).ConfigureAwait(false);
+            try
+            {
+                await _fs.CreateFileHardLinkAsync(entry.GetFilePath(), hardLinkEntry.GetFilePath(), ct)
+                    .ConfigureAwait(false);
+                return new FileCacheLink(hardLinkEntry, hardLinkPhysicalFilePath, this, readLock);
+            }
+            catch
+            {
+                await _fs.TryDeleteDirectoryAsync(hardLinkEntry.GetDirectoryPath(), ct).ConfigureAwait(false);
+                throw;
+            }
+        }
+
+        internal async Task DeleteHardLinkAsync(FileEntry hardLinkEntry, IAsyncDisposable readLock)
+        {
+            try
+            {
+                var dirPath = hardLinkEntry.GetDirectoryPath();
+                await _fs.TryDeleteDirectoryAsync(dirPath).ConfigureAwait(false);
             }
             finally
             {
-                _sync.Release();
+                await readLock.DisposeAsync().ConfigureAwait(false);
             }
         }
 
-        private string GetPhysicalKey(string virtualKey)
+        private string GetHash(string virtualKey)
         {
-            return _keyHash.ComputeHash(Encoding.UTF8.GetBytes(virtualKey)).ToHexString(HexFormatting.None);
+            return FileCacheShortNameHelper.ToShortName(_hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(virtualKey)));
         }
 
-        private async IAsyncEnumerable<FileEntry> GetStoredEntriesAsync([EnumeratorCancellation] CancellationToken ct,
-            params FileEntryState[] states)
+        private async Task MoveFromFile(FileEntry entry, string key, FilePathProviderDelegate filePathProvider,
+            CancellationToken ct)
         {
-            foreach (var state in states)
+            var activePhysicalFilePath = _fs.GetPhysicalFile(entry.GetFilePath()).FullName;
+            await _fs.TryCreateDirectoryAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false);
+            try
             {
-                ct.ThrowIfCancellationRequested();
-                await foreach (var batch in _fs
-                                   .GetFilesAsync(state.ToString(), "*.cached", SearchOption.TopDirectoryOnly, ct)
-                                   .ConfigureAwait(false))
-                foreach (var path in batch)
-                    yield return new FileEntry(_fs, path, state);
+                var physicalFilePath = await filePathProvider(key, ct).ConfigureAwait(false);
+                File.Move(physicalFilePath, activePhysicalFilePath);
+            }
+            catch
+            {
+                await _fs.TryDeleteDirectoryAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false);
+                throw;
             }
         }
 
-
-        private async Task InitializeAsync(CancellationToken ct)
+        private async Task UploadFromStream(FileEntry entry, string key, StreamProviderDelegate streamProvider,
+            CancellationToken ct)
         {
-            foreach (var stateName in Enum.GetNames(typeof(FileEntryState)))
-                await _fs.TryCreateDirectoryAsync(stateName, ct).ConfigureAwait(false);
-
-            var tmp = new ConcurrentDictionary<FileEntryState, ConcurrentDictionary<string, FileEntry>>();
-            await foreach (var entry in GetStoredEntriesAsync(ct, FileEntryState.Active, FileEntryState.Deleted,
-                               FileEntryState.Temporal).ConfigureAwait(false))
+            var tmpEntry = entry.CreateTemporal();
+            await _fs.TryCreateDirectoryAsync(tmpEntry.GetDirectoryPath(), ct).ConfigureAwait(false);
+            try
             {
-                if (!tmp.TryGetValue(entry.CurrentState, out var set))
+                await using (var inputStream = await streamProvider(key, ct).ConfigureAwait(false))
                 {
-                    set = new ConcurrentDictionary<string, FileEntry>();
-                    tmp.TryAdd(entry.CurrentState, set);
+                    await using var outputStream = await _fs
+                        .OpenFileAsync(tmpEntry.GetFilePath(), FileMode.CreateNew, ct).ConfigureAwait(false);
+                    await inputStream.CopyToAsync(outputStream, ct).ConfigureAwait(false);
                 }
 
-                set.TryAdd(entry.Key, entry);
+                await _fs.MoveFileAsync(tmpEntry.GetFilePath(), entry.GetFilePath(), ct).ConfigureAwait(false);
             }
-
-            _entries = tmp;
-        }
-
-        private async Task<Tuple<FileEntry, Stream>> OpenTemporalFileEntry(string physicalKey, CancellationToken ct)
-        {
-            var entry = new FileEntry(
-                _fs,
-                Path.Combine(FileEntryState.Temporal.ToString(), physicalKey + ".cached"),
-                FileEntryState.Temporal);
-
-            var result = Tuple.Create(entry,
-                await _fs.OpenFileAsync(entry.FilePath, FileMode.CreateNew, ct).ConfigureAwait(false));
-
-            _entries[entry.CurrentState].TryAdd(physicalKey, entry);
-            return result;
-        }
-
-        private async Task SwitchStateAsync(FileEntry entry, FileEntryState newState, CancellationToken ct)
-        {
-            var prevState = entry.CurrentState;
-            await entry.SwitchStateAsync(newState, ct).ConfigureAwait(false);
-            _entries[prevState].TryRemove(entry.Key, out _);
-            _entries[newState].TryAdd(entry.Key, entry);
-        }
-
-        private readonly HashAlgorithm _keyHash;
-        private readonly IFileSystem _fs;
-
-        private readonly SemaphoreSlim _sync = new(1);
-        private volatile bool _initialized;
-        private ConcurrentDictionary<FileEntryState, ConcurrentDictionary<string, FileEntry>> _entries;
-
-        private sealed class FileEntry
-        {
-            public FileEntry(IFileSystem fs, string filePath, FileEntryState state)
+            finally
             {
-                _fs = fs;
-                FilePath = filePath;
-                CurrentState = state;
-                Key = Path.GetFileNameWithoutExtension(filePath);
+                await _fs.TryDeleteDirectoryAsync(tmpEntry.GetDirectoryPath(), ct).ConfigureAwait(false);
             }
-
-            public async Task SwitchStateAsync(FileEntryState newState, CancellationToken ct)
-            {
-                if (newState == CurrentState)
-                    return;
-                var newFilePath = Path.Combine(newState.ToString(), Key + ".cached");
-                await _fs.MoveFileAsync(FilePath, newFilePath, ct).ConfigureAwait(false);
-                FilePath = newFilePath;
-                CurrentState = newState;
-            }
-
-            public FileEntryState CurrentState { get; private set; }
-            public string FilePath { get; private set; }
-            public string Key { get; }
-            private readonly IFileSystem _fs;
         }
-
-        private enum FileEntryState
+        
+        private async Task<IAsyncDisposable> ReadLock(string hash, CancellationToken ct)
         {
-            Temporal,
-            Active,
-            Deleted
+            throw new NotImplementedException();
         }
+
+        private async Task<IAsyncDisposable> WriteLock(string hash, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+        
+        private async Task<IAsyncDisposable> UpgradeToWriteLock(string hash, CancellationToken ct)
+        {
+            return await WriteLock(hash, ct).ConfigureAwait(false);
+        }
+
+        private readonly FileSystem _fs;
+        private readonly HashAlgorithm _hashAlgorithm;
     }
 }
