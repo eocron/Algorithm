@@ -29,6 +29,7 @@ namespace Eocron.IO.Tests
             (await _cache.TryRemoveAsync("key2")).Should().BeFalse();
             (await _cache.ContainsKeyAsync("key1")).Should().BeFalse();
             (await _cache.ContainsKeyAsync("key2")).Should().BeFalse();
+            Directory.GetFiles(_cachePath, "*", SearchOption.AllDirectories).Should().BeEmpty();
         }
 
         private async Task AssertFileEqual(IFileCacheLink actualLink, string expectedFilePath, string expectedFileName)
