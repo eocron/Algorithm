@@ -204,11 +204,6 @@ namespace Eocron.IO.Caching
         {
             return await _lockProvider.LockWriteAsync(hash, ct).ConfigureAwait(false);
         }
-        
-        private async Task<IAsyncDisposable> UpgradeToWriteLock(string hash, CancellationToken ct)
-        {
-            return await _lockProvider.LockUpgradeWriteAsync(hash, ct).ConfigureAwait(false);
-        }
 
         private readonly FileSystem _fs;
         private readonly HashAlgorithm _hashAlgorithm;

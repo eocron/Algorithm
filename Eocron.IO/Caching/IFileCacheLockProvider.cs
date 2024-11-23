@@ -9,7 +9,5 @@ namespace Eocron.IO.Caching
         Task<IAsyncDisposable> LockReadAsync(string key, CancellationToken ct);
 
         Task<IAsyncDisposable> LockWriteAsync(string key, CancellationToken ct);
-
-        Task<IAsyncDisposable> LockUpgradeWriteAsync(string key, CancellationToken ct);
     }
 }
