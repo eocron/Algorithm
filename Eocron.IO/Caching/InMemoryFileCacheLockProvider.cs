@@ -27,13 +27,6 @@ namespace Eocron.IO.Caching
             var r = await rw.WriterLockAsync(ct).ConfigureAwait(false);
             return r.ToAsyncDisposable();
         }
-
-        public async Task<IAsyncDisposable> LockUpgradeWriteAsync(string key, CancellationToken ct)
-        {
-            var rw = GetOrAdd(key);
-            var r = await rw.WriterLockAsync(ct).ConfigureAwait(false);
-            return r.ToAsyncDisposable();
-        }
         
         private readonly ConcurrentDictionary<string, Lazy<AsyncReaderWriterLock>> _cache = new();
         

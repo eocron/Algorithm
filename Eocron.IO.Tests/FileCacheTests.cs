@@ -16,8 +16,19 @@ namespace Eocron.IO.Tests
         [Test]
         public async Task GetOrAddFile()
         {
-            await using var result = await _cache.GetOrAddFileAsync("key1", _testFileName, GetFilePathProvider, retainSource: true);
-            await AssertFileEqual(result, _testFilePath, _testFileName);
+            await using (var result =
+                         await _cache.GetOrAddFileAsync("key1", _testFileName, GetFilePathProvider, retainSource: true))
+            {
+                await AssertFileEqual(result, _testFilePath, _testFileName);
+            }
+
+            (await _cache.ContainsKeyAsync("key1")).Should().BeTrue();
+            (await _cache.ContainsKeyAsync("key2")).Should().BeFalse();
+            (await _cache.TryRemoveAsync("key1")).Should().BeTrue();
+            (await _cache.TryRemoveAsync("key1")).Should().BeFalse();
+            (await _cache.TryRemoveAsync("key2")).Should().BeFalse();
+            (await _cache.ContainsKeyAsync("key1")).Should().BeFalse();
+            (await _cache.ContainsKeyAsync("key2")).Should().BeFalse();
         }
 
         private async Task AssertFileEqual(IFileCacheLink actualLink, string expectedFilePath, string expectedFileName)

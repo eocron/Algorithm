@@ -13,16 +13,7 @@ namespace Eocron.IO.Caching
 
         public static string ToShortName(byte[] data)
         {
-            var sb = new StringBuilder();
-            var bigInt = new BigInteger(data);
-            while (bigInt > 0)
-            {
-                sb.Append(Mask[(int)(bigInt % Mask.Length)]);
-                bigInt /= Mask.Length;
-            }
-            return sb.ToString();
+            return Convert.ToBase64String(data);
         }
-
-        private static readonly char[] Mask = "abcdefghijklmnopqrstuvwxyz0123456789_-".ToCharArray();
     }
 }

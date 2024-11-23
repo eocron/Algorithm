@@ -55,12 +55,15 @@ namespace Eocron.IO.Caching
         public async Task<bool> TryRemoveAsync(string key, CancellationToken ct)
         {
             var entry = CreateActiveFileEntry(key, null);
-            await using var _ = await ReadLock(entry.Hash, ct).ConfigureAwait(false);
-            if (!await _fs.IsDirectoryExistAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false))
-                return false;
-
-            await using var __ = await WriteLock(entry.Hash, ct).ConfigureAwait(false);
-            return await _fs.TryDeleteDirectoryAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false);
+            await using (var _ = await ReadLock(entry.Hash, ct).ConfigureAwait(false))
+            {
+                if (!await _fs.IsDirectoryExistAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false))
+                    return false;
+            }
+            await using (var __ = await WriteLock(entry.Hash, ct).ConfigureAwait(false))
+            {
+                return await _fs.TryDeleteDirectoryAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false);
+            }
         }
 
         private async Task<IFileCacheLink> InternalGetOrAddAsync(string key, string fileName, CancellationToken ct,
