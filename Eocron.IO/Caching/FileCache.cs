@@ -80,7 +80,7 @@ namespace Eocron.IO.Caching
             }
             await rl.DisposeAsync().ConfigureAwait(false);
 
-            
+            //need a way to downgrade to read lock...
             var wl = await WriteLock(entry.Hash, ct).ConfigureAwait(false);
             try
             {
