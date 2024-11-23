@@ -2,32 +2,40 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using Nito.AsyncEx;
+using Nito.Disposables;
 
 namespace Eocron.IO.Caching
 {
-    public class InMemoryFileCacheLockProvider : IFileCacheLockProvider
+    public sealed class InMemoryFileCacheLockProvider : IFileCacheLockProvider
     {
-        public ConcurrentDictionary<string, Lazy<ReaderWriterLockSlim>> _cache =
-            new ConcurrentDictionary<string, Lazy<ReaderWriterLockSlim>>();
         public async Task<IAsyncDisposable> LockReadAsync(string key, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var rw = GetOrAdd(key);
+            var r = await rw.ReaderLockAsync(ct).ConfigureAwait(false);
+            return r.ToAsyncDisposable();
         }
 
-        private ReaderWriterLockSlim GetOrAdd(string key)
+        private AsyncReaderWriterLock GetOrAdd(string key)
         {
-            return _cache.GetOrAdd(key, _ => new Lazy<ReaderWriterLockSlim>(() => new ReaderWriterLockSlim())).Value;
+            return _cache.GetOrAdd(key, _ => new Lazy<AsyncReaderWriterLock>(() => new AsyncReaderWriterLock())).Value;
         }
 
         public async Task<IAsyncDisposable> LockWriteAsync(string key, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var rw = GetOrAdd(key);
+            var r = await rw.WriterLockAsync(ct).ConfigureAwait(false);
+            return r.ToAsyncDisposable();
         }
 
         public async Task<IAsyncDisposable> LockUpgradeWriteAsync(string key, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var rw = GetOrAdd(key);
+            var r = await rw.WriterLockAsync(ct).ConfigureAwait(false);
+            return r.ToAsyncDisposable();
         }
+        
+        private readonly ConcurrentDictionary<string, Lazy<AsyncReaderWriterLock>> _cache = new();
         
         private sealed class Lock : IAsyncDisposable
         {

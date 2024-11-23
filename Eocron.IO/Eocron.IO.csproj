@@ -9,4 +9,8 @@
             This client library contains some basic and usefull alghorithms for my work.
         </Description>
     </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Nito.AsyncEx" />
+    </ItemGroup>
 </Project>

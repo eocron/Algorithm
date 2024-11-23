@@ -8,7 +8,6 @@ using Eocron.IO.Files;
 
 namespace Eocron.IO.Caching
 {
-    [Obsolete("TODO: file name rw lock")]
     public sealed class FileCache : IFileCache
     {
         public FileCache(FileSystem fs, HashAlgorithm hashAlgorithm, IFileCacheLockProvider lockProvider)
@@ -25,17 +24,17 @@ namespace Eocron.IO.Caching
             return await _fs.IsDirectoryExistAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false);
         }
 
-        public async Task<IFileCacheLink> GetOrAddFileAsync(string key, FilePathProviderDelegate filePathProvider,
+        public async Task<IFileCacheLink> GetOrAddFileAsync(string key, FilePathProviderDelegate filePathProvider, bool retainSource = false,
             CancellationToken ct = default)
         {
-            return await GetOrAddFileAsync(key, FileCacheShortNameHelper.GetRandom(), filePathProvider, ct).ConfigureAwait(false);
+            return await GetOrAddFileAsync(key, FileCacheShortNameHelper.GetRandom(), filePathProvider, retainSource, ct).ConfigureAwait(false);
         }
 
         public async Task<IFileCacheLink> GetOrAddFileAsync(string key, string fileName,
-            FilePathProviderDelegate filePathProvider,
+            FilePathProviderDelegate filePathProvider, bool retainSource = false,
             CancellationToken ct = default)
         {
-            return await InternalGetOrAddAsync(key, fileName, ct, entry => MoveFromFile(entry, key, filePathProvider, ct))
+            return await InternalGetOrAddAsync(key, fileName, ct, entry => retainSource ? CopyFromFile(entry, key, filePathProvider, ct) : MoveFromFile(entry, key, filePathProvider, ct))
                 .ConfigureAwait(false);
         }
 
@@ -71,28 +70,29 @@ namespace Eocron.IO.Caching
             var rl = await ReadLock(entry.Hash, ct).ConfigureAwait(false);
             try
             {
-                try
-                {
-                    if (await _fs.IsDirectoryExistAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false))
-                        return await CreateFileCacheLink(entry, rl, ct).ConfigureAwait(false);
-                }
-                catch
-                {
-                    await rl.DisposeAsync().ConfigureAwait(false);
-                    rl = null;
-                    throw;
-                }
-
-                await using var wl = await UpgradeToWriteLock(entry.Hash, ct).ConfigureAwait(false);
                 if (await _fs.IsDirectoryExistAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false))
                     return await CreateFileCacheLink(entry, rl, ct).ConfigureAwait(false);
-
-                await writeAction(entry).ConfigureAwait(false);
-                return await CreateFileCacheLink(entry, rl, ct).ConfigureAwait(false);
             }
             catch
             {
-                await (rl?.DisposeAsync() ?? ValueTask.CompletedTask).ConfigureAwait(false);
+                await rl.DisposeAsync().ConfigureAwait(false);
+                throw;
+            }
+            await rl.DisposeAsync().ConfigureAwait(false);
+
+            
+            var wl = await WriteLock(entry.Hash, ct).ConfigureAwait(false);
+            try
+            {
+                if (await _fs.IsDirectoryExistAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false))
+                    return await CreateFileCacheLink(entry, wl, ct).ConfigureAwait(false);
+                
+                await writeAction(entry).ConfigureAwait(false);
+                return await CreateFileCacheLink(entry, wl, ct).ConfigureAwait(false);
+            }
+            catch
+            {
+                await wl.DisposeAsync().ConfigureAwait(false);
                 throw;
             }
         }
@@ -137,6 +137,23 @@ namespace Eocron.IO.Caching
         private string GetHash(string virtualKey)
         {
             return FileCacheShortNameHelper.ToShortName(_hashAlgorithm.ComputeHash(Encoding.UTF8.GetBytes(virtualKey)));
+        }
+        
+        private async Task CopyFromFile(FileEntry entry, string key, FilePathProviderDelegate filePathProvider,
+            CancellationToken ct)
+        {
+            var activePhysicalFilePath = _fs.GetPhysicalFile(entry.GetFilePath()).FullName;
+            await _fs.TryCreateDirectoryAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false);
+            try
+            {
+                var physicalFilePath = await filePathProvider(key, ct).ConfigureAwait(false);
+                File.Copy(physicalFilePath, activePhysicalFilePath);
+            }
+            catch
+            {
+                await _fs.TryDeleteDirectoryAsync(entry.GetDirectoryPath(), ct).ConfigureAwait(false);
+                throw;
+            }
         }
 
         private async Task MoveFromFile(FileEntry entry, string key, FilePathProviderDelegate filePathProvider,

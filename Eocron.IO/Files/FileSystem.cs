@@ -44,7 +44,17 @@ public sealed class FileSystem : IFileSystem, IExposedFileSystem, IDisposable, I
     public async Task CreateFileHardLinkAsync(string sourceFilePath, string targetFilePath,
         CancellationToken ct = default)
     {
-        throw new NotImplementedException();
+        await EnsureInitializedAsync(ct).ConfigureAwait(false);
+        var srcInfo = GetPhysicalFile(sourceFilePath);
+        var tgtInfo = GetPhysicalFile(targetFilePath);
+        if (WindowsFileSystemUnmanaged.IsSupported)
+        {
+            WindowsFileSystemUnmanaged.CreateHardLink(tgtInfo.FullName, srcInfo.FullName, IntPtr.Zero);
+        }
+        else
+        {
+            File.CreateSymbolicLink(srcInfo.FullName, tgtInfo.FullName);
+        }
     }
 
     public void Dispose()
