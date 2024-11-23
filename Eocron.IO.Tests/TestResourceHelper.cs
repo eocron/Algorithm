@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace Eocron.Algorithms.Tests.Core
+namespace Eocron.IO.Tests
 {
     public static class TestResourceHelper
     {

@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Eocron.Algorithms.Caching
+namespace Eocron.IO.Caching
 {
     public delegate Task<Stream> StreamProviderDelegate(string key, CancellationToken ct = default);
 }

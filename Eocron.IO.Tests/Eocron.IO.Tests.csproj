@@ -5,23 +5,25 @@
         <IsPackable>false</IsPackable>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="BenchmarkDotNet" />
-        <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" />
         <PackageReference Include="FluentAssertions" />
-        <PackageReference Include="Newtonsoft.Json" />
         <PackageReference Include="NUnit" />
         <PackageReference Include="NUnit3TestAdapter" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" />
-        <PackageReference Include="QuikGraph.Graphviz" />
         <PackageReference Include="System.Memory" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Eocron.Algorithms\Eocron.Algorithms.csproj" />
+        <ProjectReference Include="..\Eocron.IO\Eocron.IO.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="README.md" />
+        <None Remove="README.md" />
     </ItemGroup>
+
+
+    <ItemGroup>
+        <EmbeddedResource Include="TestData\**" />
+    </ItemGroup>
+
 
 </Project>

@@ -1,4 +1,4 @@
-﻿namespace Eocron.Algorithms.Caching
+﻿namespace Eocron.IO.Caching
 {
     internal enum FileEntryState
     {

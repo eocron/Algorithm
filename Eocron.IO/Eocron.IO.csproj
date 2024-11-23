@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <PackageId>Eocron.IO</PackageId>
+        <Product>Eocron.IO</Product>
+        <PackageTags>io;eocron</PackageTags>
+        <Description>
+            This client library contains some basic and usefull alghorithms for my work.
+        </Description>
+    </PropertyGroup>
+</Project>

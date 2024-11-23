@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Eocron.Algorithms.Caching
+namespace Eocron.IO.Caching
 {
     internal sealed class FileCacheLink : IFileCacheLink
     {

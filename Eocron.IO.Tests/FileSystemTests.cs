@@ -4,13 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Eocron.Algorithms.IO;
-using Eocron.Algorithms.Tests.Core;
+using Eocron.IO.Files;
 using FluentAssertions;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
-namespace Eocron.Algorithms.Tests
+namespace Eocron.IO.Tests
 {
     [TestFixture]
     public class FileSystemTests

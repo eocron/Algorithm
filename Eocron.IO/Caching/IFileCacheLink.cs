@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Eocron.Algorithms.Caching
+namespace Eocron.IO.Caching
 {
     public interface IFileCacheLink : IAsyncDisposable
     {

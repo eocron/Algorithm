@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Eocron.Algorithms.IO;
+namespace Eocron.IO.Files;
 
 [Flags]
 public enum FileSystemFeature

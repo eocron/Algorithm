@@ -8,7 +8,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Eocron.Algorithms.IO;
+namespace Eocron.IO.Files;
 
 public sealed class FileSystem : IFileSystem, IExposedFileSystem, IDisposable, IAsyncDisposable
 {

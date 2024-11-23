@@ -4,17 +4,18 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Eocron.Algorithms.IO;
+using Eocron.IO.Files;
 
-namespace Eocron.Algorithms.Caching
+namespace Eocron.IO.Caching
 {
     [Obsolete("TODO: file name rw lock")]
     public sealed class FileCache : IFileCache
     {
-        public FileCache(FileSystem fs, HashAlgorithm hashAlgorithm)
+        public FileCache(FileSystem fs, HashAlgorithm hashAlgorithm, IFileCacheLockProvider lockProvider)
         {
             _fs = fs ?? throw new ArgumentNullException(nameof(fs));
             _hashAlgorithm = hashAlgorithm ?? throw new ArgumentNullException(nameof(hashAlgorithm));
+            _lockProvider = lockProvider;
         }
 
         public async Task<bool> ContainsKeyAsync(string key, CancellationToken ct)
@@ -179,20 +180,21 @@ namespace Eocron.Algorithms.Caching
         
         private async Task<IAsyncDisposable> ReadLock(string hash, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            return await _lockProvider.LockReadAsync(hash, ct).ConfigureAwait(false);
         }
 
         private async Task<IAsyncDisposable> WriteLock(string hash, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            return await _lockProvider.LockWriteAsync(hash, ct).ConfigureAwait(false);
         }
         
         private async Task<IAsyncDisposable> UpgradeToWriteLock(string hash, CancellationToken ct)
         {
-            return await WriteLock(hash, ct).ConfigureAwait(false);
+            return await _lockProvider.LockUpgradeWriteAsync(hash, ct).ConfigureAwait(false);
         }
 
         private readonly FileSystem _fs;
         private readonly HashAlgorithm _hashAlgorithm;
+        private readonly IFileCacheLockProvider _lockProvider;
     }
 }
