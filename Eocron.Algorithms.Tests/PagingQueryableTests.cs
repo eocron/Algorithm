@@ -40,7 +40,7 @@ namespace Eocron.Algorithms.Tests
             string ct = null;
             do
             {
-                var tmpQuery = queryable.Continue(cfg, ct);
+                var tmpQuery = queryable.ApplyContinuationTokenFilter(cfg, ct);
                 var tmp = tmpQuery.Take(1).ToList().FirstOrDefault();
                 if (tmp != null)
                 {

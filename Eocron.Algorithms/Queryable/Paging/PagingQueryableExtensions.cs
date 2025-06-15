@@ -18,7 +18,7 @@ namespace Eocron.Algorithms.Queryable.Paging
         /// <param name="continuationToken"></param>
         /// <typeparam name="TEntity"></typeparam>
         /// <returns></returns>
-        public static IQueryable<TEntity> Continue<TEntity>(
+        public static IQueryable<TEntity> ApplyContinuationTokenFilter<TEntity>(
             this IQueryable<TEntity> source,
             PagingConfiguration<TEntity> configuration, 
             string continuationToken) where TEntity : class
