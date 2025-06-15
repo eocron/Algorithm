@@ -9,6 +9,19 @@ namespace Eocron.Algorithms.Queryable.Paging
     /// </summary>
     public static class PagingQueryableExtensions
     {
+        public static PagingConfiguration<TEntity> OrderBy<TEntity, TKey>(this PagingConfiguration<TEntity> configuration,
+            Expression<Func<TEntity, TKey>> orderByExpression)
+        {
+            configuration.AddKeySelector(orderByExpression);
+            return configuration;
+        }
+        
+        public static PagingConfiguration<TEntity> OrderByDescending<TEntity, TKey>(this PagingConfiguration<TEntity> configuration,
+            Expression<Func<TEntity, TKey>> orderByExpression)
+        {
+            configuration.AddKeySelector(orderByExpression, isDescending: true);
+            return configuration;
+        }
         /// <summary>
         /// Applies configured ordering.
         /// Applies skipping WHERE condition to IQueryable if continuation token is not empty.

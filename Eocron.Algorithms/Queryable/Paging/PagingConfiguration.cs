@@ -6,13 +6,12 @@ using Newtonsoft.Json;
 
 namespace Eocron.Algorithms.Queryable.Paging
 {
-    public sealed class PagingConfiguration<TEntity>
+    public sealed class PagingConfiguration<TEntity> : IPagingConfiguration<TEntity>
     {
         private readonly List<PagingKeyConfiguration> _keys = new();
 
-        public ParameterExpression Input = Expression.Parameter(typeof(TEntity), "x");
-        
-        public IReadOnlyList<PagingKeyConfiguration> Keys => _keys;
+        internal ParameterExpression Input = Expression.Parameter(typeof(TEntity), "x");
+        internal IReadOnlyList<PagingKeyConfiguration> Keys => _keys;
 
         private static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings()
         {
@@ -45,7 +44,7 @@ namespace Eocron.Algorithms.Queryable.Paging
                 JsonSerializerSettings);
         }
 
-        public List<object> GetKeyValues(string continuationToken)
+        internal List<object> GetKeyValues(string continuationToken)
         {
             if (string.IsNullOrWhiteSpace(continuationToken))
                 throw new ArgumentNullException(nameof(continuationToken));

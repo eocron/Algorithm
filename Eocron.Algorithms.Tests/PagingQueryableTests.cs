@@ -16,15 +16,14 @@ namespace Eocron.Algorithms.Tests
         public void Setup()
         {
             var now = new DateTime(2017, 12, 1);
-            _items = new List<TestDbEntity>()
-            {
-                new TestDbEntity(){Id = Guid.Parse("10000000-0000-0000-0000-000000000001"),Name = "Test1", Modified = now.AddDays(1)},
-                new TestDbEntity(){Id = Guid.Parse("10000000-0000-0000-0000-000000000002"),Name = "Test2", Modified = now.AddDays(2)},
-                new TestDbEntity(){Id = Guid.Parse("10000000-0000-0000-0000-000000000003"),Name = "Test3", Modified = now.AddDays(3)},
-                new TestDbEntity(){Id = Guid.Parse("10000000-0000-0000-0000-000000000004"),Name = "Test4", Modified = now.AddDays(4)},
-                new TestDbEntity(){Id = Guid.Parse("10000000-0000-0000-0000-000000000005"),Name = "Test5", Modified = now.AddDays(5)},
-                new TestDbEntity(){Id = Guid.Parse("10000000-0000-0000-0000-000000000006"),Name = "Test6", Modified = now.AddDays(6)},
-            };
+            _items = [
+                new(){Id = Guid.Parse("10000000-0000-0000-0000-000000000001"),Name = "Test1", Modified = now.AddDays(1)},
+                new(){Id = Guid.Parse("10000000-0000-0000-0000-000000000002"),Name = "Test2", Modified = now.AddDays(2)},
+                new(){Id = Guid.Parse("10000000-0000-0000-0000-000000000003"),Name = "Test3", Modified = now.AddDays(3)},
+                new(){Id = Guid.Parse("10000000-0000-0000-0000-000000000004"),Name = "Test4", Modified = now.AddDays(4)},
+                new(){Id = Guid.Parse("10000000-0000-0000-0000-000000000005"),Name = "Test5", Modified = now.AddDays(5)},
+                new(){Id = Guid.Parse("10000000-0000-0000-0000-000000000006"),Name = "Test6", Modified = now.AddDays(6)},
+            ];
         }
 
         [Test]
@@ -32,9 +31,9 @@ namespace Eocron.Algorithms.Tests
         {
             var queryable = _items.AsQueryable();
 
-            var cfg = new PagingConfiguration<TestDbEntity>();
-            cfg.AddKeySelector(x=> x.Modified, isDescending: true);
-            cfg.AddKeySelector(x=> x.Id);
+            var cfg = new PagingConfiguration<TestDbEntity>()
+                .OrderByDescending(x => x.Modified)
+                .OrderBy(x => x.Id);
 
             var result = new List<TestDbEntity>();
             var queries = new List<string>();
@@ -66,8 +65,8 @@ namespace Eocron.Algorithms.Tests
                 "System.Collections.Generic.List`1[Eocron.Algorithms.Tests.PagingQueryableTests+TestDbEntity].OrderByDescending(x => x.Modified).ThenBy(x => x.Id).Where(x => (((x.Modified == 12/2/2017 12:00:00 AM) AndAlso (x.Id > 10000000-0000-0000-0000-000000000001)) OrElse (x.Modified < 12/2/2017 12:00:00 AM)))"
             ]);
         }
-        
-        public class TestDbEntity
+
+        private class TestDbEntity
         {
             public Guid Id { get; set; }
             
