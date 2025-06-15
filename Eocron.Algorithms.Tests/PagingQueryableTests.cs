@@ -15,7 +15,7 @@ namespace Eocron.Algorithms.Tests
         [SetUp]
         public void Setup()
         {
-            var now = DateTime.UtcNow;
+            var now = new DateTime(2017, 12, 1);
             _items = new List<TestDbEntity>()
             {
                 new TestDbEntity(){Id = Guid.Parse("10000000-0000-0000-0000-000000000001"),Name = "Test1", Modified = now.AddDays(1)},
@@ -37,10 +37,12 @@ namespace Eocron.Algorithms.Tests
             cfg.AddKeySelector(x=> x.Id);
 
             var result = new List<TestDbEntity>();
+            var queries = new List<string>();
             string ct = null;
             do
             {
                 var tmpQuery = queryable.ApplyContinuationTokenFilter(cfg, ct);
+                queries.Add(tmpQuery.ToString());
                 var tmp = tmpQuery.Take(1).ToList().FirstOrDefault();
                 if (tmp != null)
                 {
@@ -54,6 +56,15 @@ namespace Eocron.Algorithms.Tests
             } while (ct != null);
 
             result.Should().Equal(_items.OrderByDescending(x=> x.Modified).ThenBy(x=> x.Id));
+            queries.Should().Equal([
+                "System.Collections.Generic.List`1[Eocron.Algorithms.Tests.PagingQueryableTests+TestDbEntity].OrderByDescending(x => x.Modified).ThenBy(x => x.Id)",
+                "System.Collections.Generic.List`1[Eocron.Algorithms.Tests.PagingQueryableTests+TestDbEntity].OrderByDescending(x => x.Modified).ThenBy(x => x.Id).Where(x => (((x.Modified == 12/7/2017 12:00:00 AM) AndAlso (x.Id > 10000000-0000-0000-0000-000000000006)) OrElse (x.Modified < 12/7/2017 12:00:00 AM)))",
+                "System.Collections.Generic.List`1[Eocron.Algorithms.Tests.PagingQueryableTests+TestDbEntity].OrderByDescending(x => x.Modified).ThenBy(x => x.Id).Where(x => (((x.Modified == 12/6/2017 12:00:00 AM) AndAlso (x.Id > 10000000-0000-0000-0000-000000000005)) OrElse (x.Modified < 12/6/2017 12:00:00 AM)))",
+                "System.Collections.Generic.List`1[Eocron.Algorithms.Tests.PagingQueryableTests+TestDbEntity].OrderByDescending(x => x.Modified).ThenBy(x => x.Id).Where(x => (((x.Modified == 12/5/2017 12:00:00 AM) AndAlso (x.Id > 10000000-0000-0000-0000-000000000004)) OrElse (x.Modified < 12/5/2017 12:00:00 AM)))",
+                "System.Collections.Generic.List`1[Eocron.Algorithms.Tests.PagingQueryableTests+TestDbEntity].OrderByDescending(x => x.Modified).ThenBy(x => x.Id).Where(x => (((x.Modified == 12/4/2017 12:00:00 AM) AndAlso (x.Id > 10000000-0000-0000-0000-000000000003)) OrElse (x.Modified < 12/4/2017 12:00:00 AM)))",
+                "System.Collections.Generic.List`1[Eocron.Algorithms.Tests.PagingQueryableTests+TestDbEntity].OrderByDescending(x => x.Modified).ThenBy(x => x.Id).Where(x => (((x.Modified == 12/3/2017 12:00:00 AM) AndAlso (x.Id > 10000000-0000-0000-0000-000000000002)) OrElse (x.Modified < 12/3/2017 12:00:00 AM)))",
+                "System.Collections.Generic.List`1[Eocron.Algorithms.Tests.PagingQueryableTests+TestDbEntity].OrderByDescending(x => x.Modified).ThenBy(x => x.Id).Where(x => (((x.Modified == 12/2/2017 12:00:00 AM) AndAlso (x.Id > 10000000-0000-0000-0000-000000000001)) OrElse (x.Modified < 12/2/2017 12:00:00 AM)))"
+            ]);
         }
         
         public class TestDbEntity
