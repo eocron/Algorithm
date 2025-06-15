@@ -10,8 +10,8 @@ namespace Eocron.Algorithms.Queryable.Paging
     public static class PagingQueryableExtensions
     {
         /// <summary>
-        /// Apply WHERE condition to IQueryable if continuation token is not empty.
-        /// It will not apply Skip/Take operations, you should do it yourself.
+        /// Applies configured ordering.
+        /// Applies skipping WHERE condition to IQueryable if continuation token is not empty.
         /// </summary>
         /// <param name="source"></param>
         /// <param name="configuration"></param>
