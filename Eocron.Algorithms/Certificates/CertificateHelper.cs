@@ -17,29 +17,56 @@ namespace Eocron.Algorithms.Certificates
             return store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false).Single();
         }
 
+        public static string ExportCertificateToPem(X509Certificate2 cert)
+        {
+            return cert.ExportCertificatePem();
+        }
+
+        public static string ExportPublicKeyToPem(X509Certificate2 cert)
+        {
+            using var rsa = (AsymmetricAlgorithm)cert.GetRSAPublicKey() ?? cert.GetECDsaPublicKey();
+            return rsa.ExportSubjectPublicKeyInfoPem();
+        }
+
         public static string ExportPrivateKeyToPem(X509Certificate2 cert)
         {
             if (!cert.HasPrivateKey)
                 throw new InvalidOperationException("No private key found in certificate: " + cert.Subject);
 
-            var rsa = cert.GetRSAPrivateKey();
+            using var tmpCert = ToExportable(cert);
+            using var rsa = (AsymmetricAlgorithm)tmpCert.GetRSAPrivateKey() ?? tmpCert.GetECDsaPrivateKey();
             if (rsa is RSACng rsaCng)
             {
-                try
-                {
-                    var parameters = rsaCng.ExportParameters(true);
-                    using var rsaTemp = RSA.Create();
-                    rsaTemp.ImportParameters(parameters);
-                    return rsaTemp.ExportPkcs8PrivateKeyPem();
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException("Private key can't be exported: " + cert.Subject, ex);
-                }
+                using var rsaTemp = ToRsa(rsaCng);
+                return rsaTemp.ExportPkcs8PrivateKeyPem();
             }
 
             return rsa.ExportPkcs8PrivateKeyPem();
+        }
 
+        private static X509Certificate2 ToExportable(X509Certificate2 cert)
+        {
+            var tmpPwd = Guid.NewGuid().ToString("N");
+            var content = cert.Export(X509ContentType.Pkcs12, tmpPwd);
+            return new X509Certificate2(
+                content,
+                tmpPwd,
+                X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
+        }
+
+        private static RSA ToRsa(RSACng cng)
+        {
+            var parameters = cng.ExportParameters(true);
+            var rsaTemp = RSA.Create();
+            try
+            {
+                rsaTemp.ImportParameters(parameters);
+            }
+            catch
+            {
+                rsaTemp.Dispose();
+                throw;
+            }
         }
     }
 }
