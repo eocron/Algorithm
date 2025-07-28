@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Eocron.DependencyInjection
 {
-public static partial class ServiceCollectionServiceExtensions
+    public static partial class ServiceCollectionServiceExtensions
     {
         /// <summary>
         /// Adds a transient service of the type specified in <paramref name="serviceType"/> with an
@@ -21,10 +21,12 @@ public static partial class ServiceCollectionServiceExtensions
             this IServiceCollection services,
             Type serviceType,
             object? serviceKey,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type implementationType,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type implementationType,
             Action<DecoratorChain> chainBuilder)
         {
-            return AddKeyed(services, serviceType, serviceKey, implementationType, ServiceLifetime.Transient, chainBuilder);
+            return AddKeyed(services, serviceType, serviceKey, implementationType, ServiceLifetime.Transient,
+                chainBuilder);
         }
 
         /// <summary>
@@ -45,7 +47,8 @@ public static partial class ServiceCollectionServiceExtensions
             Func<IServiceProvider, object?, object> implementationFactory,
             Action<DecoratorChain> chainBuilder)
         {
-            return AddKeyed(services, serviceType, serviceKey, implementationFactory, ServiceLifetime.Transient, chainBuilder);
+            return AddKeyed(services, serviceType, serviceKey, implementationFactory, ServiceLifetime.Transient,
+                chainBuilder);
         }
 
         /// <summary>
@@ -59,7 +62,8 @@ public static partial class ServiceCollectionServiceExtensions
         /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Transient"/>
-        public static IServiceCollection AddKeyedTransient<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
+        public static IServiceCollection AddKeyedTransient<TService,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
             this IServiceCollection services,
             object? serviceKey,
             Action<DecoratorChain> chainBuilder)
@@ -80,7 +84,8 @@ public static partial class ServiceCollectionServiceExtensions
         /// <seealso cref="ServiceLifetime.Transient"/>
         public static IServiceCollection AddKeyedTransient(
             this IServiceCollection services,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type serviceType,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType,
             object? serviceKey,
             Action<DecoratorChain> chainBuilder)
         {
@@ -96,7 +101,8 @@ public static partial class ServiceCollectionServiceExtensions
         /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Transient"/>
-        public static IServiceCollection AddKeyedTransient<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
+        public static IServiceCollection AddKeyedTransient<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
             this IServiceCollection services,
             object? serviceKey,
             Action<DecoratorChain> chainBuilder)
@@ -165,10 +171,12 @@ public static partial class ServiceCollectionServiceExtensions
             this IServiceCollection services,
             Type serviceType,
             object? serviceKey,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type implementationType,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type implementationType,
             Action<DecoratorChain> chainBuilder)
         {
-            return AddKeyed(services, serviceType, serviceKey, implementationType, ServiceLifetime.Scoped, chainBuilder);
+            return AddKeyed(services, serviceType, serviceKey, implementationType, ServiceLifetime.Scoped,
+                chainBuilder);
         }
 
         /// <summary>
@@ -189,7 +197,8 @@ public static partial class ServiceCollectionServiceExtensions
             Func<IServiceProvider, object?, object> implementationFactory,
             Action<DecoratorChain> chainBuilder)
         {
-            return AddKeyed(services, serviceType, serviceKey, implementationFactory, ServiceLifetime.Scoped, chainBuilder);
+            return AddKeyed(services, serviceType, serviceKey, implementationFactory, ServiceLifetime.Scoped,
+                chainBuilder);
         }
 
         /// <summary>
@@ -203,7 +212,8 @@ public static partial class ServiceCollectionServiceExtensions
         /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Scoped"/>
-        public static IServiceCollection AddKeyedScoped<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
+        public static IServiceCollection AddKeyedScoped<TService,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
             this IServiceCollection services,
             object? serviceKey,
             Action<DecoratorChain> chainBuilder)
@@ -224,7 +234,8 @@ public static partial class ServiceCollectionServiceExtensions
         /// <seealso cref="ServiceLifetime.Scoped"/>
         public static IServiceCollection AddKeyedScoped(
             this IServiceCollection services,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type serviceType,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType,
             object? serviceKey,
             Action<DecoratorChain> chainBuilder)
         {
@@ -240,7 +251,8 @@ public static partial class ServiceCollectionServiceExtensions
         /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Scoped"/>
-        public static IServiceCollection AddKeyedScoped<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
+        public static IServiceCollection AddKeyedScoped<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
             this IServiceCollection services,
             object? serviceKey,
             Action<DecoratorChain> chainBuilder)
@@ -310,10 +322,12 @@ public static partial class ServiceCollectionServiceExtensions
             this IServiceCollection services,
             Type serviceType,
             object? serviceKey,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type implementationType,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type implementationType,
             Action<DecoratorChain> chainBuilder)
         {
-            return AddKeyed(services, serviceType, serviceKey, implementationType, ServiceLifetime.Singleton, chainBuilder);
+            return AddKeyed(services, serviceType, serviceKey, implementationType, ServiceLifetime.Singleton,
+                chainBuilder);
         }
 
         /// <summary>
@@ -334,7 +348,8 @@ public static partial class ServiceCollectionServiceExtensions
             Func<IServiceProvider, object?, object> implementationFactory,
             Action<DecoratorChain> chainBuilder)
         {
-            return AddKeyed(services, serviceType, serviceKey, implementationFactory, ServiceLifetime.Singleton, chainBuilder);
+            return AddKeyed(services, serviceType, serviceKey, implementationFactory, ServiceLifetime.Singleton,
+                chainBuilder);
         }
 
         /// <summary>
@@ -348,7 +363,8 @@ public static partial class ServiceCollectionServiceExtensions
         /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Singleton"/>
-        public static IServiceCollection AddKeyedSingleton<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
+        public static IServiceCollection AddKeyedSingleton<TService,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
             this IServiceCollection services,
             object? serviceKey,
             Action<DecoratorChain> chainBuilder)
@@ -369,7 +385,8 @@ public static partial class ServiceCollectionServiceExtensions
         /// <seealso cref="ServiceLifetime.Singleton"/>
         public static IServiceCollection AddKeyedSingleton(
             this IServiceCollection services,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type serviceType,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type serviceType,
             object? serviceKey,
             Action<DecoratorChain> chainBuilder)
         {
@@ -385,7 +402,8 @@ public static partial class ServiceCollectionServiceExtensions
         /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Singleton"/>
-        public static IServiceCollection AddKeyedSingleton<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
+        public static IServiceCollection AddKeyedSingleton<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
             this IServiceCollection services,
             object? serviceKey,
             Action<DecoratorChain> chainBuilder)
@@ -486,7 +504,8 @@ public static partial class ServiceCollectionServiceExtensions
             IServiceCollection collection,
             Type serviceType,
             object? serviceKey,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type implementationType,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            Type implementationType,
             ServiceLifetime lifetime,
             Action<DecoratorChain> chainBuilder)
         {

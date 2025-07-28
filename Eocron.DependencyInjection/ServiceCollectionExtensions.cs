@@ -451,11 +451,6 @@ namespace Eocron.DependencyInjection
             return collection;
         }
 
-        private static DecoratorChain ToChain(Action<DecoratorChain> chainBuilder)
-        {
-            var chain = new DecoratorChain();
-            chainBuilder(chain);
-            return chain;
-        }
+
     }
 }
