@@ -17,5 +17,9 @@
       <PackageReference Include="Polly" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Eocron.DependencyInjection\Eocron.DependencyInjection.csproj" />
+    </ItemGroup>
+
 
 </Project>

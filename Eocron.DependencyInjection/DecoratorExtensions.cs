@@ -92,9 +92,9 @@ namespace Eocron.DependencyInjection
             return new ServiceDescriptor(descriptor.ServiceType, newKey, descriptor.ImplementationType, descriptor.Lifetime);
         }
         
-        private static DecoratorChain ToChain(Action<DecoratorChain> chainBuilder)
+        private static DecoratorChain ToChain(Type serviceType, Action<DecoratorChain> chainBuilder)
         {
-            var chain = new DecoratorChain();
+            var chain = new DecoratorChain(serviceType);
             chainBuilder(chain);
             return chain;
         }

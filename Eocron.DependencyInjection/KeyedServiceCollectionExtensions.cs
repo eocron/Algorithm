@@ -476,7 +476,7 @@ namespace Eocron.DependencyInjection
             Action<DecoratorChain> chainBuilder)
         {
             var serviceDescriptor = new ServiceDescriptor(serviceType, serviceKey, implementationInstance);
-            services.Add(serviceDescriptor, ToChain(chainBuilder));
+            services.Add(serviceDescriptor, ToChain(serviceType, chainBuilder));
             return services;
         }
 
@@ -510,7 +510,7 @@ namespace Eocron.DependencyInjection
             Action<DecoratorChain> chainBuilder)
         {
             var descriptor = new ServiceDescriptor(serviceType, serviceKey, implementationType, lifetime);
-            collection.Add(descriptor, ToChain(chainBuilder));
+            collection.Add(descriptor, ToChain(serviceType, chainBuilder));
             return collection;
         }
 
@@ -523,7 +523,7 @@ namespace Eocron.DependencyInjection
             Action<DecoratorChain> chainBuilder)
         {
             var descriptor = new ServiceDescriptor(serviceType, serviceKey, implementationFactory, lifetime);
-            collection.Add(descriptor, ToChain(chainBuilder));
+            collection.Add(descriptor, ToChain(serviceType, chainBuilder));
             return collection;
         }
     }
