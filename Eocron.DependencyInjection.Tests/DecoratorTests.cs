@@ -17,14 +17,13 @@ namespace Eocron.DependencyInjection.Tests
         {
             var mock = new Mock<ITest>();
             var sc = new ServiceCollection();
-            Func<IServiceProvider, object> factory = (_) => mock.Object;
-            sc.Add(new ServiceDescriptor(typeof(ITest),factory, ServiceLifetime.Transient),
-                new DecoratorChain()
+            sc.AddTransient<ITest>(_=> mock.Object,
+                c => c
                     .Add((sp, o) => o)
                     .Add((sp, o) => o));
             
             sc.Select(x => x.ServiceKey).Should().Equal(["000001_decorator", "000002_decorator", null]);
-            sc.Should().ContainSingle(x=> x.ServiceType == typeof(ITest) && x.Lifetime == ServiceLifetime.Transient && !x.IsKeyedService && x.ImplementationFactory != factory);
+            sc.Should().ContainSingle(x=> x.ServiceType == typeof(ITest) && x.Lifetime == ServiceLifetime.Transient && !x.IsKeyedService);
         }
         
         [Test]
@@ -32,9 +31,8 @@ namespace Eocron.DependencyInjection.Tests
         {
             var mock = new Mock<ITest>();
             var sc = new ServiceCollection();
-            Func<IServiceProvider, object> factory = (_) => mock.Object;
-            sc.Add(new ServiceDescriptor(typeof(ITest),factory, ServiceLifetime.Transient),
-                new DecoratorChain());
+            sc.AddTransient<ITest>(_=> mock.Object,
+                c => {});
             
             sc.Should().ContainSingle(x=> x.ServiceType == typeof(ITest) && x.Lifetime == ServiceLifetime.Transient && !x.IsKeyedService);
             sc.Select(x => x.ServiceKey).Should().Equal([null]);
@@ -50,9 +48,8 @@ namespace Eocron.DependencyInjection.Tests
                 sb.Append("implementation_call_"+x);
             });
             var sc = new ServiceCollection();
-            Func<IServiceProvider, object> factory = (_) => mock.Object;
-            sc.Add(new ServiceDescriptor(typeof(ITest),factory, ServiceLifetime.Transient),
-                new DecoratorChain()
+            sc.AddTransient<ITest>(_=> mock.Object,
+                c => c
                     .Add((sp, o) =>
                     {
                         sb.Append("second_call ");

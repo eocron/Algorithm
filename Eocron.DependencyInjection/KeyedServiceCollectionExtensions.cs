@@ -4,8 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Eocron.DependencyInjection
 {
-    
-    public static partial class ServiceCollectionServiceExtensions
+public static partial class ServiceCollectionServiceExtensions
     {
         /// <summary>
         /// Adds a transient service of the type specified in <paramref name="serviceType"/> with an
@@ -14,17 +13,18 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
         /// <param name="serviceType">The type of the service to register.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <param name="implementationType">The implementation type of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Transient"/>
-        public static IServiceCollection AddTransient(
+        public static IServiceCollection AddKeyedTransient(
             this IServiceCollection services,
             Type serviceType,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type implementationType,
+            object? serviceKey,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type implementationType,
             Action<DecoratorChain> chainBuilder)
         {
-            return Add(services, serviceType, implementationType, ServiceLifetime.Transient, chainBuilder);
+            return AddKeyed(services, serviceType, serviceKey, implementationType, ServiceLifetime.Transient, chainBuilder);
         }
 
         /// <summary>
@@ -34,16 +34,18 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
         /// <param name="serviceType">The type of the service to register.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <param name="implementationFactory">The factory that creates the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Transient"/>
-        public static IServiceCollection AddTransient(
+        public static IServiceCollection AddKeyedTransient(
             this IServiceCollection services,
             Type serviceType,
-            Func<IServiceProvider, object> implementationFactory,
+            object? serviceKey,
+            Func<IServiceProvider, object?, object> implementationFactory,
             Action<DecoratorChain> chainBuilder)
         {
-            return Add(services, serviceType, implementationFactory, ServiceLifetime.Transient, chainBuilder);
+            return AddKeyed(services, serviceType, serviceKey, implementationFactory, ServiceLifetime.Transient, chainBuilder);
         }
 
         /// <summary>
@@ -54,15 +56,17 @@ namespace Eocron.DependencyInjection
         /// <typeparam name="TService">The type of the service to add.</typeparam>
         /// <typeparam name="TImplementation">The type of the implementation to use.</typeparam>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Transient"/>
-        public static IServiceCollection AddTransient<TService,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
-            this IServiceCollection services, Action<DecoratorChain> chainBuilder)
+        public static IServiceCollection AddKeyedTransient<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
+            this IServiceCollection services,
+            object? serviceKey,
+            Action<DecoratorChain> chainBuilder)
             where TService : class
             where TImplementation : class, TService
         {
-            return services.AddTransient(typeof(TService), typeof(TImplementation), chainBuilder);
+            return services.AddKeyedTransient(typeof(TService), serviceKey, typeof(TImplementation), chainBuilder);
         }
 
         /// <summary>
@@ -71,14 +75,16 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
         /// <param name="serviceType">The type of the service to register and the implementation to use.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Transient"/>
-        public static IServiceCollection AddTransient(
+        public static IServiceCollection AddKeyedTransient(
             this IServiceCollection services,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType, Action<DecoratorChain> chainBuilder)
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type serviceType,
+            object? serviceKey,
+            Action<DecoratorChain> chainBuilder)
         {
-            return services.AddTransient(serviceType, serviceType, chainBuilder);
+            return services.AddKeyedTransient(serviceType, serviceKey, serviceType, chainBuilder);
         }
 
         /// <summary>
@@ -87,14 +93,16 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <typeparam name="TService">The type of the service to add.</typeparam>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Transient"/>
-        public static IServiceCollection AddTransient<
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
-            this IServiceCollection services, Action<DecoratorChain> chainBuilder)
+        public static IServiceCollection AddKeyedTransient<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
+            this IServiceCollection services,
+            object? serviceKey,
+            Action<DecoratorChain> chainBuilder)
             where TService : class
         {
-            return services.AddTransient(typeof(TService), chainBuilder);
+            return services.AddKeyedTransient(typeof(TService), serviceKey, chainBuilder);
         }
 
         /// <summary>
@@ -104,15 +112,18 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <typeparam name="TService">The type of the service to add.</typeparam>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <param name="implementationFactory">The factory that creates the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Transient"/>
-        public static IServiceCollection AddTransient<TService>(
+        public static IServiceCollection AddKeyedTransient<TService>(
             this IServiceCollection services,
-            Func<IServiceProvider, TService> implementationFactory, Action<DecoratorChain> chainBuilder)
+            object? serviceKey,
+            Func<IServiceProvider, object?, TService> implementationFactory,
+            Action<DecoratorChain> chainBuilder)
             where TService : class
         {
-            return services.AddTransient(typeof(TService), implementationFactory, chainBuilder);
+            return services.AddKeyedTransient(typeof(TService), serviceKey, implementationFactory, chainBuilder);
         }
 
         /// <summary>
@@ -124,16 +135,19 @@ namespace Eocron.DependencyInjection
         /// <typeparam name="TService">The type of the service to add.</typeparam>
         /// <typeparam name="TImplementation">The type of the implementation to use.</typeparam>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <param name="implementationFactory">The factory that creates the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Transient"/>
-        public static IServiceCollection AddTransient<TService, TImplementation>(
+        public static IServiceCollection AddKeyedTransient<TService, TImplementation>(
             this IServiceCollection services,
-            Func<IServiceProvider, TImplementation> implementationFactory, Action<DecoratorChain> chainBuilder)
+            object? serviceKey,
+            Func<IServiceProvider, object?, TImplementation> implementationFactory,
+            Action<DecoratorChain> chainBuilder)
             where TService : class
             where TImplementation : class, TService
         {
-            return services.AddTransient(typeof(TService), implementationFactory, chainBuilder);
+            return services.AddKeyedTransient(typeof(TService), serviceKey, implementationFactory, chainBuilder);
         }
 
         /// <summary>
@@ -143,16 +157,18 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
         /// <param name="serviceType">The type of the service to register.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <param name="implementationType">The implementation type of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Scoped"/>
-        public static IServiceCollection AddScoped(
+        public static IServiceCollection AddKeyedScoped(
             this IServiceCollection services,
             Type serviceType,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type implementationType, Action<DecoratorChain> chainBuilder)
+            object? serviceKey,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type implementationType,
+            Action<DecoratorChain> chainBuilder)
         {
-            return Add(services, serviceType, implementationType, ServiceLifetime.Scoped, chainBuilder);
+            return AddKeyed(services, serviceType, serviceKey, implementationType, ServiceLifetime.Scoped, chainBuilder);
         }
 
         /// <summary>
@@ -162,15 +178,18 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
         /// <param name="serviceType">The type of the service to register.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <param name="implementationFactory">The factory that creates the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Scoped"/>
-        public static IServiceCollection AddScoped(
+        public static IServiceCollection AddKeyedScoped(
             this IServiceCollection services,
             Type serviceType,
-            Func<IServiceProvider, object> implementationFactory, Action<DecoratorChain> chainBuilder)
+            object? serviceKey,
+            Func<IServiceProvider, object?, object> implementationFactory,
+            Action<DecoratorChain> chainBuilder)
         {
-            return Add(services, serviceType, implementationFactory, ServiceLifetime.Scoped, chainBuilder);
+            return AddKeyed(services, serviceType, serviceKey, implementationFactory, ServiceLifetime.Scoped, chainBuilder);
         }
 
         /// <summary>
@@ -181,15 +200,17 @@ namespace Eocron.DependencyInjection
         /// <typeparam name="TService">The type of the service to add.</typeparam>
         /// <typeparam name="TImplementation">The type of the implementation to use.</typeparam>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Scoped"/>
-        public static IServiceCollection AddScoped<TService,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
-            this IServiceCollection services, Action<DecoratorChain> chainBuilder)
+        public static IServiceCollection AddKeyedScoped<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
+            this IServiceCollection services,
+            object? serviceKey,
+            Action<DecoratorChain> chainBuilder)
             where TService : class
             where TImplementation : class, TService
         {
-            return services.AddScoped(typeof(TService), typeof(TImplementation), chainBuilder);
+            return services.AddKeyedScoped(typeof(TService), serviceKey, typeof(TImplementation), chainBuilder);
         }
 
         /// <summary>
@@ -198,14 +219,16 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
         /// <param name="serviceType">The type of the service to register and the implementation to use.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Scoped"/>
-        public static IServiceCollection AddScoped(
+        public static IServiceCollection AddKeyedScoped(
             this IServiceCollection services,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType, Action<DecoratorChain> chainBuilder)
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type serviceType,
+            object? serviceKey,
+            Action<DecoratorChain> chainBuilder)
         {
-            return services.AddScoped(serviceType, serviceType, chainBuilder);
+            return services.AddKeyedScoped(serviceType, serviceKey, serviceType, chainBuilder);
         }
 
         /// <summary>
@@ -214,14 +237,16 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <typeparam name="TService">The type of the service to add.</typeparam>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Scoped"/>
-        public static IServiceCollection AddScoped<
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
-            this IServiceCollection services, Action<DecoratorChain> chainBuilder)
+        public static IServiceCollection AddKeyedScoped<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
+            this IServiceCollection services,
+            object? serviceKey,
+            Action<DecoratorChain> chainBuilder)
             where TService : class
         {
-            return services.AddScoped(typeof(TService), chainBuilder);
+            return services.AddKeyedScoped(typeof(TService), serviceKey, chainBuilder);
         }
 
         /// <summary>
@@ -231,15 +256,18 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <typeparam name="TService">The type of the service to add.</typeparam>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <param name="implementationFactory">The factory that creates the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Scoped"/>
-        public static IServiceCollection AddScoped<TService>(
+        public static IServiceCollection AddKeyedScoped<TService>(
             this IServiceCollection services,
-            Func<IServiceProvider, TService> implementationFactory, Action<DecoratorChain> chainBuilder)
+            object? serviceKey,
+            Func<IServiceProvider, object?, TService> implementationFactory,
+            Action<DecoratorChain> chainBuilder)
             where TService : class
         {
-            return services.AddScoped(typeof(TService), implementationFactory, chainBuilder);
+            return services.AddKeyedScoped(typeof(TService), serviceKey, implementationFactory, chainBuilder);
         }
 
         /// <summary>
@@ -251,16 +279,19 @@ namespace Eocron.DependencyInjection
         /// <typeparam name="TService">The type of the service to add.</typeparam>
         /// <typeparam name="TImplementation">The type of the implementation to use.</typeparam>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <param name="implementationFactory">The factory that creates the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Scoped"/>
-        public static IServiceCollection AddScoped<TService, TImplementation>(
+        public static IServiceCollection AddKeyedScoped<TService, TImplementation>(
             this IServiceCollection services,
-            Func<IServiceProvider, TImplementation> implementationFactory, Action<DecoratorChain> chainBuilder)
+            object? serviceKey,
+            Func<IServiceProvider, object?, TImplementation> implementationFactory,
+            Action<DecoratorChain> chainBuilder)
             where TService : class
             where TImplementation : class, TService
         {
-            return services.AddScoped(typeof(TService), implementationFactory, chainBuilder);
+            return services.AddKeyedScoped(typeof(TService), serviceKey, implementationFactory, chainBuilder);
         }
 
 
@@ -271,16 +302,18 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
         /// <param name="serviceType">The type of the service to register.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <param name="implementationType">The implementation type of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Singleton"/>
-        public static IServiceCollection AddSingleton(
+        public static IServiceCollection AddKeyedSingleton(
             this IServiceCollection services,
             Type serviceType,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type implementationType, Action<DecoratorChain> chainBuilder)
+            object? serviceKey,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type implementationType,
+            Action<DecoratorChain> chainBuilder)
         {
-            return Add(services, serviceType, implementationType, ServiceLifetime.Singleton, chainBuilder);
+            return AddKeyed(services, serviceType, serviceKey, implementationType, ServiceLifetime.Singleton, chainBuilder);
         }
 
         /// <summary>
@@ -290,15 +323,18 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
         /// <param name="serviceType">The type of the service to register.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <param name="implementationFactory">The factory that creates the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Singleton"/>
-        public static IServiceCollection AddSingleton(
+        public static IServiceCollection AddKeyedSingleton(
             this IServiceCollection services,
             Type serviceType,
-            Func<IServiceProvider, object> implementationFactory, Action<DecoratorChain> chainBuilder)
+            object? serviceKey,
+            Func<IServiceProvider, object?, object> implementationFactory,
+            Action<DecoratorChain> chainBuilder)
         {
-            return Add(services, serviceType, implementationFactory, ServiceLifetime.Singleton, chainBuilder);
+            return AddKeyed(services, serviceType, serviceKey, implementationFactory, ServiceLifetime.Singleton, chainBuilder);
         }
 
         /// <summary>
@@ -309,15 +345,17 @@ namespace Eocron.DependencyInjection
         /// <typeparam name="TService">The type of the service to add.</typeparam>
         /// <typeparam name="TImplementation">The type of the implementation to use.</typeparam>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Singleton"/>
-        public static IServiceCollection AddSingleton<TService,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
-            this IServiceCollection services, Action<DecoratorChain> chainBuilder)
+        public static IServiceCollection AddKeyedSingleton<TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
+            this IServiceCollection services,
+            object? serviceKey,
+            Action<DecoratorChain> chainBuilder)
             where TService : class
             where TImplementation : class, TService
         {
-            return services.AddSingleton(typeof(TService), typeof(TImplementation), chainBuilder);
+            return services.AddKeyedSingleton(typeof(TService), serviceKey, typeof(TImplementation), chainBuilder);
         }
 
         /// <summary>
@@ -326,14 +364,16 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
         /// <param name="serviceType">The type of the service to register and the implementation to use.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Singleton"/>
-        public static IServiceCollection AddSingleton(
+        public static IServiceCollection AddKeyedSingleton(
             this IServiceCollection services,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type serviceType, Action<DecoratorChain> chainBuilder)
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type serviceType,
+            object? serviceKey,
+            Action<DecoratorChain> chainBuilder)
         {
-            return services.AddSingleton(serviceType, serviceType, chainBuilder);
+            return services.AddKeyedSingleton(serviceType, serviceKey, serviceType, chainBuilder);
         }
 
         /// <summary>
@@ -342,14 +382,16 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <typeparam name="TService">The type of the service to add.</typeparam>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Singleton"/>
-        public static IServiceCollection AddSingleton<
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
-            this IServiceCollection services, Action<DecoratorChain> chainBuilder)
+        public static IServiceCollection AddKeyedSingleton<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
+            this IServiceCollection services,
+            object? serviceKey,
+            Action<DecoratorChain> chainBuilder)
             where TService : class
         {
-            return services.AddSingleton(typeof(TService), chainBuilder);
+            return services.AddKeyedSingleton(typeof(TService), serviceKey, typeof(TService), chainBuilder);
         }
 
         /// <summary>
@@ -359,15 +401,18 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <typeparam name="TService">The type of the service to add.</typeparam>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <param name="implementationFactory">The factory that creates the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Singleton"/>
-        public static IServiceCollection AddSingleton<TService>(
+        public static IServiceCollection AddKeyedSingleton<TService>(
             this IServiceCollection services,
-            Func<IServiceProvider, TService> implementationFactory, Action<DecoratorChain> chainBuilder)
+            object? serviceKey,
+            Func<IServiceProvider, object?, TService> implementationFactory,
+            Action<DecoratorChain> chainBuilder)
             where TService : class
         {
-            return services.AddSingleton(typeof(TService), implementationFactory, chainBuilder);
+            return services.AddKeyedSingleton(typeof(TService), serviceKey, implementationFactory, chainBuilder);
         }
 
         /// <summary>
@@ -379,16 +424,19 @@ namespace Eocron.DependencyInjection
         /// <typeparam name="TService">The type of the service to add.</typeparam>
         /// <typeparam name="TImplementation">The type of the implementation to use.</typeparam>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <param name="implementationFactory">The factory that creates the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Singleton"/>
-        public static IServiceCollection AddSingleton<TService, TImplementation>(
+        public static IServiceCollection AddKeyedSingleton<TService, TImplementation>(
             this IServiceCollection services,
-            Func<IServiceProvider, TImplementation> implementationFactory, Action<DecoratorChain> chainBuilder)
+            object? serviceKey,
+            Func<IServiceProvider, object?, TImplementation> implementationFactory,
+            Action<DecoratorChain> chainBuilder)
             where TService : class
             where TImplementation : class, TService
         {
-            return services.AddSingleton(typeof(TService), implementationFactory, chainBuilder);
+            return services.AddKeyedSingleton(typeof(TService), serviceKey, implementationFactory, chainBuilder);
         }
 
         /// <summary>
@@ -398,15 +446,18 @@ namespace Eocron.DependencyInjection
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
         /// <param name="serviceType">The type of the service to register.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <param name="implementationInstance">The instance of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Singleton"/>
-        public static IServiceCollection AddSingleton(
+        public static IServiceCollection AddKeyedSingleton(
             this IServiceCollection services,
             Type serviceType,
-            object implementationInstance, Action<DecoratorChain> chainBuilder)
+            object? serviceKey,
+            object implementationInstance,
+            Action<DecoratorChain> chainBuilder)
         {
-            var serviceDescriptor = new ServiceDescriptor(serviceType, implementationInstance);
+            var serviceDescriptor = new ServiceDescriptor(serviceType, serviceKey, implementationInstance);
             services.Add(serviceDescriptor, ToChain(chainBuilder));
             return services;
         }
@@ -417,45 +468,44 @@ namespace Eocron.DependencyInjection
         /// specified <see cref="IServiceCollection"/>.
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/> to add the service to.</param>
+        /// <param name="serviceKey">The <see cref="ServiceDescriptor.ServiceKey"/> of the service.</param>
         /// <param name="implementationInstance">The instance of the service.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         /// <seealso cref="ServiceLifetime.Singleton"/>
-        public static IServiceCollection AddSingleton<TService>(
+        public static IServiceCollection AddKeyedSingleton<TService>(
             this IServiceCollection services,
-            TService implementationInstance, Action<DecoratorChain> chainBuilder)
+            object? serviceKey,
+            TService implementationInstance,
+            Action<DecoratorChain> chainBuilder)
             where TService : class
         {
-            return services.AddSingleton(typeof(TService), implementationInstance, chainBuilder);
+            return services.AddKeyedSingleton(typeof(TService), serviceKey, implementationInstance, chainBuilder);
         }
 
-        private static IServiceCollection Add(
+        private static IServiceCollection AddKeyed(
             IServiceCollection collection,
             Type serviceType,
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
-            Type implementationType,
-            ServiceLifetime lifetime, Action<DecoratorChain> chainBuilder)
+            object? serviceKey,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type implementationType,
+            ServiceLifetime lifetime,
+            Action<DecoratorChain> chainBuilder)
         {
-            var descriptor = new ServiceDescriptor(serviceType, implementationType, lifetime);
+            var descriptor = new ServiceDescriptor(serviceType, serviceKey, implementationType, lifetime);
             collection.Add(descriptor, ToChain(chainBuilder));
             return collection;
         }
 
-        private static IServiceCollection Add(
+        private static IServiceCollection AddKeyed(
             IServiceCollection collection,
             Type serviceType,
-            Func<IServiceProvider, object> implementationFactory,
-            ServiceLifetime lifetime, Action<DecoratorChain> chainBuilder)
+            object? serviceKey,
+            Func<IServiceProvider, object?, object> implementationFactory,
+            ServiceLifetime lifetime,
+            Action<DecoratorChain> chainBuilder)
         {
-            var descriptor = new ServiceDescriptor(serviceType, implementationFactory, lifetime);
+            var descriptor = new ServiceDescriptor(serviceType, serviceKey, implementationFactory, lifetime);
             collection.Add(descriptor, ToChain(chainBuilder));
             return collection;
-        }
-
-        private static DecoratorChain ToChain(Action<DecoratorChain> chainBuilder)
-        {
-            var chain = new DecoratorChain();
-            chainBuilder(chain);
-            return chain;
         }
     }
 }
