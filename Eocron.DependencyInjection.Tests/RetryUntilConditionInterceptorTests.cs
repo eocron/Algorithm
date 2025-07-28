@@ -2,11 +2,12 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
+using Eocron.DependencyInjection.Interceptors;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 
-namespace Eocron.Aspects.Tests
+namespace Eocron.DependencyInjection.Tests
 {
     [TestFixture]
     [Ignore("Not yet tested")]

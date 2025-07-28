@@ -61,6 +61,7 @@ namespace Eocron.Algorithms.Certificates
             try
             {
                 rsaTemp.ImportParameters(parameters);
+                return rsaTemp;
             }
             catch
             {

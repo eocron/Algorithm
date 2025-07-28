@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Eocron.Aspects.Caching
+namespace Eocron.DependencyInjection.Interceptors.Caching
 {
     public sealed class AsyncAtomicLazy<T>
     {

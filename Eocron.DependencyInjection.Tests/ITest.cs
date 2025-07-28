@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace Eocron.Aspects.Tests;
+namespace Eocron.DependencyInjection.Tests;
 
 public interface ITest
 {

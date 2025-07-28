@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
 
-namespace Eocron.Aspects.Tests
+namespace Eocron.DependencyInjection.Tests
 {
     public sealed class TestConsoleLogger : ILogger
     {

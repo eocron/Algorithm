@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <PackageId>Eocron.DependencyInjection.Interceptors</PackageId>
+        <Product>Eocron.DependencyInjection.Interceptors</Product>
+        <PackageTags>aop;aspect;eocron</PackageTags>
+        <Description>
+            This client library contains some basic and usefull aspect oriented programmin alghorithms for my work.
+        </Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Castle.Core.AsyncInterceptor" />
+      <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+      <PackageReference Include="Polly" />
+    </ItemGroup>
+
+
+</Project>

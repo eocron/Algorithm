@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
 
-namespace Eocron.Aspects
+namespace Eocron.DependencyInjection.Interceptors
 {
     public sealed class TimeoutAsyncInterceptor : AsyncInterceptorBase
     {

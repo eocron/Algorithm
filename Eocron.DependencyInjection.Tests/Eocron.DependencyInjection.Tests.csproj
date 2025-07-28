@@ -9,6 +9,7 @@
         <PackageReference Include="FluentAssertions" />
         <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
         <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" />
         <PackageReference Include="Moq" />
@@ -26,7 +27,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Eocron.Aspects\Eocron.Aspects.csproj" />
+      <ProjectReference Include="..\Eocron.DependencyInjection.Interceptors\Eocron.DependencyInjection.Interceptors.csproj" />
+      <ProjectReference Include="..\Eocron.DependencyInjection\Eocron.DependencyInjection.csproj" />
     </ItemGroup>
 
 </Project>

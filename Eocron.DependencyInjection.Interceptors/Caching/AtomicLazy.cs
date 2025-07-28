@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace Eocron.Aspects.Caching
+namespace Eocron.DependencyInjection.Interceptors.Caching
 {
     public sealed class AtomicLazy<T>
     {

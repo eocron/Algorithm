@@ -2,8 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
-        <PackageId>Eocron.Aspects</PackageId>
-        <Product>Eocron.Aspects</Product>
+        <PackageId>Eocron.DependencyInjection</PackageId>
+        <Product>Eocron.DependencyInjection</Product>
         <PackageTags>aop;aspect;eocron</PackageTags>
         <Description>
             This client library contains some basic and usefull aspect oriented programmin alghorithms for my work.
@@ -11,11 +11,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Castle.Core.AsyncInterceptor" />
-      <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
-      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-      <PackageReference Include="Polly" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     </ItemGroup>
-
-
 </Project>
