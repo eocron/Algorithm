@@ -5,18 +5,29 @@ namespace Eocron.DependencyInjection
 {
     public sealed class DecoratorChain
     {
-        private readonly List<DecoratorDelegate> _items = new();
-        public IReadOnlyList<DecoratorDelegate> Items => _items;
+        private readonly List<Decorator> _items = new();
+        public IReadOnlyList<Decorator> Items => _items;
         public Type ServiceType { get; }
 
         public DecoratorChain(Type serviceType)
         {
             ServiceType = serviceType;
         }
-        public DecoratorChain Add(DecoratorDelegate decorator)
+        public DecoratorChain Add(DecoratorDelegate decorator, DecoratorConfiguratorDelegate configurator = null)
         {
-            _items.Add(decorator);
+            _items.Add(new Decorator()
+            {
+                Provider = decorator,
+                Configurator = configurator
+            });
             return this;
         }
+    }
+
+    public class Decorator
+    {
+        public DecoratorDelegate Provider { get; init; }
+        
+        public DecoratorConfiguratorDelegate Configurator { get; init; }
     }
 }

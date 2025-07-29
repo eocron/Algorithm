@@ -49,7 +49,7 @@ namespace Eocron.DependencyInjection.Interceptors.Logging
             }
             catch (Exception ex)
             {
-                _logger?.Log(_onError, ex, "Failed to invoke {invocation}. Elapsed: {elapsed}", invocation.Method.Name, sw.Elapsed);
+                _logger?.Log(_onError, ex, "Failed to call {invocation}. Elapsed: {elapsed}", invocation.Method.Name, sw.Elapsed);
                 throw;
             }
         }
@@ -67,7 +67,7 @@ namespace Eocron.DependencyInjection.Interceptors.Logging
             }
             catch (Exception ex)
             {
-                _logger?.Log(_onError, ex, "Failed to invoke {invocation}. Elapsed: {elapsed}", invocation.Method.Name, sw.Elapsed);
+                _logger?.Log(_onError, ex, "Failed to call {invocation}. Elapsed: {elapsed}", invocation.Method.Name, sw.Elapsed);
                 throw;
             }
         }
@@ -86,7 +86,7 @@ namespace Eocron.DependencyInjection.Interceptors.Logging
             }
             catch (Exception ex)
             {
-                _logger?.Log(_onError, ex, "Failed to invoke {invocation}. Elapsed: {elapsed}", invocation.Method.Name, sw.Elapsed);
+                _logger?.Log(_onError, ex, "Failed to call {invocation}. Elapsed: {elapsed}", invocation.Method.Name, sw.Elapsed);
                 throw;
             }
         }

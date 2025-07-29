@@ -25,6 +25,8 @@ namespace Eocron.DependencyInjection
                 var d = chain.Items[i];
                 var isLast = i == 0;
                 var pk = prevKey;
+                var nextKey = GenerateKey();
+                d.Configurator?.Invoke(services, nextKey, descriptor.Lifetime);
                 if (isLast)
                 {
                     if (descriptor.IsKeyedService)
@@ -32,24 +34,23 @@ namespace Eocron.DependencyInjection
                         services.Add(new ServiceDescriptor(
                             descriptor.ServiceType, 
                             descriptor.ServiceKey, 
-                            (sp, _) => d(sp, sp.GetRequiredKeyedService(descriptor.ServiceType, pk)),
+                            (sp, _) => d.Provider(sp, nextKey, sp.GetRequiredKeyedService(descriptor.ServiceType, pk), descriptor.Lifetime),
                             descriptor.Lifetime));
                     }
                     else
                     {
                         services.Add(new ServiceDescriptor(
                             descriptor.ServiceType,
-                            sp => d(sp, sp.GetRequiredKeyedService(descriptor.ServiceType, pk)),
+                            sp => d.Provider(sp, nextKey, sp.GetRequiredKeyedService(descriptor.ServiceType, pk), descriptor.Lifetime),
                             descriptor.Lifetime));
                     }
                 }
                 else
                 {
-                    var nextKey = GenerateKey();
                     services.Add(new ServiceDescriptor(
                         descriptor.ServiceType, 
                         nextKey, 
-                        (sp, _) => d(sp, sp.GetRequiredKeyedService(descriptor.ServiceType, pk)),
+                        (sp, _) => d.Provider(sp, nextKey, sp.GetRequiredKeyedService(descriptor.ServiceType, pk), descriptor.Lifetime),
                         descriptor.Lifetime));
                     prevKey = nextKey;
                 }

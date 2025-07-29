@@ -39,7 +39,12 @@ public static class InterceptionHelper
         return false;
     }
 
-    public static async Task SafeDelay(TimeSpan delay, CancellationToken ct = default)
+    public static void SafeDelay(TimeSpan delay, CancellationToken ct = default)
+    {
+        Thread.Sleep(delay);
+    }
+
+    public static async Task SafeDelayAsync(TimeSpan delay, CancellationToken ct = default)
     {
         try
         {
@@ -55,5 +60,11 @@ public static class InterceptionHelper
     {
         ProxyGenerator generator = new ProxyGenerator();
         return generator.CreateInterfaceProxyWithTargetInterface<T>(target, interceptors.Select(x=> x.ToInterceptor()).ToArray());
+    }
+    
+    public static object CreateProxy(Type interfaceType, object target, params IAsyncInterceptor[] interceptors)
+    {
+        ProxyGenerator generator = new ProxyGenerator();
+        return generator.CreateInterfaceProxyWithTargetInterface(interfaceType, target, interceptors.Select(x=> x.ToInterceptor()).ToArray());
     }
 }

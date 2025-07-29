@@ -20,15 +20,15 @@ namespace Eocron.DependencyInjection.Tests
         [SetUp]
         public void Setup()
         {
-            _interceptor = new RetryUntilConditionAsyncInterceptor((_, _) => true, (_, _) => TimeSpan.Zero, TestConsoleLogger.Instance);
-            _interceptorWithDelay = new RetryUntilConditionAsyncInterceptor((_, _) => true, (_, _) => TimeSpan.FromSeconds(10), TestConsoleLogger.Instance);
+            _interceptor = new RetryAsyncInterceptor((_, _) => true, (_, _) => TimeSpan.Zero, TestConsoleLogger.Instance);
+            _interceptorWithDelay = new RetryAsyncInterceptor((_, _) => true, (_, _) => TimeSpan.FromSeconds(10), TestConsoleLogger.Instance);
         }
 
         [Test]
         public void CorrelatedExponentialBackoff_Check()
         {
             var rnd = new Random(42);
-            var expectedMs = new[] {5, 10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 20480, 40960, 60000, 60000, 60000, 60000, 60000, 60000};
+            var expectedMs = new[] {20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 20480, 40960, 60000, 60000, 60000, 60000, 60000, 60000, 60000, 60000};
             var actualMs = Enumerable.Range(1, 20).Select(x=> (int)CorrelatedExponentialBackoff.Calculate(rnd, x, TimeSpan.Zero, TimeSpan.FromSeconds(60), false).TotalMilliseconds).ToArray();
             actualMs.Should().Equal(expectedMs);
         }
@@ -37,7 +37,7 @@ namespace Eocron.DependencyInjection.Tests
         public void CorrelatedExponentialBackoffJittered_Check()
         {
             var rnd = new Random(42);
-            var expectedMs = new[] {3, 1, 2, 20, 13, 42, 231, 328, 222, 1948, 1201, 2634, 10354, 13116, 22858, 15614, 31047, 2119, 48848, 34631};
+            var expectedMs = new[] {13, 5, 10, 83, 53, 168, 927, 1313, 889, 7795, 4804, 10539, 30336, 19213, 22858, 15614, 31047, 2119, 48848, 34631};
             var actualMs = Enumerable.Range(1, 20).Select(x=> (int)CorrelatedExponentialBackoff.Calculate(rnd, x, TimeSpan.Zero, TimeSpan.FromSeconds(60), true).TotalMilliseconds).ToArray();
             actualMs.Should().Equal(expectedMs);
         }

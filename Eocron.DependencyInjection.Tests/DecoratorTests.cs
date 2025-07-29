@@ -19,8 +19,8 @@ namespace Eocron.DependencyInjection.Tests
             var sc = new ServiceCollection();
             sc.AddTransient<ITest>(_=> mock.Object,
                 c => c
-                    .Add((sp, o) => o)
-                    .Add((sp, o) => o));
+                    .Add((sp,_, o, _) => o)
+                    .Add((sp,_, o, _) => o));
             
             sc.Select(x => x.ServiceKey).Should().Equal(["000001_decorator", "000002_decorator", null]);
             sc.Should().ContainSingle(x=> x.ServiceType == typeof(ITest) && x.Lifetime == ServiceLifetime.Transient && !x.IsKeyedService);
@@ -50,12 +50,12 @@ namespace Eocron.DependencyInjection.Tests
             var sc = new ServiceCollection();
             sc.AddTransient<ITest>(_=> mock.Object,
                 c => c
-                    .Add((sp, o) =>
+                    .Add((sp,_, o, _) =>
                     {
                         sb.Append("second_call ");
                         return o;
                     })
-                    .Add((sp, o) =>                     
+                    .Add((sp,_, o, _) =>                     
                     {
                         sb.Append("first_call ");
                         return o;

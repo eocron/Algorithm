@@ -12,7 +12,6 @@ using Microsoft.Extensions.Caching.Memory;
 namespace Eocron.DependencyInjection.Tests
 {
     [TestFixture]
-    [Ignore("Not yet tested")]
     public class MemoryCacheInterceptorTests
     {
         private IAsyncInterceptor _interceptor;
