@@ -16,7 +16,7 @@ namespace Eocron.DependencyInjection.Tests.DependencyInjectionTests
             Instance.Setup(x => x.WorkWithResultAsync(It.Is<int>(i=> i==1), It.IsAny<CancellationToken>())).ReturnsAsync(1);
             Instance.Setup(x => x.WorkWithResultAsync(It.Is<int>(i=> i==2), It.IsAny<CancellationToken>())).ReturnsAsync(2);
 
-            var proxy = CreateTestObject(x => x.AddAbsoluteTimeoutCache(Expiration));
+            var proxy = CreateTestObject(x => x.AddAbsoluteExpirationCache(Expiration));
             await Parallel.ForAsync(0, 100, async (_, _) =>
             {
                 (await proxy.WorkWithResultAsync(1, Ct)).Should().Be(1);
@@ -30,7 +30,7 @@ namespace Eocron.DependencyInjection.Tests.DependencyInjectionTests
             Instance.Setup(x => x.WorkWithResultAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new InvalidOperationException());
 
-            var proxy = CreateTestObject(x => x.AddAbsoluteTimeoutCache(Expiration));
+            var proxy = CreateTestObject(x => x.AddAbsoluteExpirationCache(Expiration));
 
             var func = async () => await proxy.WorkWithResultAsync(1, Ct);
             await func.Should().ThrowAsync<InvalidOperationException>();
@@ -45,7 +45,7 @@ namespace Eocron.DependencyInjection.Tests.DependencyInjectionTests
             Instance.Setup(x => x.WorkWithResultAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new InvalidOperationException());
 
-            var proxy = CreateTestObject(x => x.AddSlidingTimeoutCache(Expiration));
+            var proxy = CreateTestObject(x => x.AddSlidingExpirationCache(Expiration));
 
             var func = async () => await proxy.WorkWithResultAsync(1, Ct);
             await func.Should().ThrowAsync<InvalidOperationException>();
@@ -60,7 +60,7 @@ namespace Eocron.DependencyInjection.Tests.DependencyInjectionTests
             Instance.Setup(x => x.WorkWithResultAsync(It.Is<int>(i=> i==1), It.IsAny<CancellationToken>())).ReturnsAsync(1);
             Instance.Setup(x => x.WorkWithResultAsync(It.Is<int>(i=> i==2), It.IsAny<CancellationToken>())).ReturnsAsync(2);
 
-            var proxy = CreateTestObject(x => x.AddAbsoluteTimeoutCache(Expiration));
+            var proxy = CreateTestObject(x => x.AddAbsoluteExpirationCache(Expiration));
             
             //first pass
             await Parallel.ForAsync(0, 100, async (_, _) =>
@@ -87,7 +87,7 @@ namespace Eocron.DependencyInjection.Tests.DependencyInjectionTests
             Instance.Setup(x => x.WorkWithResultAsync(It.Is<int>(i=> i==1), It.IsAny<CancellationToken>())).ReturnsAsync(1);
             Instance.Setup(x => x.WorkWithResultAsync(It.Is<int>(i=> i==2), It.IsAny<CancellationToken>())).ReturnsAsync(2);
 
-            var proxy = CreateTestObject(x => x.AddSlidingTimeoutCache(Expiration));
+            var proxy = CreateTestObject(x => x.AddSlidingExpirationCache(Expiration));
             
             //first pass
             await Parallel.ForAsync(0, 100, async (_, _) =>
@@ -114,7 +114,7 @@ namespace Eocron.DependencyInjection.Tests.DependencyInjectionTests
             Instance.Setup(x => x.WorkWithResultAsync(It.Is<int>(i=> i==1), It.IsAny<CancellationToken>())).ReturnsAsync(1);
             Instance.Setup(x => x.WorkWithResultAsync(It.Is<int>(i=> i==2), It.IsAny<CancellationToken>())).ReturnsAsync(2);
 
-            var proxy = CreateTestObject(x => x.AddSlidingTimeoutCache(Expiration));
+            var proxy = CreateTestObject(x => x.AddSlidingExpirationCache(Expiration));
             
             //first pass
             await Parallel.ForAsync(0, 100, async (_, _) =>

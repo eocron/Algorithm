@@ -120,7 +120,7 @@ namespace Eocron.DependencyInjection.Interceptors
             return decoratorChain;
         }
         
-        public static DecoratorChain AddSlidingTimeoutCache(this DecoratorChain decoratorChain, 
+        public static DecoratorChain AddSlidingExpirationCache(this DecoratorChain decoratorChain, 
             TimeSpan cacheDuration,
             Func<MethodInfo, object[], object> keyProvider = null)
         {
@@ -133,7 +133,7 @@ namespace Eocron.DependencyInjection.Interceptors
             return decoratorChain;
         }
         
-        public static DecoratorChain AddAbsoluteTimeoutCache(this DecoratorChain decoratorChain, 
+        public static DecoratorChain AddAbsoluteExpirationCache(this DecoratorChain decoratorChain, 
             TimeSpan cacheDuration,
             Func<MethodInfo, object[], object> keyProvider = null)
         {
