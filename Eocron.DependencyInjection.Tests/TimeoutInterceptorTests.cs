@@ -11,7 +11,6 @@ using NUnit.Framework;
 namespace Eocron.DependencyInjection.Tests
 {
     [TestFixture]
-    [Ignore("Not yet tested")]
     public class TimeoutInterceptorTests
     {
         private IAsyncInterceptor _interceptor;

@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Reflection;
 using Castle.DynamicProxy;
+using Eocron.DependencyInjection.Interceptors.Retry;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -39,6 +42,55 @@ namespace Eocron.DependencyInjection.Interceptors
             decoratorChain.AddInterceptor((sp) => new RetryUntilConditionAsyncInterceptor(exceptionPredicate,
                 retryIntervalProvider,
                 sp.GetService<ILoggerFactory>()?.CreateLogger(decoratorChain.ServiceType.Name)));
+            return decoratorChain;
+        }
+        
+        public static DecoratorChain AddConstantBackoff(this DecoratorChain decoratorChain, 
+            int maxAttempts, 
+            TimeSpan retryInterval,
+            bool jittered = false,
+            Func<Exception, bool> isRetryable = null)
+        {
+            return decoratorChain.AddRetry(
+                (c, ex) => c <= maxAttempts && (isRetryable?.Invoke(ex) ?? true),
+                (c, _) => ConstantBackoff.Calculate(StaticRandom.Value, retryInterval, jittered));
+        }
+        
+        public static DecoratorChain AddExponentialBackoff(this DecoratorChain decoratorChain, 
+            int maxAttempts,
+            TimeSpan minPropagationDuration, 
+            TimeSpan maxPropagationDuration,
+            bool jittered = true,
+            Func<Exception, bool> isRetryable = null)
+        {
+            return decoratorChain.AddRetry(
+                (c, ex) => c <= maxAttempts && (isRetryable?.Invoke(ex) ?? true),
+                (c, _) => CorrelatedExponentialBackoff.Calculate(StaticRandom.Value, c, minPropagationDuration, maxPropagationDuration, jittered));
+        }
+        
+        public static DecoratorChain AddSlidingTimeoutCache(this DecoratorChain decoratorChain, 
+            Func<MethodInfo, object[], object> keyProvider, 
+            TimeSpan cacheDuration)
+        {
+            if (cacheDuration <= TimeSpan.Zero)
+                return decoratorChain;
+            
+            decoratorChain.AddInterceptor((sp) => new MemoryCacheAsyncInterceptor(sp.GetRequiredService<IMemoryCache>(),
+                keyProvider,
+                (_,_,ce)=> ce.SetSlidingExpiration(cacheDuration)));
+            return decoratorChain;
+        }
+        
+        public static DecoratorChain AddTimeoutCache(this DecoratorChain decoratorChain, 
+            Func<MethodInfo, object[], object> keyProvider, 
+            TimeSpan cacheDuration)
+        {
+            if (cacheDuration <= TimeSpan.Zero)
+                return decoratorChain;
+            
+            decoratorChain.AddInterceptor((sp) => new MemoryCacheAsyncInterceptor(sp.GetRequiredService<IMemoryCache>(),
+                keyProvider,
+                (_,_,ce)=> ce.SetAbsoluteExpiration(cacheDuration)));
             return decoratorChain;
         }
     }
