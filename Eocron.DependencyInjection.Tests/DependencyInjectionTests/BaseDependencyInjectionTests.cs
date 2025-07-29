@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -21,6 +22,7 @@ namespace Eocron.DependencyInjection.Tests.DependencyInjectionTests
         protected ITest CreateTestObject(Action<DecoratorChain> chainBuilder)
         {
             var sc = new ServiceCollection();
+            sc.AddSingleton<IMemoryCache>(new MemoryCache(new MemoryCacheOptions()));
             sc.AddSingleton<ILoggerFactory>(new TestConsoleLoggerFactory());
             sc.AddSingleton<ITest>(Instance.Object, chainBuilder);
             var sp = sc.BuildServiceProvider();
