@@ -203,12 +203,7 @@ namespace Eocron.DependencyInjection.Interceptors.Retry
         
         private void LogCancel(IInvocation invocation, int iteration)
         {
-            if (iteration == 0)
-            {
-                _logger?.LogTrace("Retrying of {invocation} stopped on reaching stop condition", invocation.Method.Name);
-                return;
-            }
-            _logger?.LogTrace("Retrying of {invocation} stopped on reaching stop condition. Attempt: {attempt}", invocation.Method.Name, iteration);
+            _logger?.LogTrace("Retrying of {invocation} stopped on reaching stop condition", invocation.Method.Name);
         }
     }
 }
