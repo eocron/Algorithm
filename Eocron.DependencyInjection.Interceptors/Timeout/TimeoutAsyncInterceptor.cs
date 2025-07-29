@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
 
-namespace Eocron.DependencyInjection.Interceptors
+namespace Eocron.DependencyInjection.Interceptors.Timeout
 {
     public sealed class TimeoutAsyncInterceptor : AsyncInterceptorBase
     {
@@ -11,7 +11,7 @@ namespace Eocron.DependencyInjection.Interceptors
 
         public TimeoutAsyncInterceptor(TimeSpan timeout)
         {
-            if (timeout <= TimeSpan.Zero || timeout == Timeout.InfiniteTimeSpan)
+            if (timeout <= TimeSpan.Zero || timeout == System.Threading.Timeout.InfiniteTimeSpan)
             {
                 throw new ArgumentOutOfRangeException($"Invalid timeout provided: {timeout}");
             }
@@ -37,57 +37,15 @@ namespace Eocron.DependencyInjection.Interceptors
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(rootCt);
             InterceptionHelper.TryReplaceCancellationToken(invocation, cts.Token);
 
-            var tcs = new TaskCompletionSource<TResult>();
-
-            async Task TimeoutJob()
+            var task = Task.Run(() => proceed(invocation, proceedInfo));
+            var completedTask = await Task.WhenAny(task, Task.Delay(_timeout, cts.Token));
+            if (completedTask == task || rootCt.IsCancellationRequested)
             {
-                await InterceptionHelper.SafeDelay(_timeout).ConfigureAwait(false);
-                tcs.TrySetException(CreateTimeoutException(invocation));
+                await cts.CancelAsync().ConfigureAwait(false);
+                return await task.ConfigureAwait(false); // Very important in order to propagate exceptions
             }
 
-            async Task ProceedJob()
-            {
-                await Task.Yield();
-                cts.CancelAfter(_timeout);
-                TResult result;
-                try
-                {
-                    result = await proceed(invocation, proceedInfo);
-                    if (IsTimedOut())
-                    {
-                        tcs.TrySetException(CreateTimeoutException(invocation));
-                    }
-                    else
-                    {
-                        tcs.TrySetResult(result);
-                    }
-                }
-                catch (Exception e) when (IsTimedOut())
-                {
-                    tcs.TrySetException(CreateTimeoutException(invocation, e));
-                }
-                catch (Exception e)
-                {
-                    tcs.TrySetException(e);
-                }
-            }
-
-            bool IsTimedOut()
-            {
-                return cts.IsCancellationRequested && !rootCt.IsCancellationRequested;
-            }
-
-            
-#pragma warning disable CS4014
-            TimeoutJob();
-            ProceedJob();
-#pragma warning restore CS4014
-            return await tcs.Task.ConfigureAwait(false);
-        }
-
-        private Exception CreateTimeoutException(IInvocation invocation, Exception e = null)
-        {
-            return new TimeoutException($"Method {invocation} timed out after {_timeout}", e);
+            throw new TimeoutException($"Method {invocation} timed out after {_timeout}");
         }
     }
 }

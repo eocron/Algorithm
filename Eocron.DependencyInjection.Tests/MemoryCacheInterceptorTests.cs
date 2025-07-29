@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
 using Eocron.DependencyInjection.Interceptors;
+using Eocron.DependencyInjection.Interceptors.Caching;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;

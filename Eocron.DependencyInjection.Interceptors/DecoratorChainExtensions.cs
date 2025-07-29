@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Reflection;
 using Castle.DynamicProxy;
+using Eocron.DependencyInjection.Interceptors.Caching;
+using Eocron.DependencyInjection.Interceptors.Logging;
 using Eocron.DependencyInjection.Interceptors.Retry;
+using Eocron.DependencyInjection.Interceptors.Timeout;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -21,6 +24,16 @@ namespace Eocron.DependencyInjection.Interceptors
             IAsyncInterceptor interceptor)
         {
             decoratorChain.Add((sp, instance) => InterceptionHelper.CreateProxy(instance, interceptor));
+            return decoratorChain;
+        }
+
+        public static DecoratorChain AddTracing(this DecoratorChain decoratorChain)
+        {
+            decoratorChain.AddInterceptor((sp) =>
+                new LoggingAsyncInterceptor(
+                    sp.GetService<ILoggerFactory>().CreateLogger(decoratorChain.ServiceType.FullName),
+                    LogLevel.Trace,
+                    LogLevel.Error));
             return decoratorChain;
         }
 

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Castle.DynamicProxy;
 using Microsoft.Extensions.Logging;
 
-namespace Eocron.DependencyInjection.Interceptors
+namespace Eocron.DependencyInjection.Interceptors.Retry
 {
     public sealed class RetryUntilConditionAsyncInterceptor : IAsyncInterceptor
     {

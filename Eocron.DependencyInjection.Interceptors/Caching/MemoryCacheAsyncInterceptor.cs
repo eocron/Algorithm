@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
-using Eocron.DependencyInjection.Interceptors.Caching;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace Eocron.DependencyInjection.Interceptors
+namespace Eocron.DependencyInjection.Interceptors.Caching
 {
     public sealed class MemoryCacheAsyncInterceptor : IAsyncInterceptor
     {
