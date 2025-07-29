@@ -42,17 +42,14 @@ namespace Eocron.DependencyInjection.Tests
 
             var r1 = await proxy.WorkWithResultAsync(2, token);
             var r2 = await proxy.WorkWithResultAsync(2, token);
-
             r1.Should().Be(r2);
-
-            instance.Verify(x => x.WorkWithResultAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
-                Times.Exactly(1));
-
             r1 = proxy.WorkWithResult(2);
             r2 = proxy.WorkWithResult(2);
-
             r1.Should().Be(r2);
+            
             instance.Verify(x => x.WorkWithResult(It.IsAny<int>()), Times.Exactly(1));
+            instance.Verify(x => x.WorkWithResultAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()),
+                Times.Exactly(1));
         }
 
         [Test]

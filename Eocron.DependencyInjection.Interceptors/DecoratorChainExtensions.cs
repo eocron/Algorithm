@@ -112,36 +112,36 @@ namespace Eocron.DependencyInjection.Interceptors
         }
         
         public static DecoratorChain AddCache(this DecoratorChain decoratorChain,
-            Func<MethodInfo, object[], object> keyProvider)
+            Func<MethodInfo, object[], object> keyProvider = null)
         {
             decoratorChain.AddInterceptor(sp => new MemoryCacheAsyncInterceptor(sp.GetRequiredService<IMemoryCache>(),
-                keyProvider,
+                keyProvider ?? KeyProviderHelper.AllExceptCancellationToken,
                 (_,_,_)=> {}));
             return decoratorChain;
         }
         
         public static DecoratorChain AddSlidingTimeoutCache(this DecoratorChain decoratorChain, 
             TimeSpan cacheDuration,
-            Func<MethodInfo, object[], object> keyProvider)
+            Func<MethodInfo, object[], object> keyProvider = null)
         {
             if (cacheDuration <= TimeSpan.Zero)
                 return decoratorChain;
             
             decoratorChain.AddInterceptor(sp => new MemoryCacheAsyncInterceptor(sp.GetRequiredService<IMemoryCache>(),
-                keyProvider,
+                keyProvider ?? KeyProviderHelper.AllExceptCancellationToken,
                 (_,_,ce)=> ce.SetSlidingExpiration(cacheDuration)));
             return decoratorChain;
         }
         
         public static DecoratorChain AddAbsoluteTimeoutCache(this DecoratorChain decoratorChain, 
             TimeSpan cacheDuration,
-            Func<MethodInfo, object[], object> keyProvider)
+            Func<MethodInfo, object[], object> keyProvider = null)
         {
             if (cacheDuration <= TimeSpan.Zero)
                 return decoratorChain;
             
             decoratorChain.AddInterceptor(sp => new MemoryCacheAsyncInterceptor(sp.GetRequiredService<IMemoryCache>(),
-                keyProvider,
+                keyProvider ?? KeyProviderHelper.AllExceptCancellationToken,
                 (_,_,ce)=> ce.SetAbsoluteExpiration(cacheDuration)));
             return decoratorChain;
         }
