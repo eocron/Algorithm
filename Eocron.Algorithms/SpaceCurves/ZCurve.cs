@@ -6,7 +6,7 @@ namespace Eocron.Algorithms.SpaceCurves
 {
     public static class ZCurve
     {
-        public static T[] Interleave<T>(IReadOnlyList<T> items, int m)
+        public static T[] Interleave<T>(IReadOnlyCollection<T> items, int m)
         {
             return Interleave<T>(items, items.Count, m);
         }
@@ -29,15 +29,17 @@ namespace Eocron.Algorithms.SpaceCurves
             return output;
         }
         
-        public static T[] Interleave<T>(params IReadOnlyList<T>[] itemSequences)
+        public static T[] Interleave<T>(params IReadOnlyCollection<T>[] itemSequences)
         {
-            if (itemSequences.Select(x=> x.Count).Distinct().Count()>1)
+            var itemSize = itemSequences[0].Count;
+            if (itemSequences.Any(x=> x.Count != itemSize))
             {
                 throw new ArgumentOutOfRangeException(nameof(itemSequences), "Sequences should have same size");
             }
 
             var m = itemSequences.Length;
-            return Interleave(itemSequences.SelectMany(x => x), itemSequences.Sum(x => x.Count), m);
+
+            return Interleave(itemSequences.SelectMany(x => x), itemSize * m, m);
         }
         
         public static int GetInterleavedIndex(int idx, int n, int m)
