@@ -1,0 +1,16 @@
+﻿using System;
+using System.Linq.Expressions;
+
+namespace Eocron.Algorithms.UI.Editing
+{
+    public static class EditSessionExtensions
+    {
+        public static void SetProperty<TDocument, TProperty>(this IEditSession<TDocument> editSession,
+            Expression<Func<TDocument, TProperty>> propertySelector, TProperty newValue)
+        {
+            editSession.Apply(new PropertyEditSessionChange<TDocument, TProperty>(
+                propertySelector,
+                newValue));
+        }
+    }
+}

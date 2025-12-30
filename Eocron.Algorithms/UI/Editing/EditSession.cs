@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Eocron.Algorithms.UI.Editing;
 
-public class EditSession<TDocument> : IEditSession<TDocument>
+public class EditSession<TDocument> : IEditSession<TDocument> where TDocument : class
 {
     public TDocument Source { get; private set; }
     public TDocument Draft { get; private set; }
@@ -17,7 +17,7 @@ public class EditSession<TDocument> : IEditSession<TDocument>
     public EditSession(TDocument source, int changeLimit = 100)
     {
         _changeLimit = changeLimit;
-        Source = source!;
+        Source = EditSessionHelper.DeepClone(source! ?? throw new ArgumentNullException(nameof(source)));
     }
 
     public void BeginEdit()
