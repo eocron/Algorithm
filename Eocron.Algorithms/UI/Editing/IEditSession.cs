@@ -1,31 +1,30 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Eocron.Algorithms.UI.Editing
+namespace Eocron.Algorithms.UI.Editing;
+
+public interface IEditSession<out TDocument>
 {
-    public interface IEditSession<out TDocument>
-    {
-        TDocument Source { get; }
+    TDocument Source { get; }
         
-        TDocument Draft { get; }
+    TDocument Draft { get; }
         
-        ValidationResult[] Validation { get; }
+    ValidationResult[] Validation { get; }
         
-        bool IsEditing { get; }
+    bool IsEditing { get; }
         
-        bool CanRedo { get; }
+    bool CanRedo { get; }
         
-        bool CanUndo { get; }
+    bool CanUndo { get; }
 
-        void BeginEdit();
+    void BeginEdit();
         
-        void Apply(IEditSessionChange<TDocument> change);
+    void Apply(IEditSessionChange<TDocument> change);
         
-        bool TryCommit();
+    bool TryCommit();
 
-        void Rollback();
+    void Rollback();
         
-        void Undo();
+    void Undo();
 
-        void Redo();
-    }
+    void Redo();
 }

@@ -1,8 +1,7 @@
-﻿namespace Eocron.Algorithms.UI.Editing
+﻿namespace Eocron.Algorithms.UI.Editing;
+
+public interface IEditSessionChange<in TDocument>
 {
-    public interface IEditSessionChange<in TDocument>
-    {
-        void Redo(TDocument document);
-        void Undo(TDocument document);
-    }
+    void Redo(TDocument document);
+    void Undo(TDocument document);
 }

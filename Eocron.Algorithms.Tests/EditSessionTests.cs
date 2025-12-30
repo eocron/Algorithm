@@ -160,7 +160,6 @@ public class EditSessionTests
     public class TestDocument
     {
         public string Id { get; set; }
-        
         public TestDocument Inner { get; set; }
         
         public List<TestDocument> Chidlren { get; set; }
