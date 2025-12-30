@@ -67,7 +67,7 @@ public class PropertyEditSessionChange<TDocument, TProperty> : IEditSessionChang
         }
 
         _onUndo(current, properties[^1], _context);
-            
+        _context = null;
         for (var i = _createdObjects.Count - 1; i >= 0; i--)
         {
             var (parent, property) = _createdObjects[i];
