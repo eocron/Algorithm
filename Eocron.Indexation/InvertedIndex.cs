@@ -10,8 +10,9 @@ public sealed class InvertedIndex<TEntity>(
 {
     public IEnumerable<TEntity> Search(SearchFilterInfo filterInfo)
     {
-        var includes = filterInfo.Include.Select(x => GetAllBitmaps(x.Key, x.Value));
-        var excludes = filterInfo.Exclude.Select(x => GetAllBitmaps(x.Key, x.Value));
+        ArgumentNullException.ThrowIfNull(filterInfo);
+        var includes = filterInfo.Include?.Select(x => GetAllBitmaps(x.Key, x.Value)) ?? [];
+        var excludes = filterInfo.Exclude?.Select(x => GetAllBitmaps(x.Key, x.Value)) ?? [];
         
         Roaring32Bitmap? result = null;
         try
@@ -34,11 +35,6 @@ public sealed class InvertedIndex<TEntity>(
                     result.IAnd(tmpOr);
                     tmpOr.Dispose();
                 }
-
-                if (result.IsEmpty)
-                {
-                    yield break;
-                }
             }
             
             foreach (var exclude in excludes)
@@ -47,23 +43,16 @@ public sealed class InvertedIndex<TEntity>(
 
                 foreach (var excludeBitmap in exclude)
                 {
-                    tmpOr.IAndNot(excludeBitmap);
+                    tmpOr.IOr(excludeBitmap);
                 }
 
                 if (result == null)
                 {
-                    result = tmpOr;
+                    result = new Roaring32Bitmap((uint)orderedEntities.Length);
+                    result.INot(); 
                 }
-                else
-                {
-                    result.IAnd(tmpOr);
-                    tmpOr.Dispose();
-                }
-
-                if (result.IsEmpty)
-                {
-                    yield break;
-                }
+                result.IAndNot(tmpOr);
+                tmpOr.Dispose();
             }
 
             if (result == null)

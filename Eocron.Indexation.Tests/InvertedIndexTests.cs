@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using FluentAssertions;
 using NUnit.Framework;
 
 namespace Eocron.Indexation.Tests;
@@ -33,7 +34,7 @@ public class InvertedIndexTests
     }
 
     [Test]
-    public void Sanity()
+    public void IntersectionOfData()
     {
         var indexBuilder = new InvertedIndexBuilder<TestEntity>();
         indexBuilder.WithBind("userId", x=> x.UserIds);
@@ -47,6 +48,29 @@ public class InvertedIndexTests
                 { "userId", [3] }
             }
         }).ToList();
+        result.Should().Equal([_testData[0], _testData[1]]);
+    }
+    
+    [Test]
+    public void IntersectionOfDataExcludeOne()
+    {
+        var indexBuilder = new InvertedIndexBuilder<TestEntity>();
+        indexBuilder.WithBind("userId", x=> x.UserIds);
+        indexBuilder.WithBind("language", x=> x.Languages);
+
+        var index = indexBuilder.BuildFrom(_testData);
+        var result = index.Search(new SearchFilterInfo()
+        {
+            Include = new Dictionary<string, List<object>>()
+            {
+                { "userId", [3] }
+            },
+            Exclude = new Dictionary<string, List<object>>()
+            {
+                { "userId", [5] }
+            }
+        }).ToList();
+        result.Should().Equal([_testData[0]]);
     }
     
     public class TestEntity
